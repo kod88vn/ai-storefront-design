@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'AI Storefront Design Studio',
+  description: 'State-of-the-art AI-powered storefront design studio with real-time preview and agentic workflows',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -35,8 +35,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
+    <html lang="en" className="dark">
+      <body className="font-sans antialiased overflow-hidden">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
