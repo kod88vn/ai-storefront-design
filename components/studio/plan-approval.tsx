@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { useStudioStore } from '@/lib/store'
+import { useOrchestrator } from '@/hooks/use-orchestrator'
 import type { AgentPlan } from '@/lib/types'
 
 interface PlanApprovalProps {
@@ -16,25 +17,38 @@ interface PlanApprovalProps {
 export function PlanApproval({ plan }: PlanApprovalProps) {
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedback, setFeedback] = useState('')
-  const { approvePlan, rejectPlan, setAgentStep, updateTheme, updateHero } = useStudioStore()
+  const { setAgentStep, setAgentPlan, addAuditEntry } = useStudioStore()
+  const { resumeWithFeedback } = useOrchestrator()
 
-  const handleApprove = () => {
-    approvePlan()
-    // Apply the proposed changes
-    updateTheme({ secondaryColor: '#22c55e' }) // Forest Green
-    updateHero({ layout: 'minimal' })
-    setAgentStep('updating')
-    setTimeout(() => setAgentStep('complete'), 1500)
-    setTimeout(() => setAgentStep('idle'), 3000)
+  function handleApprove() {
+    addAuditEntry({
+      method: 'agent/approvePlan',
+      params: { planId: plan.id },
+      result: { approved: true },
+    })
+    resumeWithFeedback({ approved: true })
   }
 
-  const handleReject = () => {
-    if (showFeedback && feedback) {
-      rejectPlan(feedback)
-      setAgentStep('idle')
-    } else {
-      setShowFeedback(true)
-    }
+  function handleSubmitFeedback() {
+    if (!feedback.trim()) return
+    addAuditEntry({
+      method: 'agent/rejectPlan',
+      params: { planId: plan.id, feedback },
+      result: { approved: false },
+    })
+    resumeWithFeedback({ approved: false, modifications: feedback.trim() })
+    setFeedback('')
+    setShowFeedback(false)
+  }
+
+  function handleCancel() {
+    // User dismisses the plan entirely — reset to idle without re-running
+    setAgentPlan(null)
+    setAgentStep('idle')
+    addAuditEntry({
+      method: 'agent/cancelPlan',
+      params: { planId: plan.id },
+    })
   }
 
   return (
@@ -48,18 +62,27 @@ export function PlanApproval({ plan }: PlanApprovalProps) {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        <Card className="w-[400px] border-border bg-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-card-foreground">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
-                <MessageSquare className="h-4 w-4 text-primary-foreground" />
-              </div>
-              Plan Approval Required
-            </CardTitle>
+        <Card className="w-[420px] border-border bg-card">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+                  <MessageSquare className="h-4 w-4 text-primary-foreground" />
+                </div>
+                Plan Approval Required
+              </CardTitle>
+              <button
+                onClick={handleCancel}
+                className="rounded p-1 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
             <CardDescription>
-              The AI has analyzed your input and proposes the following changes:
+              The AI has proposed the following design changes. Review and approve or give feedback.
             </CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-4">
             <div className="rounded-lg bg-muted p-4 text-sm">
               <p className="font-medium text-foreground">{plan.description}</p>
@@ -72,25 +95,32 @@ export function PlanApproval({ plan }: PlanApprovalProps) {
                   <span className="font-medium text-foreground">Color Accent:</span>{' '}
                   <span className="inline-flex items-center gap-2">
                     {plan.colorProposal}
-                    <span
-                      className="inline-block h-4 w-4 rounded-full border border-border"
-                      style={{ backgroundColor: '#22c55e' }}
-                    />
+                    {/#[0-9a-f]{3,6}/i.test(plan.colorProposal) && (
+                      <span
+                        className="inline-block h-4 w-4 rounded-full border border-border"
+                        style={{
+                          backgroundColor:
+                            plan.colorProposal.match(/#[0-9a-f]{3,6}/i)?.[0] ?? '#22c55e',
+                        }}
+                      />
+                    )}
                   </span>
                 </p>
               </div>
             </div>
 
+            {/* Feedback input */}
             {showFeedback && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
               >
                 <Textarea
-                  placeholder="Provide feedback for the AI..."
+                  placeholder="Describe what you'd like changed (e.g. 'Use blue instead of green, keep the split layout')..."
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   className="min-h-[80px]"
+                  autoFocus
                 />
               </motion.div>
             )}
@@ -100,14 +130,27 @@ export function PlanApproval({ plan }: PlanApprovalProps) {
                 <Check className="h-4 w-4" />
                 Approve
               </Button>
-              <Button
-                variant="outline"
-                onClick={handleReject}
-                className="flex-1 gap-2"
-              >
-                <X className="h-4 w-4" />
-                {showFeedback ? 'Submit Feedback' : 'Give Feedback'}
-              </Button>
+
+              {showFeedback ? (
+                <Button
+                  variant="outline"
+                  onClick={handleSubmitFeedback}
+                  disabled={!feedback.trim()}
+                  className="flex-1 gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Submit Feedback
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFeedback(true)}
+                  className="flex-1 gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Give Feedback
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
