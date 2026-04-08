@@ -1,35 +1,148 @@
-# ai-storefront-design
+# AI Storefront Design Studio
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+An AI-powered storefront design studio with real-time preview and agentic workflows. Built as a Turborepo monorepo with Yarn workspaces.
 
-## Built with v0
+---
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+## Workspace layout
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_22pgsqHio71TKvhxYzecdpcKeAdj)
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+```
+apps/
+  studio/                    Next.js app — AI orchestrator UI (port 3001)
+  web/                       Next.js app — standalone storefront renderer (port 3000)
+packages/
+  types/                     Shared TypeScript types  (@ai-storefront/types)
+  ui/                        UI primitives (@ai-storefront/ui)
+  storefront-components/     Storefront section components (@ai-storefront/storefront-components)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Prerequisites
 
-## Learn More
+- Node.js 18+
+- Yarn 1 (Classic) — this repo uses Yarn workspaces, **do not use npm or pnpm**
 
-To learn more, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+## Environment variables
 
-<a href="https://v0.app/chat/api/kiro/clone/kod88vn/ai-storefront-design" alt="Open in Kiro"><img src="https://pdgvvgmkdvyeydso.public.blob.vercel-storage.com/open%20in%20kiro.svg?sanitize=true" /></a>
+Create `apps/studio/.env.local` with your xAI key:
+
+```bash
+XAI_API_KEY=your_key_here
+```
+
+---
+
+## Getting started
+
+Install all dependencies from the repo root:
+
+```bash
+yarn install
+```
+
+### Run both apps together (recommended)
+
+```bash
+yarn dev
+```
+
+This runs `turbo dev`, starting both apps in parallel with Turbopack:
+
+| App    | URL                   |
+| ------ | --------------------- |
+| Web    | http://localhost:3000 |
+| Studio | http://localhost:3001 |
+
+### Run a single app
+
+```bash
+# Studio only
+yarn studio
+
+# Web storefront only
+yarn web
+```
+
+### Build
+
+```bash
+yarn build
+```
+
+---
+
+## App: Studio (`apps/studio`)
+
+The AI orchestrator UI. Three-pane layout: left sidebar (vision input + agent status), center canvas (live storefront preview), right sidebar (theme/layout/content panels).
+
+**Key routes:**
+
+| Route              | Purpose                                           |
+| ------------------ | ------------------------------------------------- |
+| `/`                | Studio shell                                      |
+| `/api/mcp`         | MCP tool server (analyze, compose, update config) |
+| `/api/orchestrate` | SSE stream — AI orchestrator events               |
+| `/api/skills`      | Skill manifest loader                             |
+
+**AI skills** live in `apps/studio/lib/skills/*/SKILL.md`. Each file is loaded at runtime and passed to the orchestrator.
+
+**State** is managed with Zustand in `apps/studio/lib/store.ts`.
+
+---
+
+## App: Web (`apps/web`)
+
+Standalone storefront renderer. Reads a persisted JSON config and renders the live storefront sections.
+
+**Key routes:**
+
+| Route               | Purpose                                          |
+| ------------------- | ------------------------------------------------ |
+| `/`                 | Live storefront (reads config)                   |
+| `/api/store-config` | `GET` / `PUT` persisted store config             |
+| `/api/mcp`          | MCP tool server — get/update config and metadata |
+
+**Config persistence:** `apps/web/data/store-config.json` is the source of truth for the rendered storefront. The studio calls `apps/web/api/mcp` to update it.
+
+---
+
+## Packages
+
+### `@ai-storefront/types` — `packages/types`
+
+Shared TypeScript interfaces for store config, sections, theme, and orchestrator events.
+
+### `@ai-storefront/ui` — `packages/ui`
+
+UI primitives: `Button`, `Input`, `Label`, `Textarea`.
+
+### `@ai-storefront/storefront-components` — `packages/storefront-components`
+
+Reusable storefront section components: `Navbar`, `Hero`, `ProductGrid`, `Categories`, `Footer`, `ExtraSections`, `StorefrontPreview`. Used by both `apps/web` and the preview inside `apps/studio`.
+
+---
+
+## Tech stack
+
+| Concern     | Choice                      |
+| ----------- | --------------------------- |
+| Monorepo    | Turborepo + Yarn workspaces |
+| Framework   | Next.js 16 App Router       |
+| Language    | TypeScript 5.7              |
+| Styling     | Tailwind CSS v4             |
+| Animation   | Framer Motion               |
+| Icons       | Lucide React                |
+| State       | Zustand                     |
+| AI SDK      | Vercel AI SDK v6 + xAI Grok |
+| Build speed | Turbopack (dev)             |
+
+---
+
+## Project conventions
+
+- **Components ≤ 80 lines** — split into named sub-components if larger
+- **`data-testid`** on every meaningful UI element (kebab-case)
+- **Yarn only** — never `npm install` or `pnpm`; use `yarn workspace <name> add <pkg>` to add to a specific app

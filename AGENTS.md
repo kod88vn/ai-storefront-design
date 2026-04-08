@@ -2,16 +2,16 @@
 
 ## UI Library Rules
 
-**No Radix UI primitives.** Replace every Radix component with plain HTML + Tailwind CSS.
+All interactive UI must use **plain HTML elements + Tailwind CSS**. No third-party component library primitives.
 
-| Radix component                          | Replace with                             |
-| ---------------------------------------- | ---------------------------------------- |
-| `ScrollArea`                             | `<div className="overflow-y-auto">`      |
-| `Select / SelectTrigger / SelectContent` | `<select>` native element                |
-| `Collapsible / CollapsibleContent`       | `useState` + conditional render          |
-| `Tooltip*`                               | CSS `title` attr or custom hover `<div>` |
-| `Dialog / Sheet`                         | `<div>` with fixed position overlay      |
-| `Separator`                              | `<hr>` or `border-t` class               |
+| Pattern                 | Implementation                           |
+| ----------------------- | ---------------------------------------- |
+| Scrollable area         | `<div className="overflow-y-auto">`      |
+| Select / dropdown       | `<select>` native element                |
+| Collapsible / accordion | `useState` + conditional render          |
+| Tooltip                 | CSS `title` attr or custom hover `<div>` |
+| Modal / sheet           | `<div>` with fixed position overlay      |
+| Divider                 | `<hr>` or `border-t` class               |
 
 **Allowed:**
 
@@ -19,9 +19,9 @@
 - Tailwind CSS classes
 - Framer Motion (`motion.*`, `AnimatePresence`)
 - Lucide icons
-- `@/components/ui/button.tsx` (thin wrapper, no Radix)
-- `@/components/ui/input.tsx` (thin wrapper, no Radix)
-- `@/components/ui/label.tsx` (thin wrapper, no Radix)
+- `@/components/ui/button.tsx` (thin Tailwind wrapper)
+- `@/components/ui/input.tsx` (thin Tailwind wrapper)
+- `@/components/ui/label.tsx` (thin Tailwind wrapper)
 
 ## Component Size Rule
 
@@ -67,7 +67,7 @@ Every meaningful UI element **must** have a `data-testid` attribute using descri
 </div>
 ```
 
-## Collapsible Panel Pattern (no Radix)
+## Collapsible Panel Pattern
 
 ```tsx
 function Panel({ title, icon: Icon, testId, children }: PanelProps) {
@@ -97,7 +97,7 @@ function Panel({ title, icon: Icon, testId, children }: PanelProps) {
 }
 ```
 
-## Select Pattern (no Radix)
+## Select Pattern
 
 ```tsx
 <select
@@ -113,11 +113,31 @@ function Panel({ title, icon: Icon, testId, children }: PanelProps) {
 
 ## Project Stack
 
+- **Package manager**: Yarn 1 (Classic) — always use `yarn`, never `npm` or `pnpm`
+- **Monorepo**: Turborepo with Yarn workspaces (`apps/*`, `packages/*`)
 - **Framework**: Next.js 16 App Router, TypeScript
 - **Styling**: Tailwind CSS (no inline styles unless dynamic values like colors)
 - **State**: Zustand (`@/lib/store.ts`)
 - **AI**: Vercel AI SDK v6 (`ai@6.0.152`), xAI Grok (`@ai-sdk/xai`)
 - **Architecture**: MCP server at `/api/mcp`, orchestrator at `lib/design-studio/orchestrator.ts`, SSE at `/api/orchestrate`
+
+## Package Manager Rules
+
+- Use `yarn` for all installs: `yarn add <pkg>`, `yarn add -D <pkg>`
+- Use `yarn workspace <name> add <pkg>` to install into a specific workspace
+- Use `yarn workspaces run build` or `turbo build` to build all packages
+- Never commit `pnpm-lock.yaml` or `package-lock.json`
+- Lock file is `yarn.lock` at the repo root
+
+## Workspace Layout
+
+```
+apps/studio/            Next.js Studio app (AI orchestrator UI)
+apps/web/               Next.js Web app (standalone storefront)
+packages/types/         Shared TypeScript types (@ai-storefront/types)
+packages/ui/            Base UI primitives (@ai-storefront/ui)
+packages/storefront-components/  Storefront section components
+```
 
 ## File Locations
 

@@ -7,6 +7,7 @@ import type {
   OrchestratorEvent,
   PlanFeedback,
   AppliedSummary,
+  StorefrontConfig,
   ThemeConfig,
   HeroConfig,
 } from "@/lib/types";
@@ -16,6 +17,9 @@ import type {
  * It opens an SSE stream to /api/orchestrate and routes events to the store.
  */
 export function useOrchestrator() {
+  // Snapshot of config taken at run start — used for before/after ValueChange
+  const beforeConfig = useRef<StorefrontConfig | null>(null);
+
   // Accumulate config changes across the run so we can build a summary
   const accTheme = useRef<Partial<ThemeConfig>>({});
   const accHero = useRef<Partial<HeroConfig>>({});
@@ -24,6 +28,7 @@ export function useOrchestrator() {
   const accPlanDescription = useRef<string | null>(null);
 
   function resetAccumulators() {
+    beforeConfig.current = null;
     accTheme.current = {};
     accHero.current = {};
     accGridCols.current = null;
@@ -87,23 +92,111 @@ export function useOrchestrator() {
             s.reorderSections(reordered);
           }
         }
+        if (u.enableSections) {
+          for (const type of u.enableSections) s.enableSection(type);
+        }
+        if (u.disableSections) {
+          for (const type of u.disableSections) s.disableSection(type);
+        }
+        if (u.sectionData) {
+          s.updateSectionData(u.sectionData);
+        }
         break;
       }
 
       case "complete": {
+        const before = beforeConfig.current;
+        const afterState = useStudioStore.getState();
+
+        // Build theme ValueChange — only include fields that actually changed
+        let themeChange: AppliedSummary["theme"] = null;
+        if (before && Object.keys(accTheme.current).length > 0) {
+          themeChange = {};
+          if (accTheme.current.primaryColor !== undefined) {
+            themeChange.primaryColor = {
+              before: before.theme.primaryColor,
+              after: accTheme.current.primaryColor,
+            };
+          }
+          if (accTheme.current.secondaryColor !== undefined) {
+            themeChange.secondaryColor = {
+              before: before.theme.secondaryColor,
+              after: accTheme.current.secondaryColor,
+            };
+          }
+          if (accTheme.current.borderRadius !== undefined) {
+            themeChange.borderRadius = {
+              before: before.theme.borderRadius,
+              after: accTheme.current.borderRadius,
+            };
+          }
+          if (Object.keys(themeChange).length === 0) themeChange = null;
+        }
+
+        // Build hero ValueChange
+        let heroChange: AppliedSummary["hero"] = null;
+        if (before && Object.keys(accHero.current).length > 0) {
+          heroChange = {};
+          if (accHero.current.layout !== undefined) {
+            heroChange.layout = {
+              before: before.hero.layout,
+              after: accHero.current.layout,
+            };
+          }
+          if (accHero.current.title !== undefined) {
+            heroChange.title = {
+              before: before.hero.title,
+              after: accHero.current.title,
+            };
+          }
+          if (accHero.current.subtitle !== undefined) {
+            heroChange.subtitle = {
+              before: before.hero.subtitle,
+              after: accHero.current.subtitle,
+            };
+          }
+          if (Object.keys(heroChange).length === 0) heroChange = null;
+        }
+
         const summary: AppliedSummary = {
-          sourceUrl: useStudioStore.getState().visionUrl || null,
+          sourceUrl: afterState.visionUrl || null,
           planDescription: accPlanDescription.current,
-          themeChanges:
-            Object.keys(accTheme.current).length > 0
-              ? { ...accTheme.current }
+          theme: themeChange,
+          hero: heroChange,
+          productGridColumns:
+            accGridCols.current !== null && before
+              ? {
+                  before: before.productGrid.columns,
+                  after: accGridCols.current,
+                }
               : null,
-          heroChanges:
-            Object.keys(accHero.current).length > 0
-              ? { ...accHero.current }
+          sectionOrder:
+            accSectionOrder.current !== null && before
+              ? {
+                  before: before.sections
+                    .sort((a, b) => a.order - b.order)
+                    .map((s) => s.id),
+                  after: accSectionOrder.current,
+                }
               : null,
-          productGridColumns: accGridCols.current,
-          sectionOrder: accSectionOrder.current,
+          sectionsEnabled: before
+            ? (() => {
+                const beforeEnabled = before.sections
+                  .filter((s) => s.enabled)
+                  .map((s) => s.id)
+                  .sort();
+                const afterEnabled = afterState.config.sections
+                  .filter((s) => s.enabled)
+                  .map((s) => s.id)
+                  .sort();
+                const changed =
+                  JSON.stringify(beforeEnabled) !==
+                  JSON.stringify(afterEnabled);
+                return changed
+                  ? { before: beforeEnabled, after: afterEnabled }
+                  : null;
+              })()
+            : null,
         };
         useStudioStore.getState().setAppliedSummary(summary);
         useStudioStore.getState().setAgentStep("complete");
@@ -128,6 +221,10 @@ export function useOrchestrator() {
   const startOrchestrator = useCallback(
     async (goal: string, context: OrchestratorContext) => {
       const s = useStudioStore.getState();
+      // Snapshot config BEFORE any changes for ValueChange comparison
+      beforeConfig.current = JSON.parse(
+        JSON.stringify(s.config),
+      ) as StorefrontConfig;
       s.setOrchestratorGoal(goal);
       s.setOrchestratorContext(context);
       s.setAgentStep("thinking");

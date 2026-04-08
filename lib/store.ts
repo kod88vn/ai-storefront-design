@@ -3,6 +3,8 @@
 import { create } from "zustand";
 import type {
   StorefrontConfig,
+  StorefrontSectionData,
+  SectionType,
   AgentStep,
   AgentPlan,
   AuditLogEntry,
@@ -35,6 +37,9 @@ interface StudioState {
   // Layout Sections
   reorderSections: (sections: LayoutSection[]) => void;
   toggleSection: (sectionId: string) => void;
+  enableSection: (type: SectionType) => void;
+  disableSection: (type: SectionType) => void;
+  updateSectionData: (data: Partial<StorefrontSectionData>) => void;
 
   // Agent State
   agentStep: AgentStep;
@@ -93,6 +98,7 @@ const defaultConfig: StorefrontConfig = {
   productGrid: {
     columns: 3,
   },
+  sectionData: {},
 };
 
 export const useStudioStore = create<StudioState>((set, get) => ({
@@ -186,6 +192,61 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     get().addAuditEntry({
       method: "layout/toggleSection",
       params: { sectionId },
+    });
+  },
+
+  enableSection: (type) => {
+    set((state) => {
+      const exists = state.config.sections.find((s) => s.id === type);
+      if (exists) {
+        return {
+          config: {
+            ...state.config,
+            sections: state.config.sections.map((s) =>
+              s.id === type ? { ...s, enabled: true } : s,
+            ),
+          },
+        };
+      }
+      const maxOrder = Math.max(
+        ...state.config.sections.map((s) => s.order),
+        -1,
+      );
+      return {
+        config: {
+          ...state.config,
+          sections: [
+            ...state.config.sections,
+            { id: type, type, enabled: true, order: maxOrder + 1 },
+          ],
+        },
+      };
+    });
+    get().addAuditEntry({ method: "layout/enableSection", params: { type } });
+  },
+
+  disableSection: (type) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        sections: state.config.sections.map((s) =>
+          s.id === type ? { ...s, enabled: false } : s,
+        ),
+      },
+    }));
+    get().addAuditEntry({ method: "layout/disableSection", params: { type } });
+  },
+
+  updateSectionData: (data) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        sectionData: { ...state.config.sectionData, ...data },
+      },
+    }));
+    get().addAuditEntry({
+      method: "sectionData/update",
+      params: { keys: Object.keys(data) },
     });
   },
 

@@ -2,11 +2,9 @@
 
 import { motion } from 'framer-motion'
 import { Monitor, Tablet, Smartphone } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { useStudioStore } from '@/lib/store'
 import { viewportWidths, type Viewport } from '@/lib/types'
 import { StorefrontPreview } from '../storefront/storefront-preview'
-import { PlanApproval } from './plan-approval'
 
 const viewportButtons: { viewport: Viewport; icon: React.ReactNode; label: string }[] = [
   { viewport: 'desktop', icon: <Monitor className="h-4 w-4" />, label: 'Desktop' },
@@ -15,7 +13,7 @@ const viewportButtons: { viewport: Viewport; icon: React.ReactNode; label: strin
 ]
 
 export function CenterCanvas() {
-  const { viewport, setViewport, agentStep, agentPlan } = useStudioStore()
+  const { viewport, setViewport } = useStudioStore()
   const width = viewportWidths[viewport]
 
   return (
@@ -23,19 +21,21 @@ export function CenterCanvas() {
       {/* Viewport Switcher Header */}
       <div className="flex items-center justify-center gap-2 border-b border-border bg-background px-4 py-3">
         {viewportButtons.map(({ viewport: vp, icon, label }) => (
-          <Button
+          <button
             key={vp}
-            variant={viewport === vp ? 'default' : 'ghost'}
-            size="sm"
             onClick={() => setViewport(vp)}
-            className="gap-2"
+            data-testid={`viewport-${vp}`}
+            className={`flex h-8 items-center gap-2 rounded-md px-3 text-sm transition-colors ${viewport === vp
+                ? 'bg-primary text-primary-foreground'
+                : 'text-foreground hover:bg-muted'
+              }`}
           >
             {icon}
             <span className="hidden sm:inline">{label}</span>
             <span className="text-xs text-muted-foreground">
               {viewportWidths[vp]}px
             </span>
-          </Button>
+          </button>
         ))}
       </div>
 
@@ -45,16 +45,11 @@ export function CenterCanvas() {
           className="relative origin-top overflow-hidden rounded-lg border border-border bg-background shadow-2xl"
           animate={{ width }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          style={{ 
+          style={{
             minHeight: '80vh',
             maxWidth: '100%',
           }}
         >
-          {/* Plan Approval Overlay */}
-          {agentStep === 'awaiting-approval' && agentPlan && (
-            <PlanApproval plan={agentPlan} />
-          )}
-          
           {/* Storefront Preview */}
           <StorefrontPreview />
         </motion.div>

@@ -1,0 +1,16 @@
+{
+  "name": "@ai-storefront/storefront-components",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@ai-storefront/types": "*",
+    "lucide-react": "^0.564.0"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  }
+}

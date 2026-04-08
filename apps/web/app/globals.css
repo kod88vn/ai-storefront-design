@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@source "../../../packages/storefront-components/src";
+@source "../../../packages/types/src";
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-neutral-200;
+  }
+
+  body {
+    @apply bg-white text-neutral-900 antialiased;
+  }
+}

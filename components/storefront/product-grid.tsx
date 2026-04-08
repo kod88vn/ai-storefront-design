@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { fetchProducts } from '@/lib/mock-db'
 import type { Product, ThemeConfig } from '@/lib/types'
-import { Skeleton } from '@/components/ui/skeleton'
 
 interface StorefrontProductGridProps {
   columns: 2 | 3 | 4
@@ -40,11 +39,11 @@ export function StorefrontProductGrid({ columns, theme }: StorefrontProductGridP
         <div className={`grid gap-6 ${gridCols[columns]}`}>
           {loading
             ? Array.from({ length: 8 }).map((_, i) => (
-                <ProductSkeleton key={i} />
-              ))
+              <ProductSkeleton key={i} />
+            ))
             : products.map((product) => (
-                <ProductCard key={product.id} product={product} theme={theme} />
-              ))}
+              <ProductCard key={product.id} product={product} theme={theme} />
+            ))}
         </div>
       </div>
     </section>
@@ -86,10 +85,10 @@ function ProductCard({ product, theme }: { product: Product; theme: ThemeConfig 
 function ProductSkeleton() {
   return (
     <div>
-      <Skeleton className="aspect-square w-full" />
+      <div className="aspect-square w-full animate-pulse rounded-md bg-neutral-200" />
       <div className="mt-4 space-y-2">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-4 w-1/4" />
+        <div className="h-4 w-3/4 animate-pulse rounded bg-neutral-200" />
+        <div className="h-4 w-1/4 animate-pulse rounded bg-neutral-200" />
       </div>
     </div>
   )
