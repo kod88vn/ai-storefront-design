@@ -149,9 +149,8 @@ function LayoutPanel() {
           onDragOver={(e) => handleDragOver(e, section.id)}
           onDragEnd={() => setDraggedId(null)}
           data-testid={`section-row-${section.id}`}
-          className={`flex cursor-move items-center gap-2 rounded-lg border bg-card px-3 py-2 transition-opacity ${
-            draggedId === section.id || !section.enabled ? 'opacity-50' : ''
-          }`}
+          className={`flex cursor-move items-center gap-2 rounded-lg border bg-card px-3 py-2 transition-opacity ${draggedId === section.id || !section.enabled ? 'opacity-50' : ''
+            }`}
         >
           <GripVertical className="h-4 w-4 text-muted-foreground" />
           <span className="flex-1 text-sm capitalize">

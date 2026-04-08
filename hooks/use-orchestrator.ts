@@ -94,8 +94,14 @@ export function useOrchestrator() {
         const summary: AppliedSummary = {
           sourceUrl: useStudioStore.getState().visionUrl || null,
           planDescription: accPlanDescription.current,
-          themeChanges: Object.keys(accTheme.current).length > 0 ? { ...accTheme.current } : null,
-          heroChanges: Object.keys(accHero.current).length > 0 ? { ...accHero.current } : null,
+          themeChanges:
+            Object.keys(accTheme.current).length > 0
+              ? { ...accTheme.current }
+              : null,
+          heroChanges:
+            Object.keys(accHero.current).length > 0
+              ? { ...accHero.current }
+              : null,
           productGridColumns: accGridCols.current,
           sectionOrder: accSectionOrder.current,
         };
