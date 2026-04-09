@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { useStudioStore } from '@/lib/store'
 import { useOrchestrator } from '@/hooks/use-orchestrator'
-import type { AgentStep, AppliedSummary, AgentPlan } from '@ai-storefront/types'
+import type { AgentStep, AppliedSummary, AgentPlan, PlanChange } from '@ai-storefront/types'
 
 // ─── Static metadata (display only) ──────────────────────────────────────────
 
@@ -29,25 +29,56 @@ const EXECUTION_STEPS: { step: AgentStep; label: string }[] = [
   { step: 'complete', label: 'Complete!' },
 ]
 
+// ─── Derive changes from plan fields when plannedChanges not provided ─────────
+
+function getChanges(plan: AgentPlan): PlanChange[] {
+  if (plan.plannedChanges?.length) return plan.plannedChanges
+  const changes: PlanChange[] = []
+  if (plan.colorProposal) {
+    changes.push({ id: 'color', category: 'theme', label: 'Color & Theme', description: plan.colorProposal })
+  }
+  if (plan.layoutProposal) {
+    changes.push({ id: 'layout', category: 'layout', label: 'Layout & Structure', description: plan.layoutProposal })
+  }
+  return changes
+}
+
 // ─── Inline plan approval ──────────────────────────────────────────────────────────────
 
 function InlinePlanApproval({ plan }: { plan: AgentPlan }) {
-  const [showFeedback, setShowFeedback] = useState(false)
-  const [feedback, setFeedback] = useState('')
+  const changes = getChanges(plan)
+  const [checked, setChecked] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(changes.map((c) => [c.id, true]))
+  )
+  const [suggestion, setSuggestion] = useState('')
   const { setAgentStep, setAgentPlan, addAuditEntry } = useStudioStore()
   const { resumeWithFeedback } = useOrchestrator()
 
-  function handleApprove() {
-    addAuditEntry({ method: 'agent/approvePlan', params: { planId: plan.id }, result: { approved: true } })
-    resumeWithFeedback({ approved: true })
+  function toggleChange(id: string) {
+    setChecked((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
-  function handleSubmitFeedback() {
-    if (!feedback.trim()) return
-    addAuditEntry({ method: 'agent/rejectPlan', params: { planId: plan.id, feedback }, result: { approved: false } })
-    resumeWithFeedback({ approved: false, modifications: feedback.trim() })
-    setFeedback('')
-    setShowFeedback(false)
+  function handleApply() {
+    const rejectedChanges = changes.filter((c) => !checked[c.id])
+    const allApproved = rejectedChanges.length === 0 && !suggestion.trim()
+
+    if (allApproved) {
+      addAuditEntry({ method: 'agent/approvePlan', params: { planId: plan.id }, result: { approved: true } })
+      resumeWithFeedback({ approved: true })
+      return
+    }
+
+    const parts: string[] = []
+    const approvedLabels = changes.filter((c) => checked[c.id]).map((c) => c.label)
+    const rejectedLabels = rejectedChanges.map((c) => c.label)
+    if (approvedLabels.length) parts.push(`Approved: ${approvedLabels.join(', ')}.`)
+    if (rejectedLabels.length) parts.push(`Rejected: ${rejectedLabels.join(', ')}.`)
+    if (suggestion.trim()) parts.push(`Also please: ${suggestion.trim()}`)
+    const modifications = parts.join(' ')
+
+    addAuditEntry({ method: 'agent/revisePlan', params: { planId: plan.id, modifications }, result: { approved: false } })
+    resumeWithFeedback({ approved: false, modifications, userSuggestion: suggestion.trim() || undefined })
+    setSuggestion('')
   }
 
   function handleCancel() {
@@ -56,6 +87,9 @@ function InlinePlanApproval({ plan }: { plan: AgentPlan }) {
     addAuditEntry({ method: 'agent/cancelPlan', params: { planId: plan.id } })
   }
 
+  const allSelected = changes.every((c) => checked[c.id])
+  const canApprove = changes.length > 0
+
   return (
     <div data-testid="inline-plan-approval" className="space-y-3 rounded-lg border border-border bg-muted/40 p-3">
       <div className="flex items-start justify-between">
@@ -63,56 +97,71 @@ function InlinePlanApproval({ plan }: { plan: AgentPlan }) {
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary">
             <MessageSquare className="h-3 w-3 text-primary-foreground" />
           </div>
-          <span className="text-xs font-semibold text-foreground">Plan Approval</span>
+          <span className="text-xs font-semibold text-foreground">Review Proposed Changes</span>
         </div>
         <button onClick={handleCancel} data-testid="plan-cancel-button" className="rounded p-0.5 text-muted-foreground hover:text-foreground">
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      <div className="rounded-md bg-background p-3 text-xs">
-        <p className="font-medium text-foreground">{plan.description}</p>
-        <p className="mt-2 text-muted-foreground"><span className="font-medium text-foreground">Layout:</span> {plan.layoutProposal}</p>
-        <p className="mt-1 text-muted-foreground"><span className="font-medium text-foreground">Color:</span> {plan.colorProposal}</p>
-      </div>
+      <p className="text-xs text-muted-foreground">{plan.description}</p>
 
-      {showFeedback && (
-        <textarea
-          data-testid="plan-feedback-input"
-          placeholder="Describe changes (e.g. 'Use blue instead of green')..."
-          value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
-          autoFocus
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none min-h-[72px]"
-        />
+      {changes.length > 0 && (
+        <div data-testid="plan-changes-list" className="space-y-1.5">
+          {changes.map((change) => (
+            <label
+              key={change.id}
+              data-testid={`plan-change-${change.id}`}
+              className="flex cursor-pointer items-start gap-2.5 rounded-md border border-border bg-background p-2.5 hover:bg-muted/50"
+            >
+              <input
+                type="checkbox"
+                checked={!!checked[change.id]}
+                onChange={() => toggleChange(change.id)}
+                className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-primary"
+                data-testid={`plan-change-checkbox-${change.id}`}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-foreground">{change.label}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{change.description}</p>
+              </div>
+            </label>
+          ))}
+        </div>
       )}
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">Add your own idea (optional)</label>
+        <textarea
+          data-testid="plan-suggestion-input"
+          placeholder="e.g. 'Use a warmer color palette' or 'Move newsletter above footer'..."
+          value={suggestion}
+          onChange={(e) => setSuggestion(e.target.value)}
+          className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          rows={2}
+        />
+      </div>
 
       <div className="flex gap-2">
         <button
-          data-testid="plan-approve-button"
-          onClick={handleApprove}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+          data-testid="plan-apply-button"
+          onClick={handleApply}
+          disabled={!canApprove}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
-          <Check className="h-3.5 w-3.5" /> Approve
+          {allSelected && !suggestion.trim() ? (
+            <><Check className="h-3.5 w-3.5" /> Approve All</>
+          ) : (
+            <><ArrowRight className="h-3.5 w-3.5" /> Apply Selected</>
+          )}
         </button>
-        {showFeedback ? (
-          <button
-            data-testid="plan-submit-feedback-button"
-            onClick={handleSubmitFeedback}
-            disabled={!feedback.trim()}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
-          >
-            <MessageSquare className="h-3.5 w-3.5" /> Submit
-          </button>
-        ) : (
-          <button
-            data-testid="plan-feedback-button"
-            onClick={() => setShowFeedback(true)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-muted"
-          >
-            <MessageSquare className="h-3.5 w-3.5" /> Revise
-          </button>
-        )}
+        <button
+          data-testid="plan-cancel-all-button"
+          onClick={handleCancel}
+          className="flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-muted"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   )

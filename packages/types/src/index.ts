@@ -172,12 +172,20 @@ export type AgentStep =
   | "awaiting-approval"
   | "complete";
 
+export interface PlanChange {
+  id: string;
+  category: "theme" | "hero" | "layout" | "sections" | "content";
+  label: string;
+  description: string;
+}
+
 export interface AgentPlan {
   id: string;
   description: string;
   layoutProposal: string;
   colorProposal: string;
   approved: boolean | null;
+  plannedChanges?: PlanChange[];
 }
 
 export interface AuditLogEntry {
@@ -206,6 +214,7 @@ export const viewportWidths: Record<Viewport, number> = {
 export interface PlanFeedback {
   approved: boolean;
   modifications?: string;
+  userSuggestion?: string;
   previousPlan?: {
     description: string;
     layoutProposal: string;

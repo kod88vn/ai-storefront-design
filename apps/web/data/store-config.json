@@ -1,124 +1,43 @@
 {
   "theme": {
     "primaryColor": "#1a1a1a",
-    "secondaryColor": "#22c55e",
+    "secondaryColor": "#DAA520",
     "borderRadius": "md"
   },
   "sections": [
     {
-      "id": "announcement-bar",
-      "type": "announcement-bar",
+      "id": "hero",
+      "type": "hero",
       "enabled": true,
       "order": 0
-    },
-    { "id": "hero", "type": "hero", "enabled": true, "order": 1 },
-    {
-      "id": "benefits-bar",
-      "type": "benefits-bar",
-      "enabled": true,
-      "order": 2
-    },
-    {
-      "id": "featured-collection",
-      "type": "featured-collection",
-      "enabled": true,
-      "order": 3
     },
     {
       "id": "product-grid",
       "type": "product-grid",
       "enabled": true,
-      "order": 4
+      "order": 1
     },
-    { "id": "categories", "type": "categories", "enabled": true, "order": 5 },
     {
-      "id": "testimonials",
-      "type": "testimonials",
+      "id": "categories",
+      "type": "categories",
       "enabled": true,
-      "order": 6
+      "order": 2
     },
-    { "id": "newsletter", "type": "newsletter", "enabled": true, "order": 7 },
-    { "id": "brand-strip", "type": "brand-strip", "enabled": true, "order": 8 },
     {
-      "id": "trust-badges",
-      "type": "trust-badges",
+      "id": "footer",
+      "type": "footer",
       "enabled": true,
-      "order": 9
-    },
-    { "id": "footer", "type": "footer", "enabled": true, "order": 10 }
+      "order": 3
+    }
   ],
   "hero": {
-    "layout": "centered",
-    "title": "Curated Home Essentials",
-    "subtitle": "Discover timeless pieces for modern living",
+    "layout": "minimal",
+    "title": "Curated Audio Excellence",
+    "subtitle": "Experience premium sound design",
     "ctaText": "Shop Collection"
   },
   "productGrid": {
-    "columns": 3,
-    "showRatings": true,
-    "showBadges": true
+    "columns": 3
   },
-  "sectionData": {
-    "announcement-bar": {
-      "text": "Free shipping over $100",
-      "backgroundColor": "#1a1a1a",
-      "textColor": "#ffffff"
-    },
-    "benefits-bar": {
-      "items": [
-        { "icon": "truck", "label": "Fast Shipping" },
-        { "icon": "shield", "label": "Secure Checkout" },
-        { "icon": "refresh", "label": "30-day Returns" },
-        { "icon": "award", "label": "Premium Quality" }
-      ]
-    },
-    "featured-collection": {
-      "heading": "Featured Collection",
-      "subheading": "Hand-picked for this season",
-      "layout": "grid"
-    },
-    "testimonials": {
-      "heading": "What Customers Say",
-      "layout": "grid",
-      "items": [
-        {
-          "quote": "Beautiful quality and fast delivery.",
-          "author": "A. Rivera",
-          "rating": 5
-        },
-        {
-          "quote": "Exactly as pictured. Love it.",
-          "author": "M. Chen",
-          "rating": 5
-        },
-        {
-          "quote": "Design-forward and practical.",
-          "author": "S. Patel",
-          "rating": 4
-        }
-      ]
-    },
-    "newsletter": {
-      "heading": "Stay in the Loop",
-      "subtext": "Get updates on launches and exclusive offers",
-      "buttonText": "Subscribe",
-      "backgroundColor": "#f5f5f5"
-    },
-    "trust-badges": {
-      "items": [
-        { "icon": "lock", "label": "Secure Payments" },
-        { "icon": "truck", "label": "Tracked Shipping" },
-        { "icon": "phone", "label": "Support 24/7" },
-        { "icon": "refresh", "label": "Easy Returns" }
-      ]
-    },
-    "brand-strip": {
-      "brands": [
-        { "name": "Northline" },
-        { "name": "Atelier" },
-        { "name": "Maison" },
-        { "name": "Verde" }
-      ]
-    }
-  }
+  "sectionData": {}
 }

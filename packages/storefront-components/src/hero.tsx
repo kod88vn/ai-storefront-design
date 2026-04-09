@@ -60,9 +60,9 @@ export function StorefrontHero({ config, theme }: HeroProps) {
     // Split layout (default)
     return (
         <section data-testid="storefront-hero" className="bg-white">
-            <div className="mx-auto grid max-w-7xl lg:grid-cols-2">
-                <div className="flex flex-col justify-center px-4 py-16 sm:px-6 lg:py-24">
-                    <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl" style={{ color: theme.primaryColor }}>{title}</h1>
+            <div className="mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-2">
+                <div className="flex flex-col justify-center px-4 py-12 sm:px-6 lg:py-24">
+                    <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl" style={{ color: theme.primaryColor }}>{title}</h1>
                     <p className="mt-6 text-lg text-neutral-600">{subtitle}</p>
                     <div className="mt-8">
                         <button className="px-8 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ backgroundColor: theme.secondaryColor, borderRadius: 'var(--storefront-radius)' }}>
@@ -70,7 +70,7 @@ export function StorefrontHero({ config, theme }: HeroProps) {
                         </button>
                     </div>
                 </div>
-                <div className="relative aspect-square lg:aspect-auto">
+                <div className="aspect-video lg:aspect-auto">
                     <img
                         src={config.backgroundImage || 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=800&h=800&fit=crop'}
                         alt="Hero"

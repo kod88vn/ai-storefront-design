@@ -67,18 +67,18 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
             const data = sectionData.newsletter
             if (!data) return null
             return (
-                <section data-testid="newsletter" className="px-4 py-12 text-center sm:px-6" style={{ backgroundColor: data.backgroundColor || '#f5f5f5' }}>
-                    <div className="mx-auto max-w-7xl">
+                <section data-testid="newsletter" className="px-4 py-12 sm:px-6" style={{ backgroundColor: data.backgroundColor || '#f5f5f5' }}>
+                    <div className="mx-auto max-w-xl text-center">
                         <h2 className="text-2xl font-semibold" style={{ color: theme.primaryColor }}>{data.heading}</h2>
                         <p className="mt-2 text-sm text-neutral-600">{data.subtext}</p>
-                        <div className="mt-6 flex justify-center">
+                        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
                             <input
                                 type="email"
-                                placeholder={data.placeholder || "Enter your email"}
-                                className="rounded-l-md border border-r-0 border-neutral-300 px-4 py-2 focus:border-neutral-500 focus:outline-none"
+                                placeholder={data.placeholder || 'Enter your email'}
+                                className="w-full rounded-md border border-neutral-300 px-4 py-2.5 text-sm focus:border-neutral-500 focus:outline-none sm:w-64"
                             />
                             <button
-                                className="rounded-r-md border border-l-0 border-neutral-300 bg-neutral-900 px-6 py-2 text-white hover:bg-neutral-800"
+                                className="rounded-md px-6 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
                                 style={{ backgroundColor: theme.primaryColor }}
                             >
                                 {data.buttonText}

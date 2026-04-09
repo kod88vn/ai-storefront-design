@@ -9,6 +9,8 @@ import {
   Eye,
   EyeOff,
   ChevronDown,
+  Save,
+  Check,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -233,6 +235,24 @@ function ContentPanel() {
 // ── Root ──────────────────────────────────────────────────────────────────────
 
 export function RightSidebar() {
+  const { config } = useStudioStore()
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
+
+  async function handleSave() {
+    setSaveState('saving')
+    try {
+      await fetch('/api/store-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config }),
+      })
+      setSaveState('saved')
+      setTimeout(() => setSaveState('idle'), 2000)
+    } catch {
+      setSaveState('idle')
+    }
+  }
+
   return (
     <div
       data-testid="right-sidebar"
@@ -250,6 +270,21 @@ export function RightSidebar() {
         <ThemePanel />
         <LayoutPanel />
         <ContentPanel />
+      </div>
+
+      <div data-testid="right-sidebar-footer" className="shrink-0 border-t border-border p-3">
+        <button
+          data-testid="save-config-button"
+          onClick={handleSave}
+          disabled={saveState === 'saving'}
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+        >
+          {saveState === 'saved' ? (
+            <><Check className="h-4 w-4" /> Saved!</>
+          ) : (
+            <><Save className="h-4 w-4" /> {saveState === 'saving' ? 'Saving…' : 'Save to Web'}</>
+          )}
+        </button>
       </div>
     </div>
   )

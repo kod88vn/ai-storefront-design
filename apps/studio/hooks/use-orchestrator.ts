@@ -202,6 +202,15 @@ export function useOrchestrator() {
         useStudioStore.getState().setAgentStep("complete");
         useStudioStore.getState().setAgentPlan(null);
         resetAccumulators();
+
+        // Persist the final config to the web app's data store
+        fetch("/api/store-config", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ config: afterState.config }),
+        }).catch(() => {
+          // Non-blocking — failure to persist should not break the studio
+        });
         break;
       }
 
