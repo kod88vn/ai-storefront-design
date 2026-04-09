@@ -1,0 +1,64 @@
+'use client'
+
+import { useState } from 'react'
+import { Layers, ChevronDown, Plus } from 'lucide-react'
+import { useStudioStore } from '@/lib/store'
+import { ContainerNode } from './container-node'
+import type { ComponentItem } from '@/lib/types'
+
+function collectUsedTypes(comps: ComponentItem[], set: Set<string>) {
+    for (const comp of comps) {
+        if (comp.kind === 'prebuilt') set.add(comp.sectionType)
+        if (comp.kind === 'container') collectUsedTypes(comp.components, set)
+    }
+}
+
+export function ContainersPanel() {
+    const {
+        containers, addContainer, addComponentToContainer, removeContainer,
+        updateContainerLabel, updateContainerLayoutMode, updateContainerFlexConfig,
+        updateContainerGridConfig, removeComponentFromContainer, updateComponentInContainer,
+    } = useStudioStore()
+    const [open, setOpen] = useState(false)
+
+    const usedTypes = new Set<string>()
+    for (const c of containers) collectUsedTypes(c.components, usedTypes)
+
+    return (
+        <div data-testid="containers-panel">
+            <button onClick={() => setOpen((o) => !o)} data-testid="containers-panel-toggle" className="flex w-full items-center justify-between border-b border-border px-3 py-2 text-xs font-semibold hover:bg-muted/50">
+                <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5" />Containers</span>
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+            </button>
+            {open && (
+                <>
+                    <div className="flex justify-end border-b border-border px-3 py-1.5">
+                        <button onClick={addContainer} className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/20" data-testid="add-container-button">
+                            <Plus className="h-3 w-3" />Add Container
+                        </button>
+                    </div>
+                    <div data-testid="containers-list">
+                        {containers.map((c) => (
+                            <ContainerNode
+                                key={c.id}
+                                id={c.id} label={c.label} layoutMode={c.layoutMode}
+                                flexConfig={c.flexConfig} gridConfig={c.gridConfig} components={c.components}
+                                usedTypes={usedTypes} depth={0}
+                                cbs={{
+                                    onLabelSave: (l) => updateContainerLabel(c.id, l),
+                                    onMode: (m) => updateContainerLayoutMode(c.id, m),
+                                    onFlex: (p) => updateContainerFlexConfig(c.id, p),
+                                    onGrid: (p) => updateContainerGridConfig(c.id, p),
+                                    onAdd: (comp) => addComponentToContainer(c.id, comp),
+                                    onRemoveChild: (compId) => removeComponentFromContainer(c.id, compId),
+                                    onPatchChild: (compId, patch) => updateComponentInContainer(c.id, compId, patch),
+                                    onRemoveSelf: () => removeContainer(c.id),
+                                }}
+                            />
+                        ))}
+                    </div>
+                </>
+            )}
+        </div>
+    )
+}

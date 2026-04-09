@@ -202,12 +202,12 @@ interface PlanFeedback {
 │   Left Sidebar  │         Center Canvas          │  Right Sidebar   │
 │   (320px fixed) │         (flex-1 fluid)         │  (320px fixed)   │
 ├─────────────────┼────────────────────────────────┼──────────────────┤
-│ Vision URL input│  Viewport toolbar              │ Theme Panel ▾    │
-│ Image drop zone │  ┌──────────────────────────┐  │   (open by def.) │
-│ Skills list     │  │  StorefrontPreview       │  │ Containers ▸     │
-│ Run AI button   │  │  (scaled iframe-style)   │  │   (collapsed)    │
-│ ─────────────── │  └──────────────────────────┘  │                  │
-│ Execution trace │                                │ [Save to Web]    │
+│ Vision URL input│  Viewport toolbar              │ Theme Panel      │
+│ Image drop zone │  ┌──────────────────────────┐  │ Layout Panel     │
+│ Skills list     │  │  StorefrontPreview       │  │ Content Panel    │
+│ Run AI button   │  │  (scaled iframe-style)   │  │                  │
+│ ─────────────── │  └──────────────────────────┘  │ [Save to Web]    │
+│ Execution trace │                                │                  │
 │ HITL approval   │                                │                  │
 │ Applied summary │                                │                  │
 ├─────────────────┴────────────────────────────────┴──────────────────┤
@@ -231,13 +231,31 @@ apps/studio/
 │       └── store-config/route.ts    # GET/PUT — reads/writes apps/web/data/store-config.json
 │
 ├── components/studio/
+│   │
+│   │  ── Shell ─────────────────────────────────────────────────────
 │   ├── studio-layout.tsx            # Three-pane shell
-│   ├── left-sidebar.tsx             # Orchestrator panel + HITL approval
-│   ├── right-sidebar.tsx            # Live editor panels + Save button
-│   │                                # Theme panel (open by default); Containers panel (collapsed by default)
-│   │                                # Component editor pane slides up from bottom when a component is selected
 │   ├── center-canvas.tsx            # Viewport scaler + StorefrontPreview
-│   └── audit-trail.tsx              # Collapsible JSON-RPC log
+│   ├── audit-trail.tsx              # Collapsible JSON-RPC log
+│   │
+│   │  ── Left sidebar (orchestrator + HITL) ─────────────────────────
+│   ├── left-sidebar.tsx             # Orchestrator panel — composes sub-components below
+│   ├── vision-input.tsx             # URL input + image drag-and-drop zone
+│   ├── execution-trace.tsx          # AI step list with spinner / checkmarks
+│   ├── plan-approval.tsx            # InlinePlanApproval HITL card + ChangeItem rows
+│   ├── applied-summary.tsx          # Post-apply before→after summary panel
+│   │
+│   │  ── Right sidebar (live editor) ──────────────────────────────────
+│   ├── right-sidebar.tsx            # Shell — composes ThemePanel + ContainersPanel + Save
+│   ├── theme-panel.tsx              # Colors, border radius, nav style, color scheme, font
+│   ├── containers-panel.tsx         # Container list header + Add Container button
+│   ├── container-node.tsx           # Recursive container tree node, ComponentRow, picker
+│   ├── container-layout-config.tsx  # Stack / Flex / Grid layout picker (visual 3×3 grid)
+│   │
+│   │  ── Component editor (editor pane, slides in from bottom of right sidebar)
+│   ├── component-editor.tsx         # Main dispatch + custom-text / custom-image editors
+│   ├── prebuilt-editor.tsx          # Hero, ProductGrid, and all SectionData editors
+│   ├── wysiwyg-editor.tsx           # Rich-text toolbar + contentEditable area
+│   └── advanced-section.tsx         # Tailwind class pill manager
 │
 ├── hooks/
 │   └── use-orchestrator.ts          # SSE stream handler, resumeWithFeedback
@@ -256,6 +274,27 @@ apps/studio/
     ├── content_analyzer/SKILL.md    # Brand voice and copy analysis
     └── conversion_optimizer/SKILL.md # Conversion playbooks by brand archetype
 ```
+
+### Component size budget
+
+Every studio component is kept under ~200 lines. The refactoring split three monolithic files (613 / 488 / 410 lines) into 14 focused single-responsibility files:
+
+| File | Lines | Responsibility |
+|---|---|---|
+| `left-sidebar.tsx` | ~146 | Orchestration shell only |
+| `vision-input.tsx` | ~80 | URL + image drop zone |
+| `execution-trace.tsx` | ~50 | Step list UI |
+| `plan-approval.tsx` | ~190 | HITL approval card |
+| `applied-summary.tsx` | ~107 | Post-apply diff display |
+| `right-sidebar.tsx` | ~64 | Editor shell + Save button |
+| `theme-panel.tsx` | ~71 | Theme controls |
+| `containers-panel.tsx` | ~64 | Container list |
+| `container-node.tsx` | ~166 | Recursive tree node |
+| `container-layout-config.tsx` | ~122 | Layout mode picker |
+| `component-editor.tsx` | ~108 | Custom editor dispatch |
+| `prebuilt-editor.tsx` | ~185 | All prebuilt section editors |
+| `wysiwyg-editor.tsx` | ~60 | Rich text editor |
+| `advanced-section.tsx` | ~54 | Tailwind class manager |
 
 ### State management (Zustand)
 
