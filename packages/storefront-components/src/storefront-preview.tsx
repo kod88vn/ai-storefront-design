@@ -29,9 +29,25 @@ export function StorefrontPreview({ config }: StorefrontPreviewProps) {
         }
     }
 
+    const { theme } = config
+    const radiusVal = theme.borderRadius === 'none' ? '0px' : theme.borderRadius === 'full' ? '9999px' : '8px'
+    const fontFamilyVal = theme.fontStyle === 'editorial-serif' ? 'Georgia, "Times New Roman", serif' : theme.fontStyle === 'mono-tech' ? '"Courier New", monospace' : 'system-ui, sans-serif'
+    const baseBg = theme.colorScheme === 'dark' ? '#0a0a0a' : '#ffffff'
+    const baseText = theme.colorScheme === 'dark' ? '#f5f5f5' : '#0a0a0a'
+    const isTransparentNav = theme.navStyle === 'transparent'
+
     return (
-        <div data-testid="storefront-preview" className="min-h-screen bg-white" style={{ ['--storefront-radius' as string]: config.theme.borderRadius === 'none' ? '0px' : config.theme.borderRadius === 'full' ? '9999px' : '8px' }}>
-            <StorefrontNavbar theme={config.theme} />
+        <div
+            data-testid="storefront-preview"
+            className={`min-h-screen ${isTransparentNav ? 'relative' : ''}`}
+            style={{
+                ['--storefront-radius' as string]: radiusVal,
+                fontFamily: fontFamilyVal,
+                backgroundColor: baseBg,
+                color: baseText,
+            }}
+        >
+            <StorefrontNavbar theme={theme} />
             {sortedSections.map(renderSection)}
         </div>
     )

@@ -14,11 +14,26 @@ interface MCPToolResult {
 
 // ─── Tool registry ────────────────────────────────────────────────────────────
 
+const DOMINANT_STYLES = [
+  "minimalist",
+  "maximalist",
+  "editorial",
+  "clean",
+  "dark-luxury",
+  "organic",
+  "bold-playful",
+  "earthy",
+  "mission-driven",
+  "tech-precision",
+] as const;
+
+type DominantStyle = (typeof DOMINANT_STYLES)[number];
+
 const TOOLS: MCPTool[] = [
   {
     name: "analyze_vision_input",
     description:
-      "Analyze a URL or plain-text description of a storefront design and extract visual signals: dominant colors, layout type, aesthetic style, border-radius convention, and top-level section ordering.",
+      "Analyze a URL or plain-text description of a storefront design and extract visual signals: dominant colors, layout type, aesthetic style, border-radius, navStyle, colorScheme, fontStyle, and section ordering.",
     inputSchema: {
       type: "object",
       properties: {
@@ -39,13 +54,13 @@ const TOOLS: MCPTool[] = [
   {
     name: "generate_theme",
     description:
-      "Generate a ThemeConfig (primaryColor, secondaryColor, borderRadius) from extracted design signals and a target aesthetic keyword.",
+      "Generate a full ThemeConfig (primaryColor, secondaryColor, borderRadius, navStyle, colorScheme, fontStyle) from extracted design signals and a target aesthetic keyword.",
     inputSchema: {
       type: "object",
       properties: {
         dominantStyle: {
           type: "string",
-          enum: ["minimalist", "maximalist", "editorial", "clean"],
+          enum: DOMINANT_STYLES,
           description: "Overall visual style extracted from the source",
         },
         primaryColors: {
@@ -57,7 +72,17 @@ const TOOLS: MCPTool[] = [
         targetAesthetic: {
           type: "string",
           description:
-            "Desired mood. Supported values: organic, luxury, tech, artisan, minimal",
+            "Desired mood. Supported: organic, luxury, tech, artisan, minimal, earthy, playful, editorial, health, mission",
+        },
+        colorScheme: {
+          type: "string",
+          enum: ["light", "dark"],
+          description: "Detected or desired color scheme",
+        },
+        navStyle: {
+          type: "string",
+          enum: ["bordered", "transparent", "filled"],
+          description: "Detected or desired navbar style",
         },
       },
       required: ["dominantStyle"],
@@ -66,23 +91,38 @@ const TOOLS: MCPTool[] = [
   {
     name: "plan_layout",
     description:
-      "Determine the optimal hero variant, section order, and product grid column count for a storefront given product category and style signals.",
+      "Determine the optimal hero variant, section order, product grid columns, and hero micro-parameters (badge, textAlign, ctaVariant, overlayOpacity) given product category and style signals.",
     inputSchema: {
       type: "object",
       properties: {
         productCategory: {
           type: "string",
           description:
-            "Primary product category (e.g. furniture, fashion, lighting, textiles, accessories)",
+            "Primary product category (e.g. furniture, fashion, lighting, accessories, health, personal-care)",
         },
         dominantStyle: {
           type: "string",
-          enum: ["minimalist", "maximalist", "editorial", "clean"],
+          enum: DOMINANT_STYLES,
         },
         sourceLayoutType: {
           type: "string",
-          enum: ["split", "centered", "minimal", "grid"],
+          enum: [
+            "split",
+            "centered",
+            "minimal",
+            "grid",
+            "fullbleed",
+            "editorial",
+          ],
           description: "Layout type observed in the vision source, if any",
+        },
+        colorScheme: {
+          type: "string",
+          enum: ["light", "dark"],
+        },
+        navStyle: {
+          type: "string",
+          enum: ["bordered", "transparent", "filled"],
         },
       },
       required: ["dominantStyle"],
@@ -103,29 +143,94 @@ async function executeTool(
 
       // In production this calls a vision model. For the POC we derive signals
       // from URL keywords and return a structured design summary.
-      const isLuxury = /lux|premium|gold|jewel|haute/i.test(source);
-      const isTech = /tech|saas|app|software|digital/i.test(source);
-      const isArtisan = /craft|artisan|hand|studio|maker/i.test(source);
+      const isLuxury = /lux|premium|gold|jewel|haute|master.dynamic/i.test(
+        source,
+      );
+      const isDark = /dark|black|noir|obsidian/i.test(source);
+      const isTech = /tech|saas|app|software|digital|hardware|spec/i.test(
+        source,
+      );
+      const isArtisan = /craft|artisan|hand|studio|maker|journal/i.test(source);
+      const isOrganic = /organic|natural|plant|soap|herb|earth|eco/i.test(
+        source,
+      );
+      const isEarthy = /rustic|earthy|wood|squatch|terra|grain/i.test(source);
+      const isPlayful =
+        /playful|colorful|bold|sport|active|wellness|hiya|kids/i.test(source);
+      const isHealth = /health|supplement|vitamin|clinical|medical|figs/i.test(
+        source,
+      );
+      const isMission = /mission|cause|sustainable|united|planet/i.test(source);
 
-      const dominantStyle = isLuxury
-        ? "editorial"
-        : isTech
-          ? "clean"
-          : "minimalist";
+      const dominantStyle: DominantStyle =
+        isLuxury || isDark
+          ? "dark-luxury"
+          : isTech
+            ? "tech-precision"
+            : isArtisan
+              ? "editorial"
+              : isOrganic
+                ? "organic"
+                : isEarthy
+                  ? "earthy"
+                  : isPlayful
+                    ? "bold-playful"
+                    : isHealth
+                      ? "clean"
+                      : isMission
+                        ? "mission-driven"
+                        : "minimalist";
+
       const targetAesthetic = isLuxury
         ? "luxury"
         : isTech
           ? "tech"
           : isArtisan
             ? "artisan"
-            : "organic";
+            : isOrganic
+              ? "organic"
+              : isEarthy
+                ? "earthy"
+                : isPlayful
+                  ? "playful"
+                  : isHealth
+                    ? "health"
+                    : isMission
+                      ? "mission"
+                      : "minimal";
+
+      const colorScheme = isLuxury || isDark || isTech ? "dark" : "light";
+      const navStyle =
+        isLuxury || isDark || isTech
+          ? "transparent"
+          : isMission
+            ? "filled"
+            : "bordered";
+      const fontStyle = isTech
+        ? "mono-tech"
+        : isArtisan
+          ? "editorial-serif"
+          : "modern-sans";
 
       const signals = {
-        primaryColors: ["#1a1a1a", "#f5f5f5"],
-        fontStack: "Inter, sans-serif",
-        layoutType: isLuxury ? "split" : "centered",
-        borderRadius: isLuxury ? "none" : "md",
+        primaryColors: isLuxury
+          ? ["#0a0a0a", "#c9a84c"]
+          : ["#1a1a1a", "#f5f5f5"],
+        fontStack:
+          fontStyle === "editorial-serif"
+            ? "Georgia, serif"
+            : "Inter, sans-serif",
+        fontStyle,
+        layoutType: isLuxury
+          ? "fullbleed"
+          : isArtisan
+            ? "editorial"
+            : "centered",
+        borderRadius:
+          isLuxury || isTech || isArtisan ? "none" : isPlayful ? "full" : "md",
         dominantStyle,
+        colorScheme,
+        navStyle,
         targetAesthetic,
         sectionOrder: ["hero", "product-grid", "categories", "footer"],
         sourceType: isUrl ? "url" : "description",
@@ -135,29 +240,132 @@ async function executeTool(
     }
 
     case "generate_theme": {
-      const style = String(args.dominantStyle ?? "minimalist");
+      const style = String(args.dominantStyle ?? "minimalist") as DominantStyle;
       const aesthetic = String(args.targetAesthetic ?? "organic");
+      const colorScheme = String(args.colorScheme ?? "light") as
+        | "light"
+        | "dark";
+      const navStyleInput = String(args.navStyle ?? "");
 
-      const accentMap: Record<string, string> = {
+      // Full preset table keyed by dominantStyle
+      const presets: Record<
+        DominantStyle,
+        {
+          primary: string;
+          secondary: string;
+          radius: "none" | "md" | "full";
+          nav: "bordered" | "transparent" | "filled";
+          scheme: "light" | "dark";
+          font: "modern-sans" | "editorial-serif" | "mono-tech";
+        }
+      > = {
+        "dark-luxury": {
+          primary: "#0a0a0a",
+          secondary: "#c9a84c",
+          radius: "none",
+          nav: "transparent",
+          scheme: "dark",
+          font: "modern-sans",
+        },
+        organic: {
+          primary: "#2d4a22",
+          secondary: "#7cb87a",
+          radius: "md",
+          nav: "bordered",
+          scheme: "light",
+          font: "modern-sans",
+        },
+        editorial: {
+          primary: "#1a1a1a",
+          secondary: "#e8b84b",
+          radius: "none",
+          nav: "bordered",
+          scheme: "light",
+          font: "editorial-serif",
+        },
+        "bold-playful": {
+          primary: "#1a1a1a",
+          secondary: "#f97316",
+          radius: "full",
+          nav: "bordered",
+          scheme: "light",
+          font: "modern-sans",
+        },
+        clean: {
+          primary: "#0f4c35",
+          secondary: "#22c55e",
+          radius: "md",
+          nav: "bordered",
+          scheme: "light",
+          font: "modern-sans",
+        },
+        earthy: {
+          primary: "#3d2b1f",
+          secondary: "#a16207",
+          radius: "md",
+          nav: "bordered",
+          scheme: "light",
+          font: "modern-sans",
+        },
+        maximalist: {
+          primary: "#111827",
+          secondary: "#a855f7",
+          radius: "full",
+          nav: "bordered",
+          scheme: "light",
+          font: "modern-sans",
+        },
+        minimalist: {
+          primary: "#111827",
+          secondary: "#6366f1",
+          radius: "none",
+          nav: "bordered",
+          scheme: "light",
+          font: "modern-sans",
+        },
+        "mission-driven": {
+          primary: "#1e3a5f",
+          secondary: "#0ea5e9",
+          radius: "md",
+          nav: "filled",
+          scheme: "light",
+          font: "editorial-serif",
+        },
+        "tech-precision": {
+          primary: "#0f172a",
+          secondary: "#3b82f6",
+          radius: "none",
+          nav: "transparent",
+          scheme: "dark",
+          font: "mono-tech",
+        },
+      };
+
+      // Override with explicit aesthetic accent if provided
+      const aestheticAccent: Record<string, string> = {
         organic: "#22c55e",
-        luxury: "#f59e0b",
+        luxury: "#c9a84c",
         tech: "#3b82f6",
-        artisan: "#ef4444",
+        artisan: "#e8b84b",
         minimal: "#64748b",
+        earthy: "#a16207",
+        playful: "#f97316",
+        health: "#22c55e",
+        mission: "#0ea5e9",
       };
 
-      const borderRadiusMap: Record<string, "none" | "md" | "full"> = {
-        minimalist: "md",
-        editorial: "none",
-        clean: "md",
-        maximalist: "full",
-      };
-
+      const preset = presets[style] ?? presets["minimalist"];
       const theme = {
-        primaryColor: "#1a1a1a",
-        secondaryColor: accentMap[aesthetic] ?? "#22c55e",
-        borderRadius: borderRadiusMap[style] ?? "md",
-        rationale: `${style} style with ${aesthetic} accent`,
+        primaryColor: preset.primary,
+        secondaryColor: aestheticAccent[aesthetic] ?? preset.secondary,
+        borderRadius: preset.radius,
+        navStyle: (navStyleInput || preset.nav) as
+          | "bordered"
+          | "transparent"
+          | "filled",
+        colorScheme: colorScheme || preset.scheme,
+        fontStyle: preset.font,
+        rationale: `${style} preset — ${aesthetic} accent`,
       };
 
       return { content: [{ type: "text", text: JSON.stringify(theme) }] };
@@ -165,13 +373,69 @@ async function executeTool(
 
     case "plan_layout": {
       const category = String(args.productCategory ?? "general");
-      const style = String(args.dominantStyle ?? "minimalist");
+      const style = String(args.dominantStyle ?? "minimalist") as DominantStyle;
+      const colorScheme = String(args.colorScheme ?? "light");
 
-      const heroMap: Record<string, "split" | "centered" | "minimal"> = {
-        minimalist: "minimal",
-        editorial: "split",
+      type HeroVariant =
+        | "split"
+        | "centered"
+        | "minimal"
+        | "fullbleed"
+        | "editorial";
+
+      const heroMap: Record<DominantStyle, HeroVariant> = {
+        "dark-luxury": "fullbleed",
+        organic: "split",
+        editorial: "editorial",
+        "bold-playful": "centered",
         clean: "centered",
+        earthy: "split",
         maximalist: "centered",
+        minimalist: "minimal",
+        "mission-driven": "fullbleed",
+        "tech-precision": "editorial",
+      };
+
+      const overlayMap: Record<DominantStyle, number> = {
+        "dark-luxury": 0.5,
+        "mission-driven": 0.35,
+        "tech-precision": 0.65,
+        organic: 0,
+        editorial: 0,
+        "bold-playful": 0,
+        clean: 0,
+        earthy: 0,
+        maximalist: 0,
+        minimalist: 0,
+      };
+
+      const ctaVariantMap: Record<
+        DominantStyle,
+        "solid" | "outline" | "ghost"
+      > = {
+        "dark-luxury": "ghost",
+        "tech-precision": "ghost",
+        "mission-driven": "outline",
+        organic: "solid",
+        editorial: "outline",
+        "bold-playful": "solid",
+        clean: "solid",
+        earthy: "solid",
+        maximalist: "solid",
+        minimalist: "outline",
+      };
+
+      const textAlignMap: Record<DominantStyle, "left" | "center"> = {
+        "dark-luxury": "left",
+        "tech-precision": "left",
+        organic: "left",
+        editorial: "left",
+        earthy: "left",
+        "bold-playful": "center",
+        clean: "center",
+        maximalist: "center",
+        minimalist: "left",
+        "mission-driven": "center",
       };
 
       const colsMap: Record<string, 2 | 3 | 4> = {
@@ -180,14 +444,52 @@ async function executeTool(
         accessories: 4,
         lighting: 3,
         textiles: 3,
+        health: 3,
+        "personal-care": 3,
+        kids: 4,
         general: 3,
       };
 
+      const badgeMap: Record<DominantStyle, string | null> = {
+        "dark-luxury": null,
+        organic: "100% Natural Ingredients",
+        editorial: null,
+        "bold-playful": "Free Shipping Over $50",
+        clean: "Clinically Tested",
+        earthy: "Handcrafted with Care",
+        maximalist: "New Collection",
+        minimalist: null,
+        "mission-driven": "B Corp Certified",
+        "tech-precision": null,
+      };
+
+      const heroVariant = heroMap[style] ?? "split";
+      const overlayOpacity = overlayMap[style] ?? 0;
+      const isDark =
+        colorScheme === "dark" ||
+        style === "dark-luxury" ||
+        style === "tech-precision";
+
       const layout = {
-        heroVariant: heroMap[style] ?? "split",
-        sectionOrder: ["hero", "product-grid", "categories", "footer"],
+        heroVariant,
+        heroBadge: badgeMap[style] ?? null,
+        heroTextAlign: textAlignMap[style] ?? "left",
+        heroCtaVariant: ctaVariantMap[style] ?? "solid",
+        heroOverlayOpacity: overlayOpacity,
+        sectionOrder: isDark
+          ? ["hero", "benefits-bar", "product-grid", "categories", "footer"]
+          : [
+              "hero",
+              "benefits-bar",
+              "product-grid",
+              "featured-collection",
+              "testimonials",
+              "newsletter",
+              "categories",
+              "footer",
+            ],
         productGridColumns: colsMap[category] ?? 3,
-        rationale: `${style} style for ${category} category`,
+        rationale: `${style} style for ${category} — ${heroVariant} hero`,
       };
 
       return { content: [{ type: "text", text: JSON.stringify(layout) }] };

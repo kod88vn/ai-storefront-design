@@ -2,55 +2,60 @@
 
 ## Purpose
 
-Generate a cohesive storefront color theme and typography configuration from extracted design signals or a target aesthetic keyword. Outputs a `ThemeConfig` object that is applied directly to the `StorefrontConfig`.
+Generate a cohesive `ThemeConfig` from extracted design signals or a target aesthetic keyword. Covers colors, border radius, font style, nav style, and color scheme. Always runs after `ui_extractor`.
 
 ## Input Schema
 
 ```json
 {
-  "dominantStyle": "minimalist | maximalist | editorial | clean",
+  "dominantStyle": "minimalist | maximalist | editorial | clean | dark-luxury | organic | bold-playful | earthy",
   "primaryColors": ["#hex"],
+  "colorTemperature": "warm | cool | neutral",
+  "colorScheme": "light | dark",
+  "fontStyle": "modern-sans | editorial-serif | mono-tech",
+  "navStyle": "bordered | transparent | filled",
   "targetAesthetic": "string (e.g. 'organic', 'luxury', 'tech', 'artisan')"
 }
 ```
 
-## Output Schema
+## Output Schema — ThemeConfig
 
 ```json
 {
   "primaryColor": "#hex",
   "secondaryColor": "#hex",
   "borderRadius": "none | md | full",
+  "fontStyle": "modern-sans | editorial-serif | mono-tech",
+  "navStyle": "bordered | transparent | filled",
+  "colorScheme": "light | dark",
   "rationale": "string"
 }
 ```
 
-## Example Usage
+## Aesthetic → Full Theme Presets
 
-```typescript
-// Receives ui_extractor output and synthesizes a ThemeConfig.
-// Always pairs a neutral primary with a vibrant accent for contrast.
-const theme = await skills.theme_generator.run({
-  dominantStyle: "minimalist",
-  primaryColors: ["#1a1a1a"],
-  targetAesthetic: "organic",
-});
-// → { primaryColor: "#1a1a1a", secondaryColor: "#22c55e", borderRadius: "md" }
-```
+Use these as complete starting points when mimicking a known style archetype:
 
-## Aesthetic → Accent Color Mappings
-
-| Aesthetic        | Accent Color | Hex       |
-| ---------------- | ------------ | --------- |
-| organic/natural  | Forest Green | `#22c55e` |
-| luxury/editorial | Warm Gold    | `#f59e0b` |
-| tech/clean       | Cobalt Blue  | `#3b82f6` |
-| artisan/handmade | Terracotta   | `#ef4444` |
-| minimal/modern   | Slate Gray   | `#64748b` |
+| Archetype                                        | primaryColor | secondaryColor   | borderRadius | fontStyle         | navStyle      | colorScheme |
+| ------------------------------------------------ | ------------ | ---------------- | ------------ | ----------------- | ------------- | ----------- |
+| **Dark luxury** (Master & Dynamic)               | `#0a0a0a`    | `#c9a84c` (gold) | `none`       | `modern-sans`     | `transparent` | `dark`      |
+| **Organic / natural** (Rocky Mountain Soap)      | `#2d4a22`    | `#7cb87a`        | `md`         | `modern-sans`     | `bordered`    | `light`     |
+| **Editorial serif** (Holstee)                    | `#1a1a1a`    | `#e8b84b`        | `none`       | `editorial-serif` | `bordered`    | `light`     |
+| **Bold playful** (Outdoor Voices, Love Wellness) | `#1a1a1a`    | `#f97316`        | `full`       | `modern-sans`     | `bordered`    | `light`     |
+| **Clean health** (Kettle & Fire, Hiya)           | `#0f4c35`    | `#22c55e`        | `md`         | `modern-sans`     | `bordered`    | `light`     |
+| **Earthy / rustic** (Dr. Squatch)                | `#3d2b1f`    | `#a16207`        | `md`         | `modern-sans`     | `bordered`    | `light`     |
+| **Medical / clinical** (Figs)                    | `#0c3547`    | `#06b6d4`        | `md`         | `modern-sans`     | `filled`      | `light`     |
+| **Minimal / modern** (Kit and Ace, Studio Neat)  | `#111827`    | `#6366f1`        | `none`       | `modern-sans`     | `bordered`    | `light`     |
+| **Tech / mono** (product hardware)               | `#0f172a`    | `#3b82f6`        | `none`       | `mono-tech`       | `transparent` | `dark`      |
+| **Soft beauty** (Love Wellness pastel)           | `#7c3aed`    | `#f472b6`        | `full`       | `modern-sans`     | `bordered`    | `light`     |
 
 ## Implementation Notes
 
-- Never use `borderRadius: "full"` for furniture or textiles stores — it conflicts with product imagery
-- `primaryColor` should always be near-black (`#0f172a`, `#1a1a1a`) or near-white for high-contrast readability
-- `secondaryColor` drives CTA buttons, cart badge, and hover effects — must pass WCAG AA on white
-- If `primaryColors` from `ui_extractor` are all neutrals, map to `targetAesthetic` accent table above
+- `primaryColor` drives all text headings and the logo wordmark — needs strong contrast on both light and dark backgrounds
+- `secondaryColor` drives CTA buttons, badge pills, icon accents, cart count badge — must pass WCAG AA on white AND on `primaryColor`
+- `navStyle: "transparent"` must be paired with a fullbleed or editorial hero that has a dark overlay
+- `navStyle: "filled"` works best with `colorScheme: "light"` so the colored navbar provides contrast
+- `borderRadius: "none"` signals premium/architectural brands; `"full"` signals approachable/wellness brands
+- `fontStyle: "editorial-serif"` is best for lifestyle, artisan, or heritage brands — not tech or health
+- `colorScheme: "dark"` overrides the base background to near-black; the AI should use `colorScheme: "dark"` + `navStyle: "transparent"` together for luxury dark sites
+- Never use `borderRadius: "full"` for furniture or sharp-edged product brands

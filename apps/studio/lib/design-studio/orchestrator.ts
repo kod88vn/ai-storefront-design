@@ -153,34 +153,37 @@ export async function* runOrchestrator(
 
   // ── 3. Build system prompt ──────────────────────────────────────────────────
 
-  const toolDescriptions = mcpTools
-    .map((t) => `**${t.name}**: ${t.description}`)
-    .join("\n\n");
-
   const { planFeedback } = context;
 
   let resumeInstruction = "";
   if (planFeedback?.approved === true) {
     const prev = planFeedback.previousPlan;
+    const prevDetail = prev
+      ? [
+          `"${prev.description}"`,
+          `Layout: ${prev.layoutProposal}`,
+          `Color: ${prev.colorProposal}`,
+          prev.navStyleProposal ? `NavStyle: ${prev.navStyleProposal}` : "",
+          prev.colorSchemeProposal
+            ? `ColorScheme: ${prev.colorSchemeProposal}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(", ")
+      : "";
     resumeInstruction = [
       "\n\n---",
-      "The user has **APPROVED** your plan.",
-      prev
-        ? `You previously proposed: "${prev.description}" (Layout: ${prev.layoutProposal}, Color: ${prev.colorProposal}).`
-        : "",
-      "Proceed directly with execution NOW:",
-      "1. Call the MCP tools (analyze_vision_input → generate_theme → plan_layout) to compute concrete values.",
-      "2. Call apply_config_update with the final result.",
-      "Do NOT call plan_feedback again.",
+      "**The user has APPROVED your plan.** Proceed with Phase 3 of the Planner Skill.",
+      prevDetail ? `Previously proposed: ${prevDetail}.` : "",
+      "Call apply_config_update now with all computed values. Do NOT call plan_feedback again.",
     ]
       .filter(Boolean)
       .join("\n");
   } else if (planFeedback?.approved === false) {
     resumeInstruction = [
       "\n\n---",
-      `The user provided feedback: "${planFeedback.modifications ?? "no details given"}".`,
-      "Revise your proposed plan to incorporate this feedback, then call plan_feedback again with the updated proposal.",
-      "Do NOT execute MCP tools until the user approves.",
+      `**The user rejected the plan.** Feedback: "${planFeedback.modifications ?? "no details given"}".`,
+      "Revise your proposal and call plan_feedback again. Do NOT call apply_config_update yet.",
     ].join("\n");
   }
 
@@ -190,17 +193,33 @@ export async function* runOrchestrator(
     `grid: ${context.currentConfig.productGrid.columns} columns`,
   ].join(" | ");
 
+  // The planner skill defines the full workflow — embed it so the AI follows it.
+  // All other skills are listed by purpose only (their schemas live in MCP tool descriptions).
+  const plannerSkill = skills.find((s) => s.name === "planner");
+  const mcpToolDescriptions = mcpTools
+    .map(
+      (t) =>
+        `**${t.name}**: ${t.description}\n  Input schema: ${JSON.stringify(t.inputSchema)}`,
+    )
+    .join("\n\n");
+
   const systemPrompt = `You are an AI storefront design agent. Redesign the storefront based on the goal.
 
-Skills available: ${formatSkillsForPrompt(skills)}
+## Skills
 
-MCP Tools: ${toolDescriptions}
+${formatSkillsForPrompt(skills)}
 
-Current config: ${configSummary}
+## Workflow
 
-Workflow:
-1. Call \`plan_feedback\` first with a specific layout and color proposal (include hex). Do NOT call MCP tools yet.
-2. After approval, call MCP tools then \`apply_config_update\` with concrete values.${resumeInstruction}`;
+${plannerSkill ? plannerSkill.content : "1. Call plan_feedback first. 2. After approval, call MCP tools then apply_config_update."}
+
+## MCP Tools
+
+${mcpToolDescriptions}
+
+## Current Config
+
+${configSummary}${resumeInstruction}`;
 
   // ── 4. Compose tools for the AI ─────────────────────────────────────────────
   //
@@ -208,97 +227,111 @@ Workflow:
   // orchestrator directly — NOT forwarded to MCP.
   // External tools wrap MCP calls.
 
+  // MCP tools are registered dynamically — no orchestrator edits needed when tools are added.
+  // The full input schema is embedded in each tool's description so the AI knows what to pass.
+  const dynamicMcpTools = Object.fromEntries(
+    mcpTools.map((t) => [
+      t.name,
+      tool({
+        description: `${t.description}\n\nSchema: ${JSON.stringify(t.inputSchema)}`,
+        inputSchema: z.record(z.string(), z.unknown()),
+      }),
+    ]),
+  );
+
   const tools = {
     plan_feedback: tool({
       description:
-        "Present a proposed design plan to the user for HITL approval before executing any changes. Always call this first.",
+        "Present a proposed design plan to the user for HITL approval. Always call this first (Phase 2 of the Planner Skill). Do NOT call MCP tools or apply_config_update before this is approved.",
       inputSchema: z.object({
         action: z.literal("request_feedback"),
         description: z
           .string()
-          .describe("Human-readable summary of all proposed changes"),
+          .describe(
+            "2–4 sentence summary of all proposed changes and rationale",
+          ),
         layoutProposal: z
           .string()
-          .describe("Proposed hero layout variant (split/centered/minimal)"),
+          .describe(
+            "Hero layout variant + notable section additions (e.g. 'Editorial hero + benefits bar + featured testimonials')",
+          ),
         colorProposal: z
           .string()
           .describe(
-            'Proposed accent color with hex value, e.g. "Forest Green (#22c55e)"',
+            "Primary + accent colors with hex and aesthetic label (e.g. 'Near-black (#0a0a0a) + Gold (#c9a84c) — dark luxury')",
+          ),
+        navStyleProposal: z
+          .enum(["bordered", "transparent", "filled"])
+          .optional()
+          .describe("Proposed navbar style"),
+        colorSchemeProposal: z
+          .enum(["light", "dark"])
+          .optional()
+          .describe("Proposed color scheme: light or dark base"),
+        plannedChanges: z
+          .array(
+            z.object({
+              id: z.string(),
+              category: z.enum([
+                "theme",
+                "hero",
+                "layout",
+                "sections",
+                "content",
+              ]),
+              label: z.string(),
+              description: z.string(),
+            }),
+          )
+          .optional()
+          .describe(
+            "Granular atomic change items — one entry per config field being modified. The user sees this list and can check/uncheck each item individually. Always include at minimum: hero layout, primary color, accent color, plus one item per additional field changed (nav style, color scheme, font style, grid columns, each section being enabled).",
           ),
       }),
     }),
 
     apply_config_update: tool({
       description:
-        "Apply the approved design changes to the StorefrontConfig. Call this after all MCP tools have returned with concrete values.",
+        "Apply approved design changes to the StorefrontConfig. Call this after all MCP tools have returned with concrete values (Phase 3 of the Planner Skill).",
       inputSchema: z.object({
         themeChanges: z
           .object({
             primaryColor: z.string().optional(),
             secondaryColor: z.string().optional(),
             borderRadius: z.enum(["none", "md", "full"]).optional(),
+            navStyle: z.enum(["bordered", "transparent", "filled"]).optional(),
+            colorScheme: z.enum(["light", "dark"]).optional(),
+            fontStyle: z
+              .enum(["modern-sans", "editorial-serif", "mono-tech"])
+              .optional(),
           })
           .optional(),
         heroChanges: z
           .object({
-            layout: z.enum(["split", "centered", "minimal"]).optional(),
+            layout: z
+              .enum(["split", "centered", "minimal", "fullbleed", "editorial"])
+              .optional(),
             title: z.string().optional(),
             subtitle: z.string().optional(),
+            badge: z.string().optional(),
+            textAlign: z.enum(["left", "center"]).optional(),
+            ctaVariant: z.enum(["solid", "outline", "ghost"]).optional(),
+            overlayOpacity: z.number().min(0).max(1).optional(),
+            ctaText: z.string().optional(),
+            ctaSecondaryText: z.string().optional(),
           })
           .optional(),
         productGridColumns: z
           .union([z.literal(2), z.literal(3), z.literal(4)])
           .optional(),
         sectionOrder: z.array(z.string()).optional(),
+        enableSections: z.array(z.string()).optional(),
+        disableSections: z.array(z.string()).optional(),
+        sectionData: z.record(z.string(), z.unknown()).optional(),
       }),
     }),
 
-    // MCP tool wrappers — descriptions sourced from MCP tools/list at runtime
-    analyze_vision_input: tool({
-      description:
-        mcpTools.find((t) => t.name === "analyze_vision_input")?.description ??
-        "Analyze a URL or description to extract design signals.",
-      inputSchema: z.object({
-        source: z
-          .string()
-          .describe("URL or plain-text description of the design to analyze"),
-        extractionTargets: z.array(z.string()).optional(),
-      }),
-    }),
-
-    generate_theme: tool({
-      description:
-        mcpTools.find((t) => t.name === "generate_theme")?.description ??
-        "Generate a ThemeConfig from design signals.",
-      inputSchema: z.object({
-        dominantStyle: z.enum([
-          "minimalist",
-          "maximalist",
-          "editorial",
-          "clean",
-        ]),
-        primaryColors: z.array(z.string()).optional(),
-        targetAesthetic: z.string().optional(),
-      }),
-    }),
-
-    plan_layout: tool({
-      description:
-        mcpTools.find((t) => t.name === "plan_layout")?.description ??
-        "Plan optimal layout for a storefront.",
-      inputSchema: z.object({
-        productCategory: z.string().optional(),
-        dominantStyle: z.enum([
-          "minimalist",
-          "maximalist",
-          "editorial",
-          "clean",
-        ]),
-        sourceLayoutType: z
-          .enum(["split", "centered", "minimal", "grid"])
-          .optional(),
-      }),
-    }),
+    ...dynamicMcpTools,
   };
 
   // ── 5. Manual agentic loop ──────────────────────────────────────────────────
@@ -376,6 +409,14 @@ Workflow:
           description: string;
           layoutProposal: string;
           colorProposal: string;
+          navStyleProposal?: string;
+          colorSchemeProposal?: string;
+          plannedChanges?: Array<{
+            id: string;
+            category: string;
+            label: string;
+            description: string;
+          }>;
         };
 
         yield {
@@ -386,6 +427,9 @@ Workflow:
             description: input.description,
             layoutProposal: input.layoutProposal,
             colorProposal: input.colorProposal,
+            navStyleProposal: input.navStyleProposal,
+            colorSchemeProposal: input.colorSchemeProposal,
+            plannedChanges: input.plannedChanges as never,
           },
         };
 

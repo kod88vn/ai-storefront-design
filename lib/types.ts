@@ -176,6 +176,8 @@ export interface AgentPlan {
   description: string;
   layoutProposal: string;
   colorProposal: string;
+  navStyleProposal?: string;
+  colorSchemeProposal?: string;
   approved: boolean | null;
 }
 
@@ -210,6 +212,8 @@ export interface PlanFeedback {
     description: string;
     layoutProposal: string;
     colorProposal: string;
+    navStyleProposal?: string;
+    colorSchemeProposal?: string;
   };
 }
 

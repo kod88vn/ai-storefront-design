@@ -1,8 +1,11 @@
 {
   "theme": {
     "primaryColor": "#1a1a1a",
-    "secondaryColor": "#DAA520",
-    "borderRadius": "md"
+    "secondaryColor": "#e8b84b",
+    "borderRadius": "none",
+    "colorScheme": "light",
+    "navStyle": "bordered",
+    "fontStyle": "editorial-serif"
   },
   "sections": [
     {
@@ -28,16 +31,93 @@
       "type": "footer",
       "enabled": true,
       "order": 3
+    },
+    {
+      "id": "benefits-bar",
+      "type": "benefits-bar",
+      "enabled": true,
+      "order": 4
+    },
+    {
+      "id": "featured-collection",
+      "type": "featured-collection",
+      "enabled": true,
+      "order": 5
+    },
+    {
+      "id": "testimonials",
+      "type": "testimonials",
+      "enabled": true,
+      "order": 6
+    },
+    {
+      "id": "newsletter",
+      "type": "newsletter",
+      "enabled": true,
+      "order": 7
     }
   ],
   "hero": {
-    "layout": "minimal",
-    "title": "Curated Audio Excellence",
-    "subtitle": "Experience premium sound design",
-    "ctaText": "Shop Collection"
+    "layout": "editorial",
+    "title": "Curated Design for Everyday",
+    "subtitle": "Thoughtful tools and accessories crafted with care.",
+    "ctaText": "Explore Now",
+    "badge": "Artisan Crafted",
+    "textAlign": "left",
+    "ctaVariant": "solid",
+    "overlayOpacity": 0.2,
+    "ctaSecondaryText": "Learn Our Story"
   },
   "productGrid": {
     "columns": 3
   },
-  "sectionData": {}
+  "sectionData": {
+    "benefits-bar": {
+      "benefits": [
+        {
+          "icon": "award",
+          "text": "Award-Winning Design"
+        },
+        {
+          "icon": "shield",
+          "text": "Quality Guaranteed"
+        },
+        {
+          "icon": "globe",
+          "text": "Worldwide Shipping"
+        }
+      ]
+    },
+    "featured-collection": {
+      "title": "Featured Tools",
+      "subtitle": "Our most loved designs for everyday utility.",
+      "ctaText": "View All Products"
+    },
+    "testimonials": {
+      "layout": "featured",
+      "quotes": [
+        {
+          "text": "These tools are a game-changer for my daily workflow.",
+          "author": "Jane D., Designer",
+          "rating": 5
+        },
+        {
+          "text": "Beautifully crafted and incredibly functional.",
+          "author": "Mark S., Engineer",
+          "rating": 5
+        },
+        {
+          "text": "I can’t imagine my desk without these now.",
+          "author": "Alex T., Writer",
+          "rating": 5
+        }
+      ]
+    },
+    "newsletter": {
+      "title": "Join Our Community",
+      "subtitle": "Be the first to know about new releases and exclusive offers.",
+      "incentive": "",
+      "ctaText": "Subscribe"
+    }
+  }
 }

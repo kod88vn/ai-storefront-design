@@ -96,7 +96,13 @@ export interface NewsletterConfig {
   backgroundColor?: string;
 }
 
-export type TrustIcon = "truck" | "shield" | "refresh" | "award" | "lock" | "phone";
+export type TrustIcon =
+  | "truck"
+  | "shield"
+  | "refresh"
+  | "award"
+  | "lock"
+  | "phone";
 
 export interface TrustBadgeItem {
   icon: TrustIcon;
@@ -165,11 +171,21 @@ export type AgentStep =
   | "awaiting-approval"
   | "complete";
 
+export interface PlanChange {
+  id: string;
+  category: "theme" | "hero" | "layout" | "sections" | "content";
+  label: string;
+  description: string;
+}
+
 export interface AgentPlan {
   id: string;
   description: string;
   layoutProposal: string;
   colorProposal: string;
+  navStyleProposal?: string;
+  colorSchemeProposal?: string;
+  plannedChanges?: PlanChange[];
   approved: boolean | null;
 }
 
@@ -204,6 +220,8 @@ export interface PlanFeedback {
     description: string;
     layoutProposal: string;
     colorProposal: string;
+    navStyleProposal?: string;
+    colorSchemeProposal?: string;
   };
 }
 
@@ -267,3 +285,76 @@ export interface AppliedSummary {
   sectionOrder: ValueChange<string[]> | null;
   sectionsEnabled: ValueChange<string[]> | null;
 }
+
+// ─── Designer container types ─────────────────────────────────────────────────
+
+export type ContainerLayoutMode = "block" | "flex" | "grid";
+
+export interface FlexContainerConfig {
+  direction: "row" | "column";
+  wrap: boolean;
+  justify: "start" | "center" | "end" | "between" | "around" | "evenly";
+  align: "start" | "center" | "end" | "stretch" | "baseline";
+  gap: number;
+}
+
+export interface GridContainerConfig {
+  cols: number;
+  gap: number;
+}
+
+export const DEFAULT_FLEX_CONFIG: FlexContainerConfig = {
+  direction: "row",
+  wrap: false,
+  justify: "start",
+  align: "start",
+  gap: 4,
+};
+
+export const DEFAULT_GRID_CONFIG: GridContainerConfig = {
+  cols: 2,
+  gap: 4,
+};
+
+export type ComponentItem =
+  | {
+      kind: "prebuilt";
+      id: string;
+      sectionType: SectionType;
+      customClasses: string;
+    }
+  | { kind: "custom-text"; id: string; html: string; customClasses: string }
+  | {
+      kind: "custom-image";
+      id: string;
+      src: string;
+      alt: string;
+      width: string;
+      height: string;
+      objectFit: "cover" | "contain" | "fill" | "auto";
+      customClasses: string;
+    }
+  | {
+      kind: "container";
+      id: string;
+      label: string;
+      layoutMode: ContainerLayoutMode;
+      flexConfig: FlexContainerConfig;
+      gridConfig: GridContainerConfig;
+      components: ComponentItem[];
+      customClasses: string;
+    };
+
+export interface DesignerContainer {
+  id: string;
+  label: string;
+  layoutMode: ContainerLayoutMode;
+  flexConfig: FlexContainerConfig;
+  gridConfig: GridContainerConfig;
+  components: ComponentItem[];
+}
+
+export type SelectedComponentRef = {
+  containerId: string;
+  componentId: string;
+} | null;

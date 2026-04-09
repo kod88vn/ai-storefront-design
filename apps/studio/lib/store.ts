@@ -16,6 +16,90 @@ import type {
   OrchestratorContext,
   AppliedSummary,
 } from "@ai-storefront/types";
+import type {
+  DesignerContainer,
+  ComponentItem,
+  SelectedComponentRef,
+  FlexContainerConfig,
+  GridContainerConfig,
+  ContainerLayoutMode,
+} from "@/lib/types";
+import { DEFAULT_FLEX_CONFIG, DEFAULT_GRID_CONFIG } from "@/lib/types";
+
+// ─── Container helpers ────────────────────────────────────────────────────────
+
+/** Recursively patches a component inside nested container trees. */
+function patchItemInTree(
+  items: ComponentItem[],
+  containerId: string,
+  componentId: string,
+  patch: Record<string, unknown>,
+): ComponentItem[] {
+  return items.map((item) => {
+    if (item.kind !== "container") return item;
+    if (item.id === containerId) {
+      return {
+        ...item,
+        components: item.components.map((c) =>
+          c.id === componentId ? ({ ...c, ...patch } as ComponentItem) : c,
+        ),
+      };
+    }
+    return {
+      ...item,
+      components: patchItemInTree(
+        item.components,
+        containerId,
+        componentId,
+        patch,
+      ),
+    };
+  });
+}
+
+function syncSectionsFromContainers(
+  containers: DesignerContainer[],
+): LayoutSection[] {
+  const sections: LayoutSection[] = [];
+  let order = 0;
+  for (const container of containers) {
+    for (const comp of container.components) {
+      if (comp.kind === "prebuilt") {
+        sections.push({
+          id: comp.sectionType,
+          type: comp.sectionType,
+          enabled: true,
+          order: order++,
+        });
+      }
+    }
+  }
+  return sections;
+}
+
+function makeBlock(
+  id: string,
+  label: string,
+  sectionType: SectionType,
+): DesignerContainer {
+  return {
+    id,
+    label,
+    layoutMode: "block",
+    flexConfig: { ...DEFAULT_FLEX_CONFIG },
+    gridConfig: { ...DEFAULT_GRID_CONFIG },
+    components: [
+      { kind: "prebuilt", id: sectionType, sectionType, customClasses: "" },
+    ],
+  };
+}
+
+const defaultContainers: DesignerContainer[] = [
+  makeBlock("c-hero", "Hero", "hero"),
+  makeBlock("c-products", "Product Grid", "product-grid"),
+  makeBlock("c-categories", "Categories", "categories"),
+  makeBlock("c-footer", "Footer", "footer"),
+];
 
 interface StudioState {
   // Storefront Configuration
@@ -40,6 +124,38 @@ interface StudioState {
   enableSection: (type: SectionType) => void;
   disableSection: (type: SectionType) => void;
   updateSectionData: (data: Partial<StorefrontSectionData>) => void;
+
+  // Designer Containers
+  containers: DesignerContainer[];
+  selectedComponent: SelectedComponentRef;
+  addContainer: () => void;
+  removeContainer: (id: string) => void;
+  updateContainerLabel: (id: string, label: string) => void;
+  updateContainerLayoutMode: (id: string, mode: ContainerLayoutMode) => void;
+  updateContainerFlexConfig: (
+    id: string,
+    patch: Partial<FlexContainerConfig>,
+  ) => void;
+  updateContainerGridConfig: (
+    id: string,
+    patch: Partial<GridContainerConfig>,
+  ) => void;
+  addComponentToContainer: (containerId: string, comp: ComponentItem) => void;
+  removeComponentFromContainer: (
+    containerId: string,
+    componentId: string,
+  ) => void;
+  reorderContainerComponents: (
+    containerId: string,
+    components: ComponentItem[],
+  ) => void;
+  updateComponentInContainer: (
+    containerId: string,
+    componentId: string,
+    patch: Record<string, unknown>,
+  ) => void;
+  reorderContainers: (containers: DesignerContainer[]) => void;
+  setSelectedComponent: (ref: SelectedComponentRef) => void;
 
   // Agent State
   agentStep: AgentStep;
@@ -114,6 +230,8 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   orchestratorGoal: null,
   orchestratorContext: null,
   appliedSummary: null,
+  containers: defaultContainers,
+  selectedComponent: null,
 
   // Viewport
   setViewport: (viewport) => {
@@ -313,4 +431,184 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   // Applied summary
   setAppliedSummary: (appliedSummary) => set({ appliedSummary }),
+
+  // ─── Designer container actions ───────────────────────────────────────────
+
+  setSelectedComponent: (ref) => set({ selectedComponent: ref }),
+
+  addContainer: () => {
+    const id = `c-${crypto.randomUUID().slice(0, 8)}`;
+    const n = get().containers.length + 1;
+    const newContainer: DesignerContainer = {
+      id,
+      label: `Container ${n}`,
+      layoutMode: "block",
+      flexConfig: { ...DEFAULT_FLEX_CONFIG },
+      gridConfig: { ...DEFAULT_GRID_CONFIG },
+      components: [],
+    };
+    set((state) => {
+      const containers = [...state.containers, newContainer];
+      return {
+        containers,
+        config: {
+          ...state.config,
+          sections: syncSectionsFromContainers(containers),
+        },
+      };
+    });
+  },
+
+  removeContainer: (id) => {
+    set((state) => {
+      const containers = state.containers.filter((c) => c.id !== id);
+      return {
+        containers,
+        selectedComponent:
+          state.selectedComponent?.containerId === id
+            ? null
+            : state.selectedComponent,
+        config: {
+          ...state.config,
+          sections: syncSectionsFromContainers(containers),
+        },
+      };
+    });
+  },
+
+  updateContainerLabel: (id, label) => {
+    set((state) => ({
+      containers: state.containers.map((c) =>
+        c.id === id ? { ...c, label } : c,
+      ),
+    }));
+  },
+
+  updateContainerLayoutMode: (id, mode) => {
+    set((state) => ({
+      containers: state.containers.map((c) =>
+        c.id === id ? { ...c, layoutMode: mode } : c,
+      ),
+    }));
+  },
+
+  updateContainerFlexConfig: (id, patch) => {
+    set((state) => ({
+      containers: state.containers.map((c) =>
+        c.id === id ? { ...c, flexConfig: { ...c.flexConfig, ...patch } } : c,
+      ),
+    }));
+  },
+
+  updateContainerGridConfig: (id, patch) => {
+    set((state) => ({
+      containers: state.containers.map((c) =>
+        c.id === id ? { ...c, gridConfig: { ...c.gridConfig, ...patch } } : c,
+      ),
+    }));
+  },
+
+  addComponentToContainer: (containerId, comp) => {
+    set((state) => {
+      const containers = state.containers.map((c) =>
+        c.id === containerId
+          ? { ...c, components: [...c.components, comp] }
+          : c,
+      );
+      return {
+        containers,
+        config: {
+          ...state.config,
+          sections: syncSectionsFromContainers(containers),
+        },
+      };
+    });
+  },
+
+  removeComponentFromContainer: (containerId, componentId) => {
+    set((state) => {
+      const containers = state.containers.map((c) =>
+        c.id === containerId
+          ? {
+              ...c,
+              components: c.components.filter(
+                (comp) => comp.id !== componentId,
+              ),
+            }
+          : c,
+      );
+      return {
+        containers,
+        selectedComponent:
+          state.selectedComponent?.containerId === containerId &&
+          state.selectedComponent.componentId === componentId
+            ? null
+            : state.selectedComponent,
+        config: {
+          ...state.config,
+          sections: syncSectionsFromContainers(containers),
+        },
+      };
+    });
+  },
+
+  reorderContainerComponents: (containerId, components) => {
+    set((state) => {
+      const containers = state.containers.map((c) =>
+        c.id === containerId ? { ...c, components } : c,
+      );
+      return {
+        containers,
+        config: {
+          ...state.config,
+          sections: syncSectionsFromContainers(containers),
+        },
+      };
+    });
+  },
+
+  updateComponentInContainer: (containerId, componentId, patch) => {
+    set((state) => {
+      const containers = state.containers.map((c) => {
+        if (c.id === containerId) {
+          // Direct parent is a top-level container
+          return {
+            ...c,
+            components: c.components.map((comp) =>
+              comp.id === componentId
+                ? ({ ...comp, ...patch } as ComponentItem)
+                : comp,
+            ),
+          };
+        }
+        // Search inside nested containers
+        return {
+          ...c,
+          components: patchItemInTree(
+            c.components,
+            containerId,
+            componentId,
+            patch,
+          ),
+        };
+      });
+      return {
+        containers,
+        config: {
+          ...state.config,
+          sections: syncSectionsFromContainers(containers),
+        },
+      };
+    });
+  },
+
+  reorderContainers: (containers) => {
+    set((state) => ({
+      containers,
+      config: {
+        ...state.config,
+        sections: syncSectionsFromContainers(containers),
+      },
+    }));
+  },
 }));

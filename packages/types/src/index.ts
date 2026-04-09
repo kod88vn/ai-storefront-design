@@ -5,6 +5,12 @@ export interface ThemeConfig {
   secondaryColor: string;
   borderRadius: "none" | "md" | "full";
   fontFamily?: "sans" | "serif" | "mono";
+  /** Visual weight of navbar: white+border (default), transparent overlay, or solid brand color */
+  navStyle?: "bordered" | "transparent" | "filled";
+  /** Overall site color scheme — affects base background and text colors */
+  colorScheme?: "light" | "dark";
+  /** Font personality used  as a CSS class hint to the renderer */
+  fontStyle?: "modern-sans" | "editorial-serif" | "mono-tech";
 }
 
 // ─── Section types ────────────────────────────────────────────────────────────
@@ -32,12 +38,20 @@ export interface LayoutSection {
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
 export interface HeroConfig {
-  layout: "split" | "centered" | "minimal" | "fullbleed";
+  layout: "split" | "centered" | "minimal" | "fullbleed" | "editorial";
   title: string;
   subtitle: string;
   ctaText: string;
   ctaSecondaryText?: string;
   backgroundImage?: string;
+  /** Eyebrow label above the headline — e.g. "New Collection" or "Free Shipping Over $50" */
+  badge?: string;
+  /** Text alignment inside split/centered/editorial layouts */
+  textAlign?: "left" | "center";
+  /** Overlay darkness for fullbleed (0–1, default 0.4) */
+  overlayOpacity?: number;
+  /** CTA button style — solid fills with secondaryColor, outline/ghost for dark or image backgrounds */
+  ctaVariant?: "solid" | "outline" | "ghost";
 }
 
 // ─── Product grid ─────────────────────────────────────────────────────────────
@@ -56,10 +70,26 @@ export interface AnnouncementBarConfig {
   backgroundColor?: string;
   textColor?: string;
   dismissible?: boolean;
+  /** Marquee-style scrolling text for promotional animation */
+  scrolling?: boolean;
+  /** Optional emoji prefix shown before the text */
+  emoji?: string;
 }
 
 export interface BenefitItem {
-  icon: "truck" | "shield" | "refresh" | "award" | "clock" | "leaf";
+  icon:
+    | "truck"
+    | "shield"
+    | "refresh"
+    | "award"
+    | "clock"
+    | "leaf"
+    | "star"
+    | "heart"
+    | "check"
+    | "zap"
+    | "globe"
+    | "tag";
   label: string;
   detail?: string;
 }
@@ -84,8 +114,10 @@ export interface TestimonialItem {
 
 export interface TestimonialsConfig {
   heading: string;
-  layout: "grid" | "carousel";
+  /** grid = 3-col cards, list = full-width quotes, featured = one large quote + smaller grid */
+  layout: "grid" | "carousel" | "list" | "featured";
   items: TestimonialItem[];
+  showRatings?: boolean;
 }
 
 export interface NewsletterConfig {
@@ -94,6 +126,8 @@ export interface NewsletterConfig {
   placeholder?: string;
   buttonText: string;
   backgroundColor?: string;
+  /** Incentive hook shown above headline — e.g. "Get 10% off your first order" */
+  incentive?: string;
 }
 
 export type TrustIcon =
@@ -184,6 +218,8 @@ export interface AgentPlan {
   description: string;
   layoutProposal: string;
   colorProposal: string;
+  navStyleProposal?: string;
+  colorSchemeProposal?: string;
   approved: boolean | null;
   plannedChanges?: PlanChange[];
 }
@@ -219,6 +255,8 @@ export interface PlanFeedback {
     description: string;
     layoutProposal: string;
     colorProposal: string;
+    navStyleProposal?: string;
+    colorSchemeProposal?: string;
   };
 }
 

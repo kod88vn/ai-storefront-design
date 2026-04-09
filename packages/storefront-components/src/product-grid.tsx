@@ -1,9 +1,20 @@
 import type { ProductGridConfig, ThemeConfig } from '@ai-storefront/types'
+import { Star } from 'lucide-react'
 import { sampleProducts } from './data'
 
 interface ProductGridProps {
     config: ProductGridConfig
     theme: ThemeConfig
+}
+
+function ProductStars({ rating }: { rating: number }) {
+    return (
+        <div className="flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((i) => (
+                <Star key={i} className={`h-3 w-3 ${i <= rating ? 'fill-amber-400 text-amber-400' : 'text-neutral-300'}`} />
+            ))}
+        </div>
+    )
 }
 
 export function StorefrontProductGrid({ config, theme }: ProductGridProps) {
@@ -14,12 +25,34 @@ export function StorefrontProductGrid({ config, theme }: ProductGridProps) {
                 <h2 className="mb-6 text-2xl font-semibold" style={{ color: theme.primaryColor }}>Featured Products</h2>
                 <div className={`grid grid-cols-1 gap-6 ${gridClass}`}>
                     {sampleProducts.map((product) => (
-                        <article key={product.id} data-testid="storefront-product-card" className="group">
-                            <div className="aspect-square overflow-hidden rounded-md bg-neutral-100">
-                                <img src={product.image} alt={product.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                        <article key={product.id} data-testid="storefront-product-card" className="group cursor-pointer">
+                            <div className="relative aspect-square overflow-hidden bg-neutral-100" style={{ borderRadius: 'var(--storefront-radius)' }}>
+                                <img
+                                    src={product.image}
+                                    alt={product.title}
+                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                                {product.badge && config.showBadges !== false && (
+                                    <span
+                                        className="absolute left-2 top-2 px-2 py-0.5 text-xs font-semibold text-white"
+                                        style={{ backgroundColor: theme.secondaryColor, borderRadius: 'var(--storefront-radius)' }}
+                                    >
+                                        {product.badge}
+                                    </span>
+                                )}
                             </div>
-                            <h3 className="mt-3 text-sm font-medium text-neutral-900">{product.title}</h3>
-                            <p className="mt-1 text-sm text-neutral-600">${product.price.toFixed(2)}</p>
+                            <div className="mt-3 space-y-1">
+                                {config.showRatings !== false && product.rating !== undefined && (
+                                    <div className="flex items-center gap-1.5">
+                                        <ProductStars rating={product.rating} />
+                                        {product.reviewCount !== undefined && (
+                                            <span className="text-xs text-neutral-500">({product.reviewCount})</span>
+                                        )}
+                                    </div>
+                                )}
+                                <h3 className="text-sm font-medium text-neutral-900">{product.title}</h3>
+                                <p className="text-sm font-semibold" style={{ color: theme.primaryColor }}>${product.price.toFixed(2)}</p>
+                            </div>
                         </article>
                     ))}
                 </div>
@@ -27,3 +60,4 @@ export function StorefrontProductGrid({ config, theme }: ProductGridProps) {
         </section>
     )
 }
+

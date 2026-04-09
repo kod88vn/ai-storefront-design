@@ -2,7 +2,7 @@
 
 ## Overview
 
-A monorepo containing two Next.js applications sharing a common rendering engine and type system. The **Studio** app is an AI-powered design tool where an agent proposes and applies storefront changes with human-in-the-loop approval. The **Web** app is the live storefront that always reflects the latest saved configuration.
+A Turborepo monorepo containing two Next.js applications sharing a common rendering engine and type system. The **Studio** app is an AI-powered design tool where an agent proposes and applies storefront changes with human-in-the-loop approval. The **Web** app is the live storefront that always reflects the latest saved configuration.
 
 ---
 
@@ -30,17 +30,17 @@ A monorepo containing two Next.js applications sharing a common rendering engine
 
 ## Shared Rendering Engine (`packages/storefront-components`)
 
-Single source of truth for all storefront UI. Both apps import from `@ai-storefront/storefront-components`. Neither app has its own copy of storefront components.
+Single source of truth for all storefront UI. Both apps import from `@ai-storefront/storefront-components`. Neither app maintains its own copy of storefront components.
 
 ```
 packages/storefront-components/src/
-├── storefront-preview.tsx   # Master renderer — takes StorefrontConfig, renders sorted sections
-├── navbar.tsx               # Mobile hamburger + desktop nav
-├── hero.tsx                 # 4 layout variants: split, centered, minimal, fullbleed
-├── product-grid.tsx         # Responsive grid (1 → 2 → 3/4 cols)
+├── storefront-preview.tsx   # Master renderer — applies theme CSS vars, renders ordered sections
+├── navbar.tsx               # 3 navStyle variants + hamburger mobile menu
+├── hero.tsx                 # 5 layout variants: split, centered, minimal, fullbleed, editorial
+├── product-grid.tsx         # Responsive grid with badge overlays and star ratings
 ├── categories.tsx           # Category grid (2 → 4 cols)
-├── extra-sections.tsx       # Switch-based per-section renderer (announcement-bar, benefits-bar,
-│                            #   featured-collection, testimonials, newsletter, trust-badges, brand-strip)
+├── extra-sections.tsx       # announcement-bar, benefits-bar, featured-collection,
+│                            # testimonials (grid/list/featured), newsletter, trust-badges, brand-strip
 ├── footer.tsx               # 4-column responsive footer
 └── data.ts                  # Sample products and categories
 ```
@@ -98,16 +98,61 @@ interface ThemeConfig {
   primaryColor: string;
   secondaryColor: string;
   borderRadius: "none" | "md" | "full";
-  fontFamily?: "sans" | "serif" | "mono";
+  navStyle?: "bordered" | "transparent" | "filled";
+  colorScheme?: "light" | "dark";
+  fontStyle?: "modern-sans" | "editorial-serif" | "mono-tech";
 }
 
 interface HeroConfig {
-  layout: "split" | "centered" | "minimal" | "fullbleed";
+  layout: "split" | "centered" | "minimal" | "fullbleed" | "editorial";
   title: string;
   subtitle: string;
   ctaText: string;
   ctaSecondaryText?: string;
   backgroundImage?: string;
+  badge?: string;           // eyebrow pill label above headline
+  textAlign?: "left" | "center";
+  overlayOpacity?: number;  // 0–1 for fullbleed/editorial overlay
+  ctaVariant?: "solid" | "outline" | "ghost";
+}
+```
+
+### Section data types
+
+Key section config interfaces (all in `packages/types/src/index.ts`):
+
+```typescript
+interface AnnouncementBarConfig {
+  text: string;
+  backgroundColor: string;
+  textColor: string;
+  scrolling?: boolean;   // marquee repeat for promotional bars
+  emoji?: string;        // prefix emoji for playful brands
+  link?: string | null;
+  dismissible?: boolean;
+}
+
+interface BenefitItem {
+  icon: "truck" | "shield" | "refresh" | "award" | "clock" | "leaf"
+      | "star" | "heart" | "check" | "zap" | "globe" | "tag";
+  label: string;
+  detail?: string;
+}
+
+interface TestimonialsConfig {
+  heading: string;
+  layout: "grid" | "carousel" | "list" | "featured";
+  showRatings?: boolean;
+  items: TestimonialItem[];
+}
+
+interface NewsletterConfig {
+  heading: string;
+  subtext: string;
+  placeholder?: string;
+  buttonText: string;
+  backgroundColor: string;
+  incentive?: string;    // e.g. "Get 10% off your first order"
 }
 ```
 
@@ -126,15 +171,23 @@ interface AgentPlan {
   description: string;
   layoutProposal: string;
   colorProposal: string;
+  navStyleProposal?: string;
+  colorSchemeProposal?: string;
   approved: boolean | null;
-  plannedChanges?: PlanChange[]; // Explicit per-change checklist
+  plannedChanges?: PlanChange[];
 }
 
 interface PlanFeedback {
   approved: boolean;
-  modifications?: string; // Synthesized from rejected changes + suggestion
-  userSuggestion?: string; // Raw free-text from the user
-  previousPlan?: { description; layoutProposal; colorProposal };
+  modifications?: string;
+  userSuggestion?: string;
+  previousPlan?: {
+    description: string;
+    layoutProposal: string;
+    colorProposal: string;
+    navStyleProposal?: string;
+    colorSchemeProposal?: string;
+  };
 }
 ```
 
@@ -149,12 +202,12 @@ interface PlanFeedback {
 │   Left Sidebar  │         Center Canvas          │  Right Sidebar   │
 │   (320px fixed) │         (flex-1 fluid)         │  (320px fixed)   │
 ├─────────────────┼────────────────────────────────┼──────────────────┤
-│ Vision URL input│  Viewport toolbar              │ Theme Panel      │
-│ Image drop zone │  ┌──────────────────────────┐  │ Layout Panel     │
-│ Skills list     │  │  StorefrontPreview       │  │ Content Panel    │
-│ Run AI button   │  │  (scaled iframe-style)   │  │                  │
-│ ─────────────── │  └──────────────────────────┘  │ [Save to Web]    │
-│ Execution trace │                                │                  │
+│ Vision URL input│  Viewport toolbar              │ Theme Panel ▾    │
+│ Image drop zone │  ┌──────────────────────────┐  │   (open by def.) │
+│ Skills list     │  │  StorefrontPreview       │  │ Containers ▸     │
+│ Run AI button   │  │  (scaled iframe-style)   │  │   (collapsed)    │
+│ ─────────────── │  └──────────────────────────┘  │                  │
+│ Execution trace │                                │ [Save to Web]    │
 │ HITL approval   │                                │                  │
 │ Applied summary │                                │                  │
 ├─────────────────┴────────────────────────────────┴──────────────────┤
@@ -171,27 +224,37 @@ apps/studio/
 │   ├── page.tsx                     # Renders <StudioLayout />
 │   ├── globals.css                  # Studio dark theme tokens + @source directives
 │   └── api/
-│       ├── mcp/route.ts             # MCP server endpoint
+│       ├── mcp/route.ts             # MCP server endpoint (3 tools: analyze_vision_input,
+│       │                            #   generate_theme, plan_layout)
 │       ├── orchestrate/route.ts     # SSE orchestrator stream
 │       ├── skills/route.ts          # Skill manifest loader
-│       └── store-config/route.ts   # GET/PUT — reads/writes apps/web/data/store-config.json
+│       └── store-config/route.ts    # GET/PUT — reads/writes apps/web/data/store-config.json
 │
 ├── components/studio/
 │   ├── studio-layout.tsx            # Three-pane shell
 │   ├── left-sidebar.tsx             # Orchestrator panel + HITL approval
 │   ├── right-sidebar.tsx            # Live editor panels + Save button
+│   │                                # Theme panel (open by default); Containers panel (collapsed by default)
+│   │                                # Component editor pane slides up from bottom when a component is selected
 │   ├── center-canvas.tsx            # Viewport scaler + StorefrontPreview
 │   └── audit-trail.tsx              # Collapsible JSON-RPC log
 │
 ├── hooks/
-│   └── use-orchestrator.ts         # SSE stream handler, resumeWithFeedback
+│   └── use-orchestrator.ts          # SSE stream handler, resumeWithFeedback
 │
 ├── lib/
-│   ├── store.ts                    # Zustand store (imports types from @ai-storefront/types)
+│   ├── store.ts                     # Zustand store
 │   └── design-studio/
-│       └── orchestrator.ts         # Agent orchestration logic
+│       └── orchestrator.ts          # Agent orchestration logic
 │
-└── lib/skills/*/SKILL.md           # AI skill definitions loaded at runtime
+└── lib/skills/                      # AI skill definitions loaded at runtime
+    ├── planner/SKILL.md             # Workflow orchestration (phases 1–3, brand archetypes)
+    ├── ui_extractor/SKILL.md        # Visual signal extraction from URLs/images
+    ├── theme_generator/SKILL.md     # ThemeConfig generation from design signals
+    ├── layout_planner/SKILL.md      # Hero variant + section order + hero micro-params
+    ├── section_composer/SKILL.md    # Section content population and brand archetype rules
+    ├── content_analyzer/SKILL.md    # Brand voice and copy analysis
+    └── conversion_optimizer/SKILL.md # Conversion playbooks by brand archetype
 ```
 
 ### State management (Zustand)
@@ -223,23 +286,145 @@ interface StudioStore {
 
 ---
 
-## HITL (Human-in-the-Loop) Flow
+## Skill System
 
-The agent loops until the user fully approves the plan.
+Skills are markdown files under `apps/studio/lib/skills/*/SKILL.md`. They are loaded from disk at runtime and embedded in the AI system prompt. No orchestrator code changes are needed when skills are added or updated.
+
+### Skill Inventory
+
+| Skill | Purpose |
+|---|---|
+| **planner** | Defines the three-phase workflow (Understand → Propose → Execute). Brand archetype → config inference rules. Embeds as the main workflow instruction in the system prompt. |
+| **ui_extractor** | Extracts `dominantStyle`, `navStyle`, `colorScheme`, `fontStyle`, `heroLayout`, section order from a URL or image. Maps to 10 brand archetypes. |
+| **theme_generator** | Maps `dominantStyle` + `targetAesthetic` to a full `ThemeConfig` including `navStyle`, `colorScheme`, `fontStyle`. 10 preset rows. |
+| **layout_planner** | Selects hero variant, produces `heroBadge`, `heroTextAlign`, `heroCtaVariant`, `heroOverlayOpacity`. 15-row category × style decision matrix. |
+| **section_composer** | Populates section data payloads. Defines 5 archetype composition guides (dark-luxury, organic, bold-playful, editorial, health). |
+| **content_analyzer** | Analyzes copy tone and produces hero title/subtitle/badge/CTA text. Tone × copy style table covering 5 voice types. |
+| **conversion_optimizer** | Conversion playbooks by brand archetype — which sections, testimonial layouts, newsletter incentives, and trust badge placements maximize purchase intent. |
+
+### Workflow Phases (driven by `planner/SKILL.md`)
+
+The planner skill defines three phases:
+
+1. **Understand** — call `analyze_vision_input` (if vision source provided) → `generate_theme` → `plan_layout`
+2. **Propose (HITL gate)** — call `plan_feedback` with a rich proposal. Stream stops. Client resumes after user responds.
+3. **Execute** — after approved, call `apply_config_update` with all computed values in a single call.
+
+The orchestrator embeds `planner/SKILL.md` verbatim in the system prompt. All other skills are listed by name + purpose only. The AI decides which MCP tools to call and in what order based on the planner instructions.
+
+---
+
+## Orchestrator (`apps/studio/lib/design-studio/orchestrator.ts`)
+
+A stateless async generator that:
+
+1. Loads all SKILL.md files from disk
+2. Discovers MCP tools via `tools/list` JSON-RPC call
+3. Builds the system prompt: planner skill (full content) + other skills (name + purpose) + MCP tool schemas + current config
+4. Runs a multi-turn `generateText` loop (AI SDK v6)
+5. Intercepts `plan_feedback` tool calls → emits `plan_description` SSE event → stops the stream
+6. Intercepts `apply_config_update` → emits `config_update` SSE event
+7. Forwards all other tool calls to the MCP endpoint dynamically
+
+### Dynamic MCP tool registration
+
+MCP tools are registered at runtime from the `tools/list` response — the orchestrator has **no hardcoded tool schemas**. New tools added to the MCP server are automatically available without orchestrator changes:
+
+```typescript
+const dynamicMcpTools = Object.fromEntries(
+  mcpTools.map((t) => [
+    t.name,
+    tool({
+      description: `${t.description}\n\nSchema: ${JSON.stringify(t.inputSchema)}`,
+      inputSchema: z.record(z.string(), z.unknown()),
+    }),
+  ]),
+);
+```
+
+### Internal tools (handled by orchestrator directly, not forwarded to MCP)
+
+| Tool | Schema key additions vs. previous |
+|---|---|
+| `plan_feedback` | + `navStyleProposal`, + `colorSchemeProposal` |
+| `apply_config_update` | `themeChanges` now includes `navStyle`, `colorScheme`, `fontStyle`; `heroChanges` now includes `badge`, `textAlign`, `ctaVariant`, `overlayOpacity`, `ctaText`, `ctaSecondaryText`; + `enableSections`, `disableSections`, `sectionData` |
+
+---
+
+## MCP Server (`apps/studio/app/api/mcp/route.ts`)
+
+JSON-RPC 2.0 server implementing 3 tools:
+
+### `analyze_vision_input`
+
+Extracts design signals from a URL or description. Detects 10 brand archetypes from keyword patterns and returns:
+
+```json
+{
+  "primaryColors": ["#hex"],
+  "fontStyle": "modern-sans | editorial-serif | mono-tech",
+  "layoutType": "fullbleed | editorial | centered | split | minimal",
+  "borderRadius": "none | md | full",
+  "dominantStyle": "dark-luxury | organic | editorial | bold-playful | clean | earthy | maximalist | minimalist | mission-driven | tech-precision",
+  "colorScheme": "light | dark",
+  "navStyle": "bordered | transparent | filled",
+  "targetAesthetic": "string"
+}
+```
+
+### `generate_theme`
+
+Maps `dominantStyle` + optional `targetAesthetic` / `colorScheme` / `navStyle` to a full theme preset. 10 presets keyed by `dominantStyle`:
+
+| dominantStyle | primaryColor | secondaryColor | radius | navStyle | scheme | fontStyle |
+|---|---|---|---|---|---|---|
+| dark-luxury | `#0a0a0a` | `#c9a84c` | none | transparent | dark | modern-sans |
+| organic | `#2d4a22` | `#7cb87a` | md | bordered | light | modern-sans |
+| editorial | `#1a1a1a` | `#e8b84b` | none | bordered | light | editorial-serif |
+| bold-playful | `#1a1a1a` | `#f97316` | full | bordered | light | modern-sans |
+| clean | `#0f4c35` | `#22c55e` | md | bordered | light | modern-sans |
+| earthy | `#3d2b1f` | `#a16207` | md | bordered | light | modern-sans |
+| minimalist | `#111827` | `#6366f1` | none | bordered | light | modern-sans |
+| mission-driven | `#1e3a5f` | `#0ea5e9` | md | filled | light | editorial-serif |
+| tech-precision | `#0f172a` | `#3b82f6` | none | transparent | dark | mono-tech |
+
+### `plan_layout`
+
+Returns hero variant and all micro-parameters:
+
+```json
+{
+  "heroVariant": "split | centered | minimal | fullbleed | editorial",
+  "heroBadge": "string | null",
+  "heroTextAlign": "left | center",
+  "heroCtaVariant": "solid | outline | ghost",
+  "heroOverlayOpacity": 0.0,
+  "sectionOrder": ["hero", "benefits-bar", "product-grid", "..."],
+  "productGridColumns": 3
+}
+```
+
+---
+
+## HITL (Human-in-the-Loop) Flow
 
 ```
 1. User submits goal (URL or free text + optional image)
         │
         ▼
-2. Agent streams SSE events → plan_description event carries AgentPlan
+2. Orchestrator runs Phase 1 — calls analyze_vision_input → generate_theme → plan_layout
         │
         ▼
-3. InlinePlanApproval renders in left sidebar
+3. Orchestrator calls plan_feedback → emits plan_description SSE event → stream stops
+        │
+        ▼
+4. InlinePlanApproval renders in left sidebar:
    ┌──────────────────────────────────────────┐
    │ [description text]                       │
    │                                          │
    │ ☑ Color & Theme — "<colorProposal>"      │
-   │ ☑ Layout & Structure — "<layoutProposal>"│
+   │ ☑ Layout — "<layoutProposal>"            │
+   │ ☑ NavStyle — "<navStyleProposal>"        │
    │   (or explicit PlanChange[] items)       │
    │                                          │
    │ Add your own idea: [textarea]            │
@@ -247,41 +432,57 @@ The agent loops until the user fully approves the plan.
    │ [Approve All]  [Cancel]                  │
    └──────────────────────────────────────────┘
         │
-        ├─ All checked, no suggestion → approved: true → agent applies changes → DONE
+        ├─ Approved → agent calls apply_config_update → config_update SSE → DONE
         │
-        └─ Any unchecked OR has suggestion → approved: false
-              modifications = "Approved: X. Rejected: Y. Also: <suggestion>"
-              → resumeWithFeedback() → re-runs orchestrator with PlanFeedback
-              → loop repeats from step 2
+        └─ Rejected / modified → approved: false
+              modifications = synthesized from rejected items + suggestion
+              → resumeWithFeedback() → orchestrator re-runs from Phase 2 (Revise)
+              → loop repeats
 ```
 
-### Feedback composition
-
-`resumeWithFeedback` embeds the previous plan in `PlanFeedback.previousPlan` so the AI has full revision context on re-runs.
+`resumeWithFeedback` embeds the previous plan in `PlanFeedback.previousPlan` (including `navStyleProposal` and `colorSchemeProposal`) so the AI has full revision context on stateless re-runs.
 
 ---
 
 ## AI Stack
 
-| Layer         | Technology                                               |
-| ------------- | -------------------------------------------------------- |
-| LLM provider  | xAI Grok via `@ai-sdk/xai`                               |
-| AI SDK        | Vercel AI SDK v6 (`ai@6.0.152`)                          |
-| Transport     | Server-Sent Events (SSE) at `/api/orchestrate`           |
-| Tool protocol | MCP server at `/api/mcp`                                 |
-| Skill loading | `lib/skills/*/SKILL.md` — markdown files read at runtime |
+| Layer | Technology |
+|---|---|
+| LLM provider | xAI Grok via `@ai-sdk/xai` |
+| AI SDK | Vercel AI SDK v6 (`ai@6.0.152`) |
+| Transport | Server-Sent Events (SSE) at `/api/orchestrate` |
+| Tool protocol | MCP server at `/api/mcp` (JSON-RPC 2.0) |
+| Skill loading | `lib/skills/*/SKILL.md` — read from disk at runtime |
 
 ### SSE event types
 
 ```typescript
 type OrchestratorEvent =
-  | { type: "progress"; agentStep: AgentStep }
-  | { type: "audit"; entry: AuditLogEntry }
+  | { type: "progress"; agentStep: AgentStep; message: string }
+  | { type: "audit"; entry: Omit<AuditLogEntry, "id" | "timestamp"> }
   | { type: "plan_description"; plan: Omit<AgentPlan, "approved"> }
   | { type: "config_update"; configUpdate: OrchestratorConfigUpdate }
-  | { type: "complete" }
+  | { type: "complete"; agentStep: "complete" }
   | { type: "error"; error: string };
 ```
+
+---
+
+## Brand Archetype System
+
+The skill system understands 10 brand archetypes. Each maps to a full config combination:
+
+| Archetype | dominantStyle | navStyle | colorScheme | heroLayout | fontStyle | borderRadius |
+|---|---|---|---|---|---|---|
+| Dark luxury (Master & Dynamic) | dark-luxury | transparent | dark | fullbleed | modern-sans | none |
+| Organic/natural (Rocky Mountain Soap) | organic | bordered | light | split | modern-sans | md |
+| Editorial/artisan (Holstee) | editorial | bordered | light | editorial | editorial-serif | none |
+| Bold/playful (Outdoor Voices) | bold-playful | bordered | light | centered | modern-sans | full |
+| Health/clinical (Kettle & Fire) | clean | bordered | light | centered | modern-sans | md |
+| Earthy/rustic (Dr. Squatch) | earthy | bordered | light | split | modern-sans | md |
+| Minimal/modern (Kit and Ace) | minimalist | bordered | light | minimal | modern-sans | none |
+| Mission/cause (United By Blue) | mission-driven | filled | light | fullbleed | editorial-serif | md |
+| Tech/precision (hardware stores) | tech-precision | transparent | dark | editorial | mono-tech | none |
 
 ---
 
@@ -292,7 +493,7 @@ Studio edits config in Zustand (in-memory)
         │
         ├── Agent completes → use-orchestrator fires PUT /api/store-config (non-blocking)
         │
-        └── User clicks "Save to Web" in right sidebar → PUT /api/store-config
+        └── User clicks "Save to Web" → PUT /api/store-config
                 │
                 ▼
         apps/studio/app/api/store-config/route.ts
@@ -315,13 +516,13 @@ Minimal Next.js app. No studio UI — purely a storefront renderer.
 ```
 apps/web/
 ├── app/
-│   ├── page.tsx                  # force-dynamic, reads store-config.json, renders StorefrontPreview
-│   ├── globals.css               # Tailwind import + @source directives
-│   └── api/store-config/route.ts # GET/PUT for storefront config (used by external consumers)
+│   ├── page.tsx                   # force-dynamic, reads store-config.json, renders StorefrontPreview
+│   ├── globals.css                # Tailwind import + @source directives
+│   └── api/store-config/route.ts  # GET/PUT for storefront config
 ├── lib/
-│   └── store-config.ts           # readStoreConfig() / writeStoreConfig() helpers
+│   └── store-config.ts            # readStoreConfig() / writeStoreConfig() helpers
 └── data/
-    └── store-config.json         # Source of truth for live storefront config
+    └── store-config.json          # Source of truth for live storefront config
 ```
 
 ---
@@ -331,10 +532,10 @@ apps/web/
 Center canvas scales the storefront preview to simulate device widths.
 
 | Viewport | Simulated width |
-| -------- | --------------- |
-| Desktop  | 1440px          |
-| Tablet   | 768px           |
-| Mobile   | 375px           |
+|---|---|
+| Desktop | 1440px |
+| Tablet | 768px |
+| Mobile | 375px |
 
 The canvas uses CSS `transform: scale()` to fit the simulated width into the available panel width.
 
@@ -342,13 +543,13 @@ The canvas uses CSS `transform: scale()` to fit the simulated width into the ava
 
 ## Audit Trail
 
-Every state change is logged. Format follows JSON-RPC method conventions.
+Every state change and tool call is logged in JSON-RPC method convention format.
 
 ```typescript
 interface AuditLogEntry {
   id: string;
   timestamp: Date;
-  method: string; // e.g. "agent/approvePlan", "config/updateTheme"
+  method: string; // e.g. "tools/call", "tools/result", "skills/load"
   params: Record<string, unknown>;
   result?: unknown;
 }
@@ -364,301 +565,16 @@ The audit trail panel is collapsible and scrollable, pinned to the bottom of the
 
 2. **Config-driven components** — All storefront components are pure functions of `StorefrontConfig`. No component manages its own persistent state.
 
-3. **SSE over WebSocket** — One-directional agent → client event stream keeps the server stateless between requests.
+3. **Skill-driven workflow** — The agent's workflow phases, brand archetype mappings, and decision rules live in SKILL.md files, not in the orchestrator. Adding or changing workflow behavior requires only editing a markdown file.
 
-4. **HITL loop** — The agent never applies changes without approval. Partial approvals and free-text suggestions flow back as `PlanFeedback` and trigger a new orchestrator run with full revision context.
+4. **Dynamic MCP tool registration** — The orchestrator registers MCP tools at runtime from `tools/list`. New tools are available immediately without any orchestrator code changes.
 
-5. **File-based persistence** — `store-config.json` is intentionally simple. No database dependency for the config store.
+5. **SSE over WebSocket** — One-directional agent → client event stream keeps the server stateless between requests.
 
-6. **Mobile-first storefront, desktop-only studio** — Storefront components use responsive Tailwind classes. The studio UI assumes a wide desktop viewport and is not designed for mobile use.
+6. **HITL loop** — The agent never applies changes without approval. Partial approvals and free-text suggestions flow back as `PlanFeedback` with the previous proposal embedded, triggering a revision loop.
 
-7. **Dark studio, light storefront** — The studio shell uses a zinc-950 dark theme. The storefront preview renders in its own light context driven by `StorefrontConfig.theme`.
+7. **File-based persistence** — `store-config.json` is intentionally simple. No database dependency for the config store.
 
-## Overview
+8. **Dark studio, light storefront** — The studio shell uses a zinc-950 dark theme. The storefront preview renders in its own context driven by `ThemeConfig.colorScheme`.
 
-A state-of-the-art AI-powered storefront design studio with real-time preview and agentic workflows. The application follows a three-pane layout pattern optimized for design tool workflows.
-
----
-
-## System Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Studio Layout Shell                                │
-├──────────────────┬────────────────────────────────┬─────────────────────────┤
-│   Left Sidebar   │        Center Canvas           │     Right Sidebar       │
-│   (320px fixed)  │       (flex-1 fluid)           │     (380px fixed)       │
-├──────────────────┼────────────────────────────────┼─────────────────────────┤
-│                  │                                │                         │
-│  - Vision Input  │  ┌────────────────────────┐   │  - Theme Panel          │
-│  - Skill Loader  │  │   Viewport Toolbar     │   │  - Layout Panel         │
-│  - AI Trigger    │  ├────────────────────────┤   │  - Content Panel        │
-│  - Agent Status  │  │                        │   │  - Component Editing    │
-│                  │  │   Storefront Preview   │   │                         │
-│                  │  │   (iframe-style)       │   │                         │
-│                  │  │                        │   │                         │
-│                  │  └────────────────────────┘   │                         │
-│                  │                                │                         │
-├──────────────────┴────────────────────────────────┴─────────────────────────┤
-│                         Audit Trail (Collapsible)                           │
-│                    JSON-RPC style message stream                            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Directory Structure
-
-```
-├── app/
-│   ├── globals.css          # Dark theme tokens (zinc-950 base)
-│   ├── layout.tsx           # Root layout with dark mode
-│   └── page.tsx             # Entry point
-│
-├── components/
-│   ├── studio/
-│   │   ├── studio-layout.tsx    # Three-pane shell
-│   │   ├── left-sidebar.tsx     # Orchestrator panel
-│   │   ├── right-sidebar.tsx    # CMS/editing panel
-│   │   ├── center-canvas.tsx    # Preview container
-│   │   ├── plan-approval.tsx    # HITL approval card
-│   │   └── audit-trail.tsx      # Action log stream
-│   │
-│   └── storefront/
-│       ├── storefront-preview.tsx  # Main preview wrapper
-│       ├── navbar.tsx              # Store navigation
-│       ├── hero.tsx                # Hero section (3 variants)
-│       ├── product-grid.tsx        # Product cards with skeletons
-│       ├── categories.tsx          # Category showcase
-│       └── footer.tsx              # Store footer
-│
-└── lib/
-    ├── types.ts             # TypeScript interfaces
-    ├── store.ts             # Zustand state management
-    ├── mock-db.ts           # Mock product/category data
-    └── utils.ts             # Utility functions
-```
-
----
-
-## State Management
-
-### Zustand Store (`lib/store.ts`)
-
-Single global store managing all application state:
-
-```typescript
-interface StudioStore {
-  // Theme Configuration
-  theme: ThemeConfig;
-  setTheme: (theme: Partial<ThemeConfig>) => void;
-
-  // Layout Management
-  layout: LayoutConfig;
-  setLayout: (layout: Partial<LayoutConfig>) => void;
-  reorderSections: (from: number, to: number) => void;
-
-  // Content Management
-  content: ContentConfig;
-  setContent: (content: Partial<ContentConfig>) => void;
-
-  // Viewport Control
-  viewport: "desktop" | "tablet" | "mobile";
-  setViewport: (viewport: string) => void;
-
-  // Agentic State
-  agentState: AgentState;
-  setAgentState: (state: Partial<AgentState>) => void;
-  startAgentLoop: () => void;
-  approveStep: () => void;
-  rejectStep: () => void;
-
-  // Selection State
-  selectedComponent: string | null;
-  setSelectedComponent: (id: string | null) => void;
-
-  // Audit Trail
-  auditLog: AuditEntry[];
-  addAuditEntry: (entry: Omit<AuditEntry, "id" | "timestamp">) => void;
-}
-```
-
-### State Flow
-
-```
-User Action → Store Update → Component Re-render → Audit Log Entry
-     ↓
-Agent Trigger → Planning Phase → HITL Approval → Execution → Preview Update
-```
-
----
-
-## Component Architecture
-
-### Storefront Components
-
-All storefront components are **configuration-driven** and receive their data from the Zustand store:
-
-| Component     | Props Source                         | Variants                 |
-| ------------- | ------------------------------------ | ------------------------ |
-| `Navbar`      | `content.storeName`, `theme`         | Standard                 |
-| `Hero`        | `content.hero`, `layout.heroVariant` | centered, split, minimal |
-| `ProductGrid` | `mock-db.products`, `theme`          | With skeleton loading    |
-| `Categories`  | `mock-db.categories`                 | Grid layout              |
-| `Footer`      | `content.storeName`                  | Standard                 |
-
-### Section Reordering
-
-The layout supports drag-and-drop style reordering via the `sectionOrder` array:
-
-```typescript
-sectionOrder: ["hero", "products", "categories", "footer"];
-```
-
-Components render in the order specified, enabling non-destructive layout changes.
-
----
-
-## Agentic Workflow
-
-### Agent States
-
-```typescript
-type AgentStatus =
-  | "idle"
-  | "planning"
-  | "awaiting_approval"
-  | "executing"
-  | "complete";
-```
-
-### Workflow Sequence
-
-```
-1. IDLE
-   └── User clicks "Simulate AI Design"
-
-2. PLANNING
-   └── Agent analyzes current state
-   └── Generates proposed changes
-   └── Audit: "Agent planning design changes..."
-
-3. AWAITING_APPROVAL (HITL)
-   └── Plan card overlay appears
-   └── Shows proposed changes with diff preview
-   └── User can Approve or Reject
-
-4. EXECUTING
-   └── Sequential step execution
-   └── Each step updates store
-   └── Real-time preview updates
-   └── Audit: Step-by-step logging
-
-5. COMPLETE
-   └── All changes applied
-   └── Agent returns to idle
-```
-
-### Plan Approval Card
-
-The HITL interface shows:
-
-- Current step number and total
-- Action type (theme, layout, content)
-- Before/after comparison
-- Approve (green) / Reject (red) buttons
-
----
-
-## Theming System
-
-### Design Tokens
-
-```css
-/* Dark Studio Theme (zinc-950 base) */
---background: oklch(0.09 0 0); /* Near black */
---card: oklch(0.12 0 0); /* Elevated surfaces */
---border: oklch(0.22 0 0); /* Crisp borders */
---muted-foreground: oklch(0.6 0 0); /* Secondary text */
-```
-
-### Runtime Theme Config
-
-```typescript
-interface ThemeConfig {
-  primaryColor: string; // Brand color
-  backgroundColor: string; // Store background
-  textColor: string; // Body text
-  accentColor: string; // Highlights
-  borderRadius: "none" | "sm" | "md" | "lg" | "full";
-}
-```
-
-Theme changes propagate via CSS custom properties and Tailwind classes.
-
----
-
-## Viewport System
-
-Three viewport sizes with animated transitions:
-
-| Viewport | Width | Use Case           |
-| -------- | ----- | ------------------ |
-| Desktop  | 100%  | Full-width preview |
-| Tablet   | 768px | Tablet simulation  |
-| Mobile   | 375px | Phone simulation   |
-
-Transitions powered by Framer Motion for smooth resizing.
-
----
-
-## Audit Trail
-
-### Entry Structure
-
-```typescript
-interface AuditEntry {
-  id: string;
-  timestamp: Date;
-  type: "info" | "action" | "agent" | "error";
-  message: string;
-  details?: Record<string, unknown>;
-}
-```
-
-### Display Format
-
-JSON-RPC style with color-coded entries:
-
-- `info` (blue): System information
-- `action` (green): User actions
-- `agent` (amber): AI agent actions
-- `error` (red): Error states
-
----
-
-## Key Design Decisions
-
-1. **Single Store Pattern**: All state in one Zustand store for predictable updates and easy debugging.
-
-2. **Configuration-Driven Components**: Storefront components read from store, enabling non-destructive editing.
-
-3. **HITL by Default**: Agent changes require explicit approval before execution.
-
-4. **Audit Everything**: Every state change logs to the audit trail for transparency.
-
-5. **Dark Studio UI**: Professional dark theme (zinc-950) with high contrast for extended use.
-
-6. **Responsive Preview**: Live viewport switching without page reload.
-
----
-
-## Future Enhancements
-
-- [ ] Drag-and-drop section reordering
-- [ ] Undo/redo stack
-- [ ] Export to code
-- [ ] Real AI integration (replace mock agent)
-- [ ] Collaborative editing
-- [ ] Version history
-- [ ] Custom component injection
+9. **Mobile-first storefront, desktop-only studio** — Storefront components use responsive Tailwind classes. The studio UI assumes a wide desktop viewport.
