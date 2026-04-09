@@ -110,9 +110,9 @@ interface HeroConfig {
   ctaText: string;
   ctaSecondaryText?: string;
   backgroundImage?: string;
-  badge?: string;           // eyebrow pill label above headline
+  badge?: string; // eyebrow pill label above headline
   textAlign?: "left" | "center";
-  overlayOpacity?: number;  // 0–1 for fullbleed/editorial overlay
+  overlayOpacity?: number; // 0–1 for fullbleed/editorial overlay
   ctaVariant?: "solid" | "outline" | "ghost";
 }
 ```
@@ -126,15 +126,26 @@ interface AnnouncementBarConfig {
   text: string;
   backgroundColor: string;
   textColor: string;
-  scrolling?: boolean;   // marquee repeat for promotional bars
-  emoji?: string;        // prefix emoji for playful brands
+  scrolling?: boolean; // marquee repeat for promotional bars
+  emoji?: string; // prefix emoji for playful brands
   link?: string | null;
   dismissible?: boolean;
 }
 
 interface BenefitItem {
-  icon: "truck" | "shield" | "refresh" | "award" | "clock" | "leaf"
-      | "star" | "heart" | "check" | "zap" | "globe" | "tag";
+  icon:
+    | "truck"
+    | "shield"
+    | "refresh"
+    | "award"
+    | "clock"
+    | "leaf"
+    | "star"
+    | "heart"
+    | "check"
+    | "zap"
+    | "globe"
+    | "tag";
   label: string;
   detail?: string;
 }
@@ -152,7 +163,7 @@ interface NewsletterConfig {
   placeholder?: string;
   buttonText: string;
   backgroundColor: string;
-  incentive?: string;    // e.g. "Get 10% off your first order"
+  incentive?: string; // e.g. "Get 10% off your first order"
 }
 ```
 
@@ -279,22 +290,22 @@ apps/studio/
 
 Every studio component is kept under ~200 lines. The refactoring split three monolithic files (613 / 488 / 410 lines) into 14 focused single-responsibility files:
 
-| File | Lines | Responsibility |
-|---|---|---|
-| `left-sidebar.tsx` | ~146 | Orchestration shell only |
-| `vision-input.tsx` | ~80 | URL + image drop zone |
-| `execution-trace.tsx` | ~50 | Step list UI |
-| `plan-approval.tsx` | ~190 | HITL approval card |
-| `applied-summary.tsx` | ~107 | Post-apply diff display |
-| `right-sidebar.tsx` | ~64 | Editor shell + Save button |
-| `theme-panel.tsx` | ~71 | Theme controls |
-| `containers-panel.tsx` | ~64 | Container list |
-| `container-node.tsx` | ~166 | Recursive tree node |
-| `container-layout-config.tsx` | ~122 | Layout mode picker |
-| `component-editor.tsx` | ~108 | Custom editor dispatch |
-| `prebuilt-editor.tsx` | ~185 | All prebuilt section editors |
-| `wysiwyg-editor.tsx` | ~60 | Rich text editor |
-| `advanced-section.tsx` | ~54 | Tailwind class manager |
+| File                          | Lines | Responsibility               |
+| ----------------------------- | ----- | ---------------------------- |
+| `left-sidebar.tsx`            | ~146  | Orchestration shell only     |
+| `vision-input.tsx`            | ~80   | URL + image drop zone        |
+| `execution-trace.tsx`         | ~50   | Step list UI                 |
+| `plan-approval.tsx`           | ~190  | HITL approval card           |
+| `applied-summary.tsx`         | ~107  | Post-apply diff display      |
+| `right-sidebar.tsx`           | ~64   | Editor shell + Save button   |
+| `theme-panel.tsx`             | ~71   | Theme controls               |
+| `containers-panel.tsx`        | ~64   | Container list               |
+| `container-node.tsx`          | ~166  | Recursive tree node          |
+| `container-layout-config.tsx` | ~122  | Layout mode picker           |
+| `component-editor.tsx`        | ~108  | Custom editor dispatch       |
+| `prebuilt-editor.tsx`         | ~185  | All prebuilt section editors |
+| `wysiwyg-editor.tsx`          | ~60   | Rich text editor             |
+| `advanced-section.tsx`        | ~54   | Tailwind class manager       |
 
 ### State management (Zustand)
 
@@ -331,15 +342,15 @@ Skills are markdown files under `apps/studio/lib/skills/*/SKILL.md`. They are lo
 
 ### Skill Inventory
 
-| Skill | Purpose |
-|---|---|
-| **planner** | Defines the three-phase workflow (Understand → Propose → Execute). Brand archetype → config inference rules. Embeds as the main workflow instruction in the system prompt. |
-| **ui_extractor** | Extracts `dominantStyle`, `navStyle`, `colorScheme`, `fontStyle`, `heroLayout`, section order from a URL or image. Maps to 10 brand archetypes. |
-| **theme_generator** | Maps `dominantStyle` + `targetAesthetic` to a full `ThemeConfig` including `navStyle`, `colorScheme`, `fontStyle`. 10 preset rows. |
-| **layout_planner** | Selects hero variant, produces `heroBadge`, `heroTextAlign`, `heroCtaVariant`, `heroOverlayOpacity`. 15-row category × style decision matrix. |
-| **section_composer** | Populates section data payloads. Defines 5 archetype composition guides (dark-luxury, organic, bold-playful, editorial, health). |
-| **content_analyzer** | Analyzes copy tone and produces hero title/subtitle/badge/CTA text. Tone × copy style table covering 5 voice types. |
-| **conversion_optimizer** | Conversion playbooks by brand archetype — which sections, testimonial layouts, newsletter incentives, and trust badge placements maximize purchase intent. |
+| Skill                    | Purpose                                                                                                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **planner**              | Defines the three-phase workflow (Understand → Propose → Execute). Brand archetype → config inference rules. Embeds as the main workflow instruction in the system prompt. |
+| **ui_extractor**         | Extracts `dominantStyle`, `navStyle`, `colorScheme`, `fontStyle`, `heroLayout`, section order from a URL or image. Maps to 10 brand archetypes.                            |
+| **theme_generator**      | Maps `dominantStyle` + `targetAesthetic` to a full `ThemeConfig` including `navStyle`, `colorScheme`, `fontStyle`. 10 preset rows.                                         |
+| **layout_planner**       | Selects hero variant, produces `heroBadge`, `heroTextAlign`, `heroCtaVariant`, `heroOverlayOpacity`. 15-row category × style decision matrix.                              |
+| **section_composer**     | Populates section data payloads. Defines 5 archetype composition guides (dark-luxury, organic, bold-playful, editorial, health).                                           |
+| **content_analyzer**     | Analyzes copy tone and produces hero title/subtitle/badge/CTA text. Tone × copy style table covering 5 voice types.                                                        |
+| **conversion_optimizer** | Conversion playbooks by brand archetype — which sections, testimonial layouts, newsletter incentives, and trust badge placements maximize purchase intent.                 |
 
 ### Workflow Phases (driven by `planner/SKILL.md`)
 
@@ -383,9 +394,9 @@ const dynamicMcpTools = Object.fromEntries(
 
 ### Internal tools (handled by orchestrator directly, not forwarded to MCP)
 
-| Tool | Schema key additions vs. previous |
-|---|---|
-| `plan_feedback` | + `navStyleProposal`, + `colorSchemeProposal` |
+| Tool                  | Schema key additions vs. previous                                                                                                                                                                                                        |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plan_feedback`       | + `navStyleProposal`, + `colorSchemeProposal`                                                                                                                                                                                            |
 | `apply_config_update` | `themeChanges` now includes `navStyle`, `colorScheme`, `fontStyle`; `heroChanges` now includes `badge`, `textAlign`, `ctaVariant`, `overlayOpacity`, `ctaText`, `ctaSecondaryText`; + `enableSections`, `disableSections`, `sectionData` |
 
 ---
@@ -415,17 +426,17 @@ Extracts design signals from a URL or description. Detects 10 brand archetypes f
 
 Maps `dominantStyle` + optional `targetAesthetic` / `colorScheme` / `navStyle` to a full theme preset. 10 presets keyed by `dominantStyle`:
 
-| dominantStyle | primaryColor | secondaryColor | radius | navStyle | scheme | fontStyle |
-|---|---|---|---|---|---|---|
-| dark-luxury | `#0a0a0a` | `#c9a84c` | none | transparent | dark | modern-sans |
-| organic | `#2d4a22` | `#7cb87a` | md | bordered | light | modern-sans |
-| editorial | `#1a1a1a` | `#e8b84b` | none | bordered | light | editorial-serif |
-| bold-playful | `#1a1a1a` | `#f97316` | full | bordered | light | modern-sans |
-| clean | `#0f4c35` | `#22c55e` | md | bordered | light | modern-sans |
-| earthy | `#3d2b1f` | `#a16207` | md | bordered | light | modern-sans |
-| minimalist | `#111827` | `#6366f1` | none | bordered | light | modern-sans |
-| mission-driven | `#1e3a5f` | `#0ea5e9` | md | filled | light | editorial-serif |
-| tech-precision | `#0f172a` | `#3b82f6` | none | transparent | dark | mono-tech |
+| dominantStyle  | primaryColor | secondaryColor | radius | navStyle    | scheme | fontStyle       |
+| -------------- | ------------ | -------------- | ------ | ----------- | ------ | --------------- |
+| dark-luxury    | `#0a0a0a`    | `#c9a84c`      | none   | transparent | dark   | modern-sans     |
+| organic        | `#2d4a22`    | `#7cb87a`      | md     | bordered    | light  | modern-sans     |
+| editorial      | `#1a1a1a`    | `#e8b84b`      | none   | bordered    | light  | editorial-serif |
+| bold-playful   | `#1a1a1a`    | `#f97316`      | full   | bordered    | light  | modern-sans     |
+| clean          | `#0f4c35`    | `#22c55e`      | md     | bordered    | light  | modern-sans     |
+| earthy         | `#3d2b1f`    | `#a16207`      | md     | bordered    | light  | modern-sans     |
+| minimalist     | `#111827`    | `#6366f1`      | none   | bordered    | light  | modern-sans     |
+| mission-driven | `#1e3a5f`    | `#0ea5e9`      | md     | filled      | light  | editorial-serif |
+| tech-precision | `#0f172a`    | `#3b82f6`      | none   | transparent | dark   | mono-tech       |
 
 ### `plan_layout`
 
@@ -485,12 +496,12 @@ Returns hero variant and all micro-parameters:
 
 ## AI Stack
 
-| Layer | Technology |
-|---|---|
-| LLM provider | xAI Grok via `@ai-sdk/xai` |
-| AI SDK | Vercel AI SDK v6 (`ai@6.0.152`) |
-| Transport | Server-Sent Events (SSE) at `/api/orchestrate` |
-| Tool protocol | MCP server at `/api/mcp` (JSON-RPC 2.0) |
+| Layer         | Technology                                          |
+| ------------- | --------------------------------------------------- |
+| LLM provider  | xAI Grok via `@ai-sdk/xai`                          |
+| AI SDK        | Vercel AI SDK v6 (`ai@6.0.152`)                     |
+| Transport     | Server-Sent Events (SSE) at `/api/orchestrate`      |
+| Tool protocol | MCP server at `/api/mcp` (JSON-RPC 2.0)             |
 | Skill loading | `lib/skills/*/SKILL.md` — read from disk at runtime |
 
 ### SSE event types
@@ -511,17 +522,17 @@ type OrchestratorEvent =
 
 The skill system understands 10 brand archetypes. Each maps to a full config combination:
 
-| Archetype | dominantStyle | navStyle | colorScheme | heroLayout | fontStyle | borderRadius |
-|---|---|---|---|---|---|---|
-| Dark luxury (Master & Dynamic) | dark-luxury | transparent | dark | fullbleed | modern-sans | none |
-| Organic/natural (Rocky Mountain Soap) | organic | bordered | light | split | modern-sans | md |
-| Editorial/artisan (Holstee) | editorial | bordered | light | editorial | editorial-serif | none |
-| Bold/playful (Outdoor Voices) | bold-playful | bordered | light | centered | modern-sans | full |
-| Health/clinical (Kettle & Fire) | clean | bordered | light | centered | modern-sans | md |
-| Earthy/rustic (Dr. Squatch) | earthy | bordered | light | split | modern-sans | md |
-| Minimal/modern (Kit and Ace) | minimalist | bordered | light | minimal | modern-sans | none |
-| Mission/cause (United By Blue) | mission-driven | filled | light | fullbleed | editorial-serif | md |
-| Tech/precision (hardware stores) | tech-precision | transparent | dark | editorial | mono-tech | none |
+| Archetype                             | dominantStyle  | navStyle    | colorScheme | heroLayout | fontStyle       | borderRadius |
+| ------------------------------------- | -------------- | ----------- | ----------- | ---------- | --------------- | ------------ |
+| Dark luxury (Master & Dynamic)        | dark-luxury    | transparent | dark        | fullbleed  | modern-sans     | none         |
+| Organic/natural (Rocky Mountain Soap) | organic        | bordered    | light       | split      | modern-sans     | md           |
+| Editorial/artisan (Holstee)           | editorial      | bordered    | light       | editorial  | editorial-serif | none         |
+| Bold/playful (Outdoor Voices)         | bold-playful   | bordered    | light       | centered   | modern-sans     | full         |
+| Health/clinical (Kettle & Fire)       | clean          | bordered    | light       | centered   | modern-sans     | md           |
+| Earthy/rustic (Dr. Squatch)           | earthy         | bordered    | light       | split      | modern-sans     | md           |
+| Minimal/modern (Kit and Ace)          | minimalist     | bordered    | light       | minimal    | modern-sans     | none         |
+| Mission/cause (United By Blue)        | mission-driven | filled      | light       | fullbleed  | editorial-serif | md           |
+| Tech/precision (hardware stores)      | tech-precision | transparent | dark        | editorial  | mono-tech       | none         |
 
 ---
 
@@ -571,10 +582,10 @@ apps/web/
 Center canvas scales the storefront preview to simulate device widths.
 
 | Viewport | Simulated width |
-|---|---|
-| Desktop | 1440px |
-| Tablet | 768px |
-| Mobile | 375px |
+| -------- | --------------- |
+| Desktop  | 1440px          |
+| Tablet   | 768px           |
+| Mobile   | 375px           |
 
 The canvas uses CSS `transform: scale()` to fit the simulated width into the available panel width.
 
