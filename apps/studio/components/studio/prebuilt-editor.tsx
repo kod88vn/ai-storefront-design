@@ -43,7 +43,7 @@ function HeroEditor() {
 }
 
 function ProductGridEditor() {
-    const { config, setProductGridColumns } = useStudioStore()
+    const { config, setProductGridColumns, updateProductGrid } = useStudioStore()
     const pg = config.productGrid
     return (
         <div className="space-y-3">
@@ -53,8 +53,7 @@ function ProductGridEditor() {
                 </select>
             </Field>
             <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
-                <input type="checkbox" checked={pg.showRatings ?? false} onChange={() => useStudioStore.getState().updateSectionData({})} className="accent-primary h-3.5 w-3.5" />
-                Show Ratings
+                <input type="checkbox" checked={pg.showRatings ?? false} onChange={(e) => updateProductGrid({ showRatings: e.target.checked })} className="accent-primary h-3.5 w-3.5" />
             </label>
         </div>
     )

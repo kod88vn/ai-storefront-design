@@ -11,6 +11,7 @@ import type {
   Viewport,
   ThemeConfig,
   HeroConfig,
+  ProductGridConfig,
   LayoutSection,
   LoadedSkill,
   OrchestratorContext,
@@ -117,6 +118,7 @@ interface StudioState {
 
   // Product Grid
   setProductGridColumns: (columns: 2 | 3 | 4) => void;
+  updateProductGrid: (patch: Partial<ProductGridConfig>) => void;
 
   // Layout Sections
   reorderSections: (sections: LayoutSection[]) => void;
@@ -275,12 +277,25 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     set((state) => ({
       config: {
         ...state.config,
-        productGrid: { columns },
+        productGrid: { ...state.config.productGrid, columns },
       },
     }));
     get().addAuditEntry({
       method: "productGrid/setColumns",
       params: { columns },
+    });
+  },
+
+  updateProductGrid: (patch) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        productGrid: { ...state.config.productGrid, ...patch },
+      },
+    }));
+    get().addAuditEntry({
+      method: "productGrid/update",
+      params: { changes: patch },
     });
   },
 
