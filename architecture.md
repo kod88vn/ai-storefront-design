@@ -97,10 +97,20 @@ interface StorefrontConfig {
 interface ThemeConfig {
   primaryColor: string;
   secondaryColor: string;
-  borderRadius: "none" | "md" | "full";
+  borderRadius: "none" | "sm" | "md" | "lg" | "xl" | "full";
   navStyle?: "bordered" | "transparent" | "filled";
   colorScheme?: "light" | "dark";
-  fontStyle?: "modern-sans" | "editorial-serif" | "mono-tech";
+  fontStyle?:
+    | "modern-sans"
+    | "editorial-serif"
+    | "mono-tech"
+    | "humanist"
+    | "geometric"
+    | "transitional"
+    | "slab-serif"
+    | "display"
+    | "rounded"
+    | "condensed";
 }
 
 interface HeroConfig {
@@ -199,6 +209,16 @@ interface PlanFeedback {
     navStyleProposal?: string;
     colorSchemeProposal?: string;
   };
+}
+
+interface AppliedSummary {
+  planDescription: string | null;
+  theme: { before: Partial<ThemeConfig>; after: Partial<ThemeConfig> } | null;
+  // Individual tracked fields surfaced in the Applied Changes panel:
+  //   primaryColor, secondaryColor, borderRadius, navStyle, colorScheme, fontStyle
+  hero: { before: Partial<HeroConfig>; after: Partial<HeroConfig> } | null;
+  productGridColumns: { before: number; after: number } | null;
+  sectionOrder: string[] | null; // final ordered section IDs after apply
 }
 ```
 
@@ -313,6 +333,7 @@ Every studio component is kept under ~200 lines. The refactoring split three mon
 // apps/studio/lib/store.ts
 interface StudioStore {
   config: StorefrontConfig; // Live config driving the canvas preview
+  containers: DesignerContainer[]; // What the studio canvas renders (separate from config.sections)
   visionUrl: string;
   agentStep: AgentStep; // idle | thinking | decomposing | executing | awaiting-approval | complete
   agentPlan: AgentPlan | null; // Set when agent proposes changes
@@ -331,8 +352,23 @@ interface StudioStore {
   disableSection(type: SectionType): void;
   toggleSection(id: string): void;
   updateSectionData(patch: Partial<StorefrontSectionData>): void;
+  // Atomic container update — updates containers AND syncs config.sections
+  reorderContainers(containers: DesignerContainer[]): void;
 }
 ```
+
+### Dual section data models
+
+The studio maintains two parallel representations of section layout that must be kept in sync:
+
+| Model             | Type                  | What uses it                                                     |
+| ----------------- | --------------------- | ---------------------------------------------------------------- |
+| `containers`      | `DesignerContainer[]` | Studio canvas (`center-canvas.tsx`) — what you see while editing |
+| `config.sections` | `LayoutSection[]`     | Web storefront preview + `StorefrontConfig` persistence          |
+
+`syncSectionsFromContainers` (store-internal) provides a **one-way** `containers → config.sections` sync. It runs automatically whenever `containers` changes (via `addContainer`, `removeContainer`, `reorderContainers`).
+
+When the orchestrator applies section changes (`enableSections`, `disableSections`, `sectionOrder`), the hook in `use-orchestrator.ts` **must** call `reorderContainers` — not `enableSection`/`reorderSections` — so that both models update atomically. Calling only the section-level actions leaves `containers` stale and the canvas unchanged.
 
 ---
 
@@ -340,17 +376,36 @@ interface StudioStore {
 
 Skills are markdown files under `apps/studio/lib/skills/*/SKILL.md`. They are loaded from disk at runtime and embedded in the AI system prompt. No orchestrator code changes are needed when skills are added or updated.
 
+### Tag-based loading
+
+Each SKILL.md declares a `## Tags` section. The orchestrator loads only skills whose tags match the current request:
+
+```markdown
+## Tags
+
+always
+```
+
+| Tag          | Loaded when                                                               |
+| ------------ | ------------------------------------------------------------------------- |
+| `always`     | Every request                                                             |
+| `vision`     | Request has `context.imageData` or `context.visionUrl`                    |
+| `content`    | Goal contains words like copy, content, message, voice, description       |
+| `conversion` | Goal contains words like convert, conversion, sale, checkout, cta, funnel |
+
+Skills with no `## Tags` section are always loaded (backwards-compatible).
+
 ### Skill Inventory
 
-| Skill                    | Purpose                                                                                                                                                                    |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **planner**              | Defines the three-phase workflow (Understand → Propose → Execute). Brand archetype → config inference rules. Embeds as the main workflow instruction in the system prompt. |
-| **ui_extractor**         | Extracts `dominantStyle`, `navStyle`, `colorScheme`, `fontStyle`, `heroLayout`, section order from a URL or image. Maps to 10 brand archetypes.                            |
-| **theme_generator**      | Maps `dominantStyle` + `targetAesthetic` to a full `ThemeConfig` including `navStyle`, `colorScheme`, `fontStyle`. 10 preset rows.                                         |
-| **layout_planner**       | Selects hero variant, produces `heroBadge`, `heroTextAlign`, `heroCtaVariant`, `heroOverlayOpacity`. 15-row category × style decision matrix.                              |
-| **section_composer**     | Populates section data payloads. Defines 5 archetype composition guides (dark-luxury, organic, bold-playful, editorial, health).                                           |
-| **content_analyzer**     | Analyzes copy tone and produces hero title/subtitle/badge/CTA text. Tone × copy style table covering 5 voice types.                                                        |
-| **conversion_optimizer** | Conversion playbooks by brand archetype — which sections, testimonial layouts, newsletter incentives, and trust badge placements maximize purchase intent.                 |
+| Skill                    | Tag          | Purpose                                                                                                                                                                    |
+| ------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **planner**              | `always`     | Defines the three-phase workflow (Understand → Propose → Execute). Brand archetype → config inference rules. Embeds as the main workflow instruction in the system prompt. |
+| **theme_generator**      | `always`     | Maps `dominantStyle` + `targetAesthetic` to a full `ThemeConfig` including `navStyle`, `colorScheme`, `fontStyle`. 10 preset rows.                                         |
+| **layout_planner**       | `always`     | Selects hero variant, produces `heroBadge`, `heroTextAlign`, `heroCtaVariant`, `heroOverlayOpacity`. 15-row category × style decision matrix.                              |
+| **section_composer**     | `always`     | Populates section data payloads. Defines 5 archetype composition guides (dark-luxury, organic, bold-playful, editorial, health).                                           |
+| **ui_extractor**         | `vision`     | Extracts `dominantStyle`, `navStyle`, `colorScheme`, `fontStyle`, `heroLayout`, section order from a URL or image. Maps to 10 brand archetypes.                            |
+| **content_analyzer**     | `content`    | Analyzes copy tone and produces hero title/subtitle/badge/CTA text. Tone × copy style table covering 5 voice types.                                                        |
+| **conversion_optimizer** | `conversion` | Conversion playbooks by brand archetype — which sections, testimonial layouts, newsletter incentives, and trust badge placements maximize purchase intent.                 |
 
 ### Workflow Phases (driven by `planner/SKILL.md`)
 
@@ -360,7 +415,14 @@ The planner skill defines three phases:
 2. **Propose (HITL gate)** — call `plan_feedback` with a rich proposal. Stream stops. Client resumes after user responds.
 3. **Execute** — after approved, call `apply_config_update` with all computed values in a single call.
 
-The orchestrator embeds `planner/SKILL.md` verbatim in the system prompt. All other skills are listed by name + purpose only. The AI decides which MCP tools to call and in what order based on the planner instructions.
+The orchestrator builds the system prompt with:
+
+- `planner/SKILL.md` verbatim as the main workflow instruction
+- All other loaded skills embedded in full under a `## Skill References` section (not just name + purpose)
+- Pre-computed vision tokens (if image supplied — see Vision Pipeline below)
+- MCP tool schemas and current `StorefrontConfig`
+
+The AI decides which MCP tools to call and in what order based on the planner instructions.
 
 ---
 
@@ -368,13 +430,35 @@ The orchestrator embeds `planner/SKILL.md` verbatim in the system prompt. All ot
 
 A stateless async generator that:
 
-1. Loads all SKILL.md files from disk
+1. Loads SKILL.md files from disk, filtered by tag for this request
 2. Discovers MCP tools via `tools/list` JSON-RPC call
-3. Builds the system prompt: planner skill (full content) + other skills (name + purpose) + MCP tool schemas + current config
-4. Runs a multi-turn `generateText` loop (AI SDK v6)
-5. Intercepts `plan_feedback` tool calls → emits `plan_description` SSE event → stops the stream
-6. Intercepts `apply_config_update` → emits `config_update` SSE event
-7. Forwards all other tool calls to the MCP endpoint dynamically
+3. **(If image supplied)** Runs vision pre-analysis with `grok-2-vision-1212` → extracts exact hex colors + design tokens
+4. Builds the system prompt: planner skill (full) + supporting skills (full, under `## Skill References`) + pre-computed vision tokens + MCP tool schemas + current config
+5. Runs a multi-turn `generateText` loop (AI SDK v6) using the primary model (`grok-3`)
+6. Intercepts `plan_feedback` tool calls → emits `plan_description` SSE event → stops the stream
+7. Intercepts `apply_config_update` → emits `config_update` SSE event
+8. Forwards all other tool calls to the MCP endpoint dynamically
+
+### Vision pipeline (two-step)
+
+`grok-3` (primary model) is text-only. When `context.imageData` is present, the orchestrator first calls `grok-2-vision-1212` to extract structured design tokens:
+
+```json
+{
+  "primaryColor": "#hex",
+  "secondaryColor": "#hex",
+  "borderRadius": "none|sm|md|lg|xl|full",
+  "fontStyle": "modern-sans|editorial-serif|...",
+  "navStyle": "bordered|transparent|filled",
+  "colorScheme": "light|dark",
+  "dominantStyle": "dark-luxury|organic|...",
+  "heroLayout": "split|centered|...",
+  "sectionOrder": ["hero", ...],
+  "targetAesthetic": "string"
+}
+```
+
+These tokens are injected into the system prompt under a `## Pre-Computed Design Tokens` heading. The planner skill instructs the AI to use these values directly (skipping the MCP `analyze_vision_input` call) so the exact extracted colors are preserved through to `apply_config_update`.
 
 ### Dynamic MCP tool registration
 
@@ -394,10 +478,10 @@ const dynamicMcpTools = Object.fromEntries(
 
 ### Internal tools (handled by orchestrator directly, not forwarded to MCP)
 
-| Tool                  | Schema key additions vs. previous                                                                                                                                                                                                        |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `plan_feedback`       | + `navStyleProposal`, + `colorSchemeProposal`                                                                                                                                                                                            |
-| `apply_config_update` | `themeChanges` now includes `navStyle`, `colorScheme`, `fontStyle`; `heroChanges` now includes `badge`, `textAlign`, `ctaVariant`, `overlayOpacity`, `ctaText`, `ctaSecondaryText`; + `enableSections`, `disableSections`, `sectionData` |
+| Tool                  | Schema key additions vs. previous                                                                                                                                                                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plan_feedback`       | + `navStyleProposal`, + `colorSchemeProposal`                                                                                                                                                                                                            |
+| `apply_config_update` | `themeChanges` now includes `navStyle`, `colorScheme`, `fontStyle`; `heroChanges` now includes `badge`, `textAlign`, `ctaVariant`, `overlayOpacity`, `ctaText`, `ctaSecondaryText`; + `enableSections`, `disableSections`, `sectionOrder`, `sectionData` |
 
 ---
 
@@ -437,6 +521,10 @@ Maps `dominantStyle` + optional `targetAesthetic` / `colorScheme` / `navStyle` t
 | minimalist     | `#111827`    | `#6366f1`      | none   | bordered    | light  | modern-sans     |
 | mission-driven | `#1e3a5f`    | `#0ea5e9`      | md     | filled      | light  | editorial-serif |
 | tech-precision | `#0f172a`    | `#3b82f6`      | none   | transparent | dark   | mono-tech       |
+
+`borderRadius` valid values (expanded): `none`, `sm`, `md`, `lg`, `xl`, `full`
+
+`fontStyle` valid values (expanded): `modern-sans`, `editorial-serif`, `mono-tech`, `humanist`, `geometric`, `transitional`, `slab-serif`, `display`, `rounded`, `condensed`
 
 ### `plan_layout`
 
@@ -496,13 +584,14 @@ Returns hero variant and all micro-parameters:
 
 ## AI Stack
 
-| Layer         | Technology                                          |
-| ------------- | --------------------------------------------------- |
-| LLM provider  | xAI Grok via `@ai-sdk/xai`                          |
-| AI SDK        | Vercel AI SDK v6 (`ai@6.0.152`)                     |
-| Transport     | Server-Sent Events (SSE) at `/api/orchestrate`      |
-| Tool protocol | MCP server at `/api/mcp` (JSON-RPC 2.0)             |
-| Skill loading | `lib/skills/*/SKILL.md` — read from disk at runtime |
+| Layer         | Technology                                                           |
+| ------------- | -------------------------------------------------------------------- |
+| Primary LLM   | xAI Grok-3 via `@ai-sdk/xai` (text-only)                             |
+| Vision LLM    | `grok-2-vision-1212` — image pre-analysis only                       |
+| AI SDK        | Vercel AI SDK v6 (`ai@6.0.152`)                                      |
+| Transport     | Server-Sent Events (SSE) at `/api/orchestrate`                       |
+| Tool protocol | MCP server at `/api/mcp` (JSON-RPC 2.0)                              |
+| Skill loading | `lib/skills/*/SKILL.md` — read from disk at runtime, filtered by tag |
 
 ### SSE event types
 

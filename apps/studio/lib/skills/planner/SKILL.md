@@ -1,5 +1,9 @@
 # Skill: planner
 
+## Tags
+
+always
+
 ## Purpose
 
 Orchestrate the full design agent workflow. Decides which skills to invoke, in what order, when to surface a plan for HITL approval, and how to structure proposals. The orchestrator embeds this skill's full content as its workflow instructions — there are no hardcoded steps in the orchestrator itself.

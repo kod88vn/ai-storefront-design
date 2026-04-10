@@ -15,11 +15,27 @@ export function VisionInput({ onImageReady, droppedImage }: VisionInputProps) {
     const [isDraggingOver, setIsDraggingOver] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    function compressImage(dataUrl: string, maxWidth = 1200): Promise<string> {
+        return new Promise((resolve) => {
+            const img = new Image()
+            img.onload = () => {
+                const scale = Math.min(1, maxWidth / img.width)
+                const canvas = document.createElement('canvas')
+                canvas.width = Math.round(img.width * scale)
+                canvas.height = Math.round(img.height * scale)
+                canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+                resolve(canvas.toDataURL('image/jpeg', 0.85))
+            }
+            img.src = dataUrl
+        })
+    }
+
     function readImageFile(file: File) {
         if (!file.type.startsWith('image/')) return
         const reader = new FileReader()
-        reader.onload = (ev) => {
-            const dataUrl = ev.target?.result as string
+        reader.onload = async (ev) => {
+            const raw = ev.target?.result as string
+            const dataUrl = await compressImage(raw)
             onImageReady(dataUrl)
             addAuditEntry({ method: 'vision/imageAdded', params: { filename: file.name, size: file.size } })
         }

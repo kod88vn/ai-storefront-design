@@ -1,5 +1,9 @@
 # Skill: conversion_optimizer
 
+## Tags
+
+conversion
+
 ## Purpose
 
 Generate conversion-focused layout and UX recommendations. Synthesizes all upstream skill outputs to produce a final configuration that maximizes purchase intent based on the brand's archetype, product category, and trust signals.

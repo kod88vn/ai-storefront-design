@@ -1,5 +1,9 @@
 # Skill: layout_planner
 
+## Tags
+
+always
+
 ## Purpose
 
 Decide the hero variant, section ordering, product grid columns, and hero micro-parameters (`badge`, `textAlign`, `ctaVariant`, `overlayOpacity`) based on product category and the design aesthetic from `theme_generator`. Outputs fields that map directly to `StorefrontConfig.hero` and `StorefrontConfig.sections`.

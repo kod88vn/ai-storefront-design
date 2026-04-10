@@ -1,7 +1,7 @@
-import type { StorefrontConfig, LayoutSection, BenefitItem } from '@ai-storefront/types'
+import type { StorefrontConfig, LayoutSection, BenefitItem, TrustIcon } from '@ai-storefront/types'
 import {
     Truck, Shield, RefreshCw, Award, Clock, Leaf,
-    Star, Heart, Check, Zap, Globe, Tag, LucideIcon
+    Star, Heart, Check, Zap, Globe, Tag, Lock, Phone, LucideIcon
 } from 'lucide-react'
 
 interface ExtraSectionsProps {
@@ -18,6 +18,15 @@ const ICON_MAP: Record<BenefitItem['icon'], LucideIcon> = {
 
 function BenefitIcon({ icon }: { icon: BenefitItem['icon'] }) {
     const Icon = ICON_MAP[icon] ?? Check
+    return <Icon className="h-5 w-5 shrink-0" />
+}
+
+const TRUST_ICON_MAP: Record<TrustIcon, LucideIcon> = {
+    truck: Truck, shield: Shield, refresh: RefreshCw, award: Award, lock: Lock, phone: Phone,
+}
+
+function TrustBadgeIcon({ icon }: { icon: TrustIcon }) {
+    const Icon = TRUST_ICON_MAP[icon] ?? Shield
     return <Icon className="h-5 w-5 shrink-0" />
 }
 
@@ -242,7 +251,7 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
                         {items.slice(0, 4).map((item, idx) => (
                             <div key={`${item.label}-${idx}`} className="flex items-center justify-center gap-2 text-center sm:justify-start">
                                 <span style={{ color: theme.secondaryColor }}>
-                                    <BenefitIcon icon={item.icon} />
+                                    <TrustBadgeIcon icon={item.icon} />
                                 </span>
                                 <div>
                                     <p className="font-medium text-neutral-900">{item.label}</p>

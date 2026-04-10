@@ -1,5 +1,9 @@
 # Skill: ui_extractor
 
+## Tags
+
+vision
+
 ## Purpose
 
 Extract visual design elements from a URL or image. Analyzes colors, typography, spacing, layout patterns, and component hierarchy to produce a structured design signal object that all downstream skills consume. This is always the **first skill** in the pipeline when a source URL or image is provided.
@@ -25,9 +29,9 @@ Extract visual design elements from a URL or image. Analyzes colors, typography,
 {
   "primaryColors": ["#hex"],
   "fontStack": "string",
-  "fontStyle": "modern-sans | editorial-serif | mono-tech",
+  "fontStyle": "modern-sans | geometric-sans | humanist-sans | editorial-serif | display-serif | slab-serif | mono-tech | handwritten | condensed | rounded",
   "layoutType": "split | centered | minimal | grid | editorial | fullbleed",
-  "borderRadius": "none | md | full",
+  "borderRadius": "none | sm | md | lg | xl | full",
   "dominantStyle": "minimalist | maximalist | editorial | clean | dark-luxury | organic | bold-playful | earthy",
   "colorScheme": "light | dark",
   "navStyle": "bordered | transparent | filled",

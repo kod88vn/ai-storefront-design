@@ -29,6 +29,8 @@ import type {
 
 const MAX_STEPS = 15;
 const AI_MODEL = process.env.AI_MODEL ?? "grok-3";
+// grok-3 does not support vision — use a dedicated vision model for image analysis
+const VISION_MODEL = "grok-2-vision-1212";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -78,16 +80,26 @@ async function loadSkills(): Promise<LoadedSkill[]> {
   return skills;
 }
 
-function extractPurpose(content: string): string {
-  const m = content.match(/##\s+Purpose\s*\n+([\s\S]*?)(?:\n\n|##)/m);
-  return m ? m[1].trim().split("\n")[0] : "";
+function parseTags(content: string): string[] {
+  const m = content.match(/##\s+Tags\s*\n+([^\n#]+)/m);
+  if (!m) return [];
+  return m[1]
+    .split(/[,\s]+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
 }
 
-function formatSkillsForPrompt(skills: LoadedSkill[]): string {
-  if (skills.length === 0) return "(no skills loaded)";
-  return skills
-    .map((s) => `- **${s.name}**: ${extractPurpose(s.content) || s.name}`)
-    .join("\n");
+function getActiveTags(
+  goal: string,
+  context: OrchestratorContext,
+): Set<string> {
+  const tags = new Set<string>(["always"]);
+  if (context.imageData || context.visionUrl) tags.add("vision");
+  if (/\b(copy|content|messag|voice|description)\b/i.test(goal))
+    tags.add("content");
+  if (/\b(convert|conversion|sale|checkout|cta|funnel)\b/i.test(goal))
+    tags.add("conversion");
+  return tags;
 }
 
 // ─── MCP client ───────────────────────────────────────────────────────────────
@@ -139,11 +151,20 @@ export async function* runOrchestrator(
   goal: string,
   context: OrchestratorContext,
 ): AsyncGenerator<OrchestratorEvent> {
-  // ── 1. Load skills ──────────────────────────────────────────────────────────
+  // ── 1. Load skills (tag-filtered for this request) ─────────────────────────
   yield progress("Loading AI skills...", "thinking");
 
-  const skills = await loadSkills();
-  yield audit("skills/load", { loaded: skills.map((s) => s.name) });
+  const allSkills = await loadSkills();
+  const activeTags = getActiveTags(goal, context);
+  const skills = allSkills.filter((s) => {
+    const tags = parseTags(s.content);
+    // Skills with no tags always load (backwards-compat)
+    return tags.length === 0 || tags.some((t) => activeTags.has(t));
+  });
+  yield audit("skills/load", {
+    loaded: skills.map((s) => s.name),
+    skipped: allSkills.filter((s) => !skills.includes(s)).map((s) => s.name),
+  });
 
   // ── 2. Discover MCP tools ───────────────────────────────────────────────────
   yield progress("Discovering tools via MCP...", "decomposing");
@@ -151,7 +172,85 @@ export async function* runOrchestrator(
   const mcpTools = await mcpListTools();
   yield audit("tools/list", { tools: mcpTools.map((t) => t.name) });
 
-  // ── 3. Build system prompt ──────────────────────────────────────────────────
+  // ── 3. Image pre-analysis (vision model → structured tokens) ────────────────
+  //
+  // grok-3 is text-only. When an image is uploaded we first call
+  // grok-2-vision-1212 to extract exact design tokens (hex colors, enums).
+  // These tokens are injected into the system prompt so the AI can skip the
+  // MCP analyze_vision_input call (which can't access the image data) and use
+  // the pre-computed values directly in plan_feedback and apply_config_update.
+
+  let preComputedTokens = "";
+  if (context.imageData) {
+    yield progress("Analyzing uploaded image...", "thinking");
+    try {
+      const visionResult = await generateText({
+        model: xai(VISION_MODEL),
+        messages: [
+          {
+            role: "user",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            content: [
+              {
+                type: "text",
+                text: `You are a design analyst. Extract structured design tokens from this storefront screenshot and respond with ONLY a raw JSON object (no markdown fences):
+
+{
+  "primaryColor": "<exact hex of dominant brand color — navbar, buttons, or headings>",
+  "secondaryColor": "<exact hex of accent or CTA button color>",
+  "colorScheme": "<light|dark>",
+  "fontStyle": "<modern-sans|geometric-sans|humanist-sans|editorial-serif|display-serif|slab-serif|mono-tech|handwritten|condensed|rounded>",
+  "navStyle": "<bordered|transparent|filled>",
+  "borderRadius": "<none|sm|md|lg|xl|full>",
+  "heroLayout": "<split|centered|minimal|fullbleed|editorial>",
+  "productGridColumns": <2|3|4>,
+  "mood": "<2–3 word aesthetic>",
+  "observations": "<1–2 sentences on typography, sections, imagery>"
+}
+
+Rules: sample real hex values from the visible pixels; never use generic placeholders.`,
+              },
+              { type: "image", image: context.imageData },
+            ] as any,
+          },
+        ],
+      });
+
+      let parsed: Record<string, unknown> = {};
+      try {
+        const raw = visionResult.text
+          .trim()
+          .replace(/^```json\s*|```\s*$/g, "");
+        parsed = JSON.parse(raw);
+      } catch {
+        parsed = { observations: visionResult.text };
+      }
+
+      preComputedTokens = [
+        `primaryColor: ${parsed.primaryColor ?? "not detected"}`,
+        `secondaryColor: ${parsed.secondaryColor ?? "not detected"}`,
+        `colorScheme: ${parsed.colorScheme ?? "light"}`,
+        `fontStyle: ${parsed.fontStyle ?? "modern-sans"}`,
+        `navStyle: ${parsed.navStyle ?? "bordered"}`,
+        `borderRadius: ${parsed.borderRadius ?? "md"}`,
+        `heroLayout: ${parsed.heroLayout ?? "split"}`,
+        `productGridColumns: ${parsed.productGridColumns ?? 3}`,
+        `mood: ${parsed.mood ?? ""}`,
+        `observations: ${parsed.observations ?? ""}`,
+      ].join("\n");
+
+      yield progress("Image analyzed — proceeding with design...", "thinking");
+    } catch (err) {
+      preComputedTokens = "";
+      yield progress(
+        "Image analysis failed — using text goal only.",
+        "thinking",
+      );
+      console.error("Vision model error:", (err as Error).message);
+    }
+  }
+
+  // ── 4. Build system prompt ──────────────────────────────────────────────────
 
   const { planFeedback } = context;
 
@@ -189,13 +288,21 @@ export async function* runOrchestrator(
 
   const configSummary = [
     `hero: ${context.currentConfig.hero.layout} layout, title="${context.currentConfig.hero.title}"`,
-    `theme: primary=${context.currentConfig.theme.primaryColor}, secondary=${context.currentConfig.theme.secondaryColor}, radius=${context.currentConfig.theme.borderRadius}`,
+    `theme: primary=${context.currentConfig.theme.primaryColor}, secondary=${context.currentConfig.theme.secondaryColor}, radius=${context.currentConfig.theme.borderRadius}, font=${context.currentConfig.theme.fontStyle ?? "modern-sans"}, nav=${context.currentConfig.theme.navStyle ?? "bordered"}, scheme=${context.currentConfig.theme.colorScheme ?? "light"}`,
     `grid: ${context.currentConfig.productGrid.columns} columns`,
   ].join(" | ");
 
-  // The planner skill defines the full workflow — embed it so the AI follows it.
-  // All other skills are listed by purpose only (their schemas live in MCP tool descriptions).
+  // planner skill is always embedded in full as the workflow definition.
+  // All other loaded skills are embedded in full under ## Skill References
+  // so the AI has exact input/output schemas, presets, and rules to follow.
   const plannerSkill = skills.find((s) => s.name === "planner");
+  const supportingSkills = skills.filter((s) => s.name !== "planner");
+
+  const supportingSkillsSection =
+    supportingSkills.length > 0
+      ? `## Skill References\n\n${supportingSkills.map((s) => `---\n\n${s.content}`).join("\n\n")}`
+      : "";
+
   const mcpToolDescriptions = mcpTools
     .map(
       (t) =>
@@ -203,15 +310,30 @@ export async function* runOrchestrator(
     )
     .join("\n\n");
 
-  const systemPrompt = `You are an AI storefront design agent. Redesign the storefront based on the goal.
+  // When an image was uploaded and pre-analyzed, inject the tokens into the
+  // system prompt and tell the AI to skip the MCP vision/theme calls for Phase 1.
+  const preComputedSection = preComputedTokens
+    ? `## Pre-Computed Design Tokens (from uploaded image)
 
-## Skills
+**Image already analyzed — do NOT call \`analyze_vision_input\` or \`generate_theme\` MCP tools for Phase 1.**
+Use these extracted values directly when calling \`plan_feedback\` and \`apply_config_update\`. These are exact pixel samples from the uploaded screenshot — use them verbatim.
 
-${formatSkillsForPrompt(skills)}
+${preComputedTokens}
 
-## Workflow
+Skip Phase 1 entirely and proceed to Phase 2 (plan_feedback) using the tokens above.
 
-${plannerSkill ? plannerSkill.content : "1. Call plan_feedback first. 2. After approval, call MCP tools then apply_config_update."}
+`
+    : "";
+
+  const systemPrompt = `You are an AI storefront design agent. Redesign the storefront based on the user's goal.
+
+When writing plan_feedback descriptions, explain the *why* — e.g. "dark palette matches the luxury feel in the uploaded image" or "editorial serif suits the fashion category". Users need reasoning, not just a list of changes.
+
+${preComputedSection}## Workflow
+
+${plannerSkill ? plannerSkill.content : "1. Call plan_feedback first. 2. After approval, call apply_config_update."}
+
+${supportingSkillsSection}
 
 ## MCP Tools
 
@@ -221,7 +343,7 @@ ${mcpToolDescriptions}
 
 ${configSummary}${resumeInstruction}`;
 
-  // ── 4. Compose tools for the AI ─────────────────────────────────────────────
+  // ── 5. Compose tools for the AI ─────────────────────────────────────────────
   //
   // Internal tools (plan_feedback, apply_config_update) are handled by the
   // orchestrator directly — NOT forwarded to MCP.
@@ -298,11 +420,24 @@ ${configSummary}${resumeInstruction}`;
           .object({
             primaryColor: z.string().optional(),
             secondaryColor: z.string().optional(),
-            borderRadius: z.enum(["none", "md", "full"]).optional(),
+            borderRadius: z
+              .enum(["none", "sm", "md", "lg", "xl", "full"])
+              .optional(),
             navStyle: z.enum(["bordered", "transparent", "filled"]).optional(),
             colorScheme: z.enum(["light", "dark"]).optional(),
             fontStyle: z
-              .enum(["modern-sans", "editorial-serif", "mono-tech"])
+              .enum([
+                "modern-sans",
+                "geometric-sans",
+                "humanist-sans",
+                "editorial-serif",
+                "display-serif",
+                "slab-serif",
+                "mono-tech",
+                "handwritten",
+                "condensed",
+                "rounded",
+              ])
               .optional(),
           })
           .optional(),
@@ -334,17 +469,20 @@ ${configSummary}${resumeInstruction}`;
     ...dynamicMcpTools,
   };
 
-  // ── 5. Manual agentic loop ──────────────────────────────────────────────────
+  // ── 6. Build initial user message and start agentic loop ───────────────────
+  //
+  // Image analysis tokens (if any) are already in the system prompt (step 3).
+  // The user message only needs the goal — clean and minimal.
 
-  const visionSource =
-    context.visionUrl ||
-    (context.imageData ? "[base64 image provided]" : "[no external source]");
+  const visionSource = context.visionUrl || "[no external source]";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const messages: any[] = [
     {
       role: "user",
-      content: `Goal: ${goal}\nVision Input: ${visionSource}`,
+      content: context.imageData
+        ? `Goal: ${goal}\n\n(Image reference uploaded — design tokens are in the system prompt. Use the Pre-Computed Design Tokens from the system prompt for colors and layout.)`
+        : `Goal: ${goal}\nVision Input: ${visionSource}`,
     },
   ];
 

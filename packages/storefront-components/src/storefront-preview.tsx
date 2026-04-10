@@ -30,8 +30,26 @@ export function StorefrontPreview({ config }: StorefrontPreviewProps) {
     }
 
     const { theme } = config
-    const radiusVal = theme.borderRadius === 'none' ? '0px' : theme.borderRadius === 'full' ? '9999px' : '8px'
-    const fontFamilyVal = theme.fontStyle === 'editorial-serif' ? 'Georgia, "Times New Roman", serif' : theme.fontStyle === 'mono-tech' ? '"Courier New", monospace' : 'system-ui, sans-serif'
+
+    const FONT_FAMILIES: Record<string, string> = {
+        'modern-sans': 'system-ui, -apple-system, "Segoe UI", sans-serif',
+        'geometric-sans': '"Century Gothic", Futura, "Trebuchet MS", sans-serif',
+        'humanist-sans': '"Gill Sans", Optima, "Segoe UI", sans-serif',
+        'editorial-serif': 'Georgia, "Times New Roman", serif',
+        'display-serif': 'Palatino, "Book Antiqua", "Palatino Linotype", serif',
+        'slab-serif': 'Rockwell, "Courier New", Georgia, serif',
+        'mono-tech': '"SF Mono", "Roboto Mono", "Courier New", monospace',
+        'handwritten': '"Bradley Hand", "Brush Script MT", cursive',
+        'condensed': '"Arial Narrow", Impact, "Franklin Gothic Book", sans-serif',
+        'rounded': '"Varela Round", "Nunito", "Comic Sans MS", sans-serif',
+    }
+
+    const RADIUS_MAP: Record<string, string> = {
+        none: '0px', sm: '4px', md: '8px', lg: '16px', xl: '24px', full: '9999px',
+    }
+
+    const radiusVal = RADIUS_MAP[theme.borderRadius] ?? '8px'
+    const fontFamilyVal = FONT_FAMILIES[theme.fontStyle ?? 'modern-sans'] ?? 'system-ui, sans-serif'
     const baseBg = theme.colorScheme === 'dark' ? '#0a0a0a' : '#ffffff'
     const baseText = theme.colorScheme === 'dark' ? '#f5f5f5' : '#0a0a0a'
     const isTransparentNav = theme.navStyle === 'transparent'

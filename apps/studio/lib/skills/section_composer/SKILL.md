@@ -1,5 +1,9 @@
 # Skill: section_composer
 
+## Tags
+
+always
+
 ## Purpose
 
 Compose section plans for modern ecommerce storefronts. Decides which sections to enable, populates their full content payloads, and ensures every section has complete renderable data. Runs after `layout_planner`.

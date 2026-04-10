@@ -1,11 +1,11 @@
 {
   "theme": {
-    "primaryColor": "#1a1a1a",
-    "secondaryColor": "#e8b84b",
+    "primaryColor": "#111827",
+    "secondaryColor": "#64748b",
     "borderRadius": "none",
-    "colorScheme": "light",
     "navStyle": "bordered",
-    "fontStyle": "editorial-serif"
+    "colorScheme": "light",
+    "fontStyle": "modern-sans"
   },
   "sections": [
     {
@@ -15,109 +15,95 @@
       "order": 0
     },
     {
-      "id": "product-grid",
-      "type": "product-grid",
+      "id": "benefits-bar",
+      "type": "benefits-bar",
       "enabled": true,
       "order": 1
     },
     {
-      "id": "categories",
-      "type": "categories",
+      "id": "product-grid",
+      "type": "product-grid",
       "enabled": true,
       "order": 2
-    },
-    {
-      "id": "footer",
-      "type": "footer",
-      "enabled": true,
-      "order": 3
-    },
-    {
-      "id": "benefits-bar",
-      "type": "benefits-bar",
-      "enabled": true,
-      "order": 4
-    },
-    {
-      "id": "featured-collection",
-      "type": "featured-collection",
-      "enabled": true,
-      "order": 5
     },
     {
       "id": "testimonials",
       "type": "testimonials",
       "enabled": true,
-      "order": 6
+      "order": 3
     },
     {
-      "id": "newsletter",
-      "type": "newsletter",
+      "id": "categories",
+      "type": "categories",
       "enabled": true,
-      "order": 7
+      "order": 4
+    },
+    {
+      "id": "footer",
+      "type": "footer",
+      "enabled": true,
+      "order": 5
     }
   ],
   "hero": {
-    "layout": "editorial",
-    "title": "Curated Design for Everyday",
-    "subtitle": "Thoughtful tools and accessories crafted with care.",
-    "ctaText": "Explore Now",
-    "badge": "Artisan Crafted",
+    "layout": "minimal",
+    "title": "Curated Home Essentials",
+    "subtitle": "Discover modern designs for every space",
+    "ctaText": "Shop Now",
+    "badge": "New Arrivals",
     "textAlign": "left",
     "ctaVariant": "solid",
-    "overlayOpacity": 0.2,
-    "ctaSecondaryText": "Learn Our Story"
+    "overlayOpacity": 0,
+    "ctaSecondaryText": "Explore More"
   },
   "productGrid": {
-    "columns": 3
+    "columns": 3,
+    "showRatings": true
   },
   "sectionData": {
     "benefits-bar": {
-      "benefits": [
+      "items": [
         {
-          "icon": "award",
-          "text": "Award-Winning Design"
+          "icon": "truck",
+          "label": "Free Shipping Over $50",
+          "detail": "On all US orders"
+        },
+        {
+          "icon": "refresh",
+          "label": "30-Day Returns",
+          "detail": "Hassle-free policy"
         },
         {
           "icon": "shield",
-          "text": "Quality Guaranteed"
-        },
-        {
-          "icon": "globe",
-          "text": "Worldwide Shipping"
+          "label": "Secure Checkout",
+          "detail": "SSL encrypted"
         }
       ]
-    },
-    "featured-collection": {
-      "title": "Featured Tools",
-      "subtitle": "Our most loved designs for everyday utility.",
-      "ctaText": "View All Products"
     },
     "testimonials": {
-      "layout": "featured",
-      "quotes": [
+      "heading": "What Our Customers Say",
+      "layout": "grid",
+      "showRatings": true,
+      "items": [
         {
-          "text": "These tools are a game-changer for my daily workflow.",
-          "author": "Jane D., Designer",
+          "quote": "Amazing quality and fast delivery. I'm thrilled with my purchase!",
+          "author": "Sarah M.",
+          "location": "New York, NY",
           "rating": 5
         },
         {
-          "text": "Beautifully crafted and incredibly functional.",
-          "author": "Mark S., Engineer",
+          "quote": "The design fits perfectly in my home. Highly recommend!",
+          "author": "James T.",
+          "location": "Los Angeles, CA",
           "rating": 5
         },
         {
-          "text": "I can’t imagine my desk without these now.",
-          "author": "Alex T., Writer",
+          "quote": "Customer service was exceptional. Will shop again.",
+          "author": "Emma R.",
+          "location": "Chicago, IL",
           "rating": 5
         }
       ]
-    },
-    "newsletter": {
-      "title": "Join Our Community",
-      "subtitle": "Be the first to know about new releases and exclusive offers.",
-      "incentive": "",
-      "ctaText": "Subscribe"
     }
   }
 }

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Palette, ChevronDown } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { useStudioStore } from '@/lib/store'
+import type { ThemeConfig } from '@ai-storefront/types'
 
 const selectCls = 'h-8 w-full rounded-md border border-border bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring'
 const labelCls = 'text-[10px] font-medium uppercase tracking-wider text-muted-foreground'
@@ -31,10 +32,13 @@ export function ThemePanel() {
                     ))}
                     <div className="space-y-1">
                         <span className={labelCls}>Border Radius</span>
-                        <select value={theme.borderRadius} onChange={(e) => updateTheme({ borderRadius: e.target.value as 'none' | 'md' | 'full' })} data-testid="border-radius-select" className={selectCls}>
-                            <option value="none">None (0px)</option>
-                            <option value="md">Medium (8px)</option>
-                            <option value="full">Full (9999px)</option>
+                        <select value={theme.borderRadius} onChange={(e) => updateTheme({ borderRadius: e.target.value as ThemeConfig['borderRadius'] })} data-testid="border-radius-select" className={selectCls}>
+                            <option value="none">Sharp (0px)</option>
+                            <option value="sm">Subtle (4px)</option>
+                            <option value="md">Rounded (8px)</option>
+                            <option value="lg">Soft (16px)</option>
+                            <option value="xl">Extra Soft (24px)</option>
+                            <option value="full">Pill (9999px)</option>
                         </select>
                     </div>
                     <div className="space-y-1">
@@ -58,10 +62,17 @@ export function ThemePanel() {
                     </div>
                     <div className="space-y-1">
                         <span className={labelCls}>Font Style</span>
-                        <select value={theme.fontStyle ?? 'modern-sans'} onChange={(e) => updateTheme({ fontStyle: e.target.value as 'modern-sans' | 'editorial-serif' | 'mono-tech' })} data-testid="font-style-select" className={selectCls}>
-                            <option value="modern-sans">Modern Sans</option>
-                            <option value="editorial-serif">Editorial Serif</option>
-                            <option value="mono-tech">Mono Tech</option>
+                        <select value={theme.fontStyle ?? 'modern-sans'} onChange={(e) => updateTheme({ fontStyle: e.target.value as ThemeConfig['fontStyle'] })} data-testid="font-style-select" className={selectCls}>
+                            <option value="modern-sans">Modern Sans — clean system UI</option>
+                            <option value="geometric-sans">Geometric Sans — Century Gothic style</option>
+                            <option value="humanist-sans">Humanist Sans — Gill Sans / Optima</option>
+                            <option value="editorial-serif">Editorial Serif — Georgia classic</option>
+                            <option value="display-serif">Display Serif — Palatino dramatic</option>
+                            <option value="slab-serif">Slab Serif — Rockwell bold</option>
+                            <option value="mono-tech">Mono Tech — monospace technical</option>
+                            <option value="handwritten">Handwritten — cursive script</option>
+                            <option value="condensed">Condensed — narrow compressed</option>
+                            <option value="rounded">Rounded — friendly rounded</option>
                         </select>
                     </div>
                 </div>

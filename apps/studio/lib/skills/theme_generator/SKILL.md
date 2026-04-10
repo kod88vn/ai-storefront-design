@@ -1,5 +1,9 @@
 # Skill: theme_generator
 
+## Tags
+
+always
+
 ## Purpose
 
 Generate a cohesive `ThemeConfig` from extracted design signals or a target aesthetic keyword. Covers colors, border radius, font style, nav style, and color scheme. Always runs after `ui_extractor`.
@@ -12,7 +16,7 @@ Generate a cohesive `ThemeConfig` from extracted design signals or a target aest
   "primaryColors": ["#hex"],
   "colorTemperature": "warm | cool | neutral",
   "colorScheme": "light | dark",
-  "fontStyle": "modern-sans | editorial-serif | mono-tech",
+  "fontStyle": "modern-sans | geometric-sans | humanist-sans | editorial-serif | display-serif | slab-serif | mono-tech | handwritten | condensed | rounded",
   "navStyle": "bordered | transparent | filled",
   "targetAesthetic": "string (e.g. 'organic', 'luxury', 'tech', 'artisan')"
 }
@@ -24,8 +28,8 @@ Generate a cohesive `ThemeConfig` from extracted design signals or a target aest
 {
   "primaryColor": "#hex",
   "secondaryColor": "#hex",
-  "borderRadius": "none | md | full",
-  "fontStyle": "modern-sans | editorial-serif | mono-tech",
+  "borderRadius": "none | sm | md | lg | xl | full",
+  "fontStyle": "modern-sans | geometric-sans | humanist-sans | editorial-serif | display-serif | slab-serif | mono-tech | handwritten | condensed | rounded",
   "navStyle": "bordered | transparent | filled",
   "colorScheme": "light | dark",
   "rationale": "string"

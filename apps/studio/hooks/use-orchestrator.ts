@@ -79,25 +79,92 @@ export function useOrchestrator() {
           accGridCols.current = u.productGridColumns;
           s.setProductGridColumns(u.productGridColumns);
         }
-        if (u.sectionOrder) {
-          accSectionOrder.current = u.sectionOrder;
-          const current = [...s.config.sections];
-          const reordered = u.sectionOrder
-            .map((id, order) => {
-              const found = current.find((sec) => sec.id === id);
-              return found ? { ...found, order } : null;
-            })
-            .filter((sec): sec is NonNullable<typeof sec> => Boolean(sec));
-          if (reordered.length === current.length) {
-            s.reorderSections(reordered);
+
+        // ── Section updates: sync both config.sections AND containers ────────
+        // The canvas renders from `containers`; the web preview renders from
+        // `config.sections`. We must keep both in sync.
+        const hasSectionChanges =
+          u.sectionOrder || u.enableSections || u.disableSections;
+
+        if (hasSectionChanges) {
+          // Step 1: enable/disable sections in config first
+          if (u.enableSections) {
+            for (const type of u.enableSections) s.enableSection(type);
           }
+          if (u.disableSections) {
+            for (const type of u.disableSections) s.disableSection(type);
+          }
+
+          // Step 2: build the full ordered+enabled section list
+          const currentState = useStudioStore.getState();
+          const allSections = currentState.config.sections;
+
+          // Determine display order: use AI-provided sectionOrder if given,
+          // otherwise keep current order
+          const orderedIds: string[] = u.sectionOrder
+            ? [
+                ...u.sectionOrder,
+                // append any sections not mentioned in sectionOrder at the end
+                ...allSections
+                  .filter((sec) => !u.sectionOrder!.includes(sec.id))
+                  .sort((a, b) => a.order - b.order)
+                  .map((sec) => sec.id),
+              ]
+            : allSections
+                .slice()
+                .sort((a, b) => a.order - b.order)
+                .map((sec) => sec.id);
+
+          if (u.sectionOrder) {
+            accSectionOrder.current = orderedIds;
+          }
+
+          // Step 3: rebuild containers to match — one container per enabled section
+          const existingContainers = currentState.containers;
+          const newContainers = orderedIds
+            .map((id) => {
+              const sec = allSections.find((sec) => sec.id === id);
+              if (!sec?.enabled) return null;
+              // Reuse existing container if there is one, otherwise create new
+              const existing = existingContainers.find(
+                (c) =>
+                  c.components.length > 0 &&
+                  c.components[0].kind === "prebuilt" &&
+                  c.components[0].sectionType === id,
+              );
+              if (existing) return existing;
+              const label = id
+                .split("-")
+                .map((w) => w[0].toUpperCase() + w.slice(1))
+                .join(" ");
+              return {
+                id: `c-${id}`,
+                label,
+                layoutMode: "block" as const,
+                flexConfig: {
+                  direction: "row" as const,
+                  wrap: false,
+                  justify: "start" as const,
+                  align: "start" as const,
+                  gap: 4,
+                },
+                gridConfig: { cols: 2, gap: 4 },
+                components: [
+                  {
+                    kind: "prebuilt" as const,
+                    id,
+                    sectionType:
+                      id as import("@ai-storefront/types").SectionType,
+                    customClasses: "",
+                  },
+                ],
+              };
+            })
+            .filter((c): c is NonNullable<typeof c> => c !== null);
+
+          s.reorderContainers(newContainers);
         }
-        if (u.enableSections) {
-          for (const type of u.enableSections) s.enableSection(type);
-        }
-        if (u.disableSections) {
-          for (const type of u.disableSections) s.disableSection(type);
-        }
+
         if (u.sectionData) {
           s.updateSectionData(u.sectionData);
         }
@@ -128,6 +195,24 @@ export function useOrchestrator() {
             themeChange.borderRadius = {
               before: before.theme.borderRadius,
               after: accTheme.current.borderRadius,
+            };
+          }
+          if (accTheme.current.fontStyle !== undefined) {
+            themeChange.fontStyle = {
+              before: before.theme.fontStyle ?? "modern-sans",
+              after: accTheme.current.fontStyle,
+            };
+          }
+          if (accTheme.current.navStyle !== undefined) {
+            themeChange.navStyle = {
+              before: before.theme.navStyle ?? "bordered",
+              after: accTheme.current.navStyle,
+            };
+          }
+          if (accTheme.current.colorScheme !== undefined) {
+            themeChange.colorScheme = {
+              before: before.theme.colorScheme ?? "light",
+              after: accTheme.current.colorScheme,
             };
           }
           if (Object.keys(themeChange).length === 0) themeChange = null;
@@ -221,15 +306,15 @@ export function useOrchestrator() {
   const startOrchestrator = useCallback(
     async (goal: string, context: OrchestratorContext) => {
       const s = useStudioStore.getState();
-      // Snapshot config BEFORE any changes for ValueChange comparison
-      beforeConfig.current = JSON.parse(
-        JSON.stringify(s.config),
-      ) as StorefrontConfig;
       s.setOrchestratorGoal(goal);
       s.setOrchestratorContext(context);
       s.setAgentStep("thinking");
       s.setAppliedSummary(null);
+      // Reset accumulators FIRST, then snapshot config so the snapshot isn't wiped
       resetAccumulators();
+      beforeConfig.current = JSON.parse(
+        JSON.stringify(s.config),
+      ) as StorefrontConfig;
 
       s.addAuditEntry({
         method: "agent/start",

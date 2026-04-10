@@ -3,14 +3,36 @@
 export interface ThemeConfig {
   primaryColor: string;
   secondaryColor: string;
-  borderRadius: "none" | "md" | "full";
+  borderRadius: "none" | "sm" | "md" | "lg" | "xl" | "full";
   fontFamily?: "sans" | "serif" | "mono";
   /** Visual weight of navbar: white+border (default), transparent overlay, or solid brand color */
   navStyle?: "bordered" | "transparent" | "filled";
   /** Overall site color scheme — affects base background and text colors */
   colorScheme?: "light" | "dark";
-  /** Font personality used  as a CSS class hint to the renderer */
-  fontStyle?: "modern-sans" | "editorial-serif" | "mono-tech";
+  /**
+   * Font personality applied as a font-family to the storefront preview wrapper.
+   * modern-sans     → system-ui clean sans
+   * geometric-sans  → Century Gothic / Futura style
+   * humanist-sans   → Gill Sans / Optima style
+   * editorial-serif → Georgia classic serif
+   * display-serif   → Palatino dramatic serif
+   * slab-serif      → Rockwell bold slab
+   * mono-tech       → Courier New monospace
+   * handwritten     → cursive script
+   * condensed       → Arial Narrow / Impact compressed
+   * rounded         → Varela Round friendly rounded
+   */
+  fontStyle?:
+    | "modern-sans"
+    | "geometric-sans"
+    | "humanist-sans"
+    | "editorial-serif"
+    | "display-serif"
+    | "slab-serif"
+    | "mono-tech"
+    | "handwritten"
+    | "condensed"
+    | "rounded";
 }
 
 // ─── Section types ────────────────────────────────────────────────────────────
@@ -309,6 +331,9 @@ export interface AppliedSummary {
     primaryColor?: ValueChange<string>;
     secondaryColor?: ValueChange<string>;
     borderRadius?: ValueChange<string>;
+    fontStyle?: ValueChange<string>;
+    navStyle?: ValueChange<string>;
+    colorScheme?: ValueChange<string>;
   } | null;
   hero: {
     layout?: ValueChange<string>;

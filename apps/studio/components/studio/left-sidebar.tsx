@@ -1,16 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Brain, Loader2, RotateCcw, MessageSquare } from 'lucide-react'
+import { Brain, Loader2, RotateCcw, MessageSquare, Wand2 } from 'lucide-react'
 import { useStudioStore } from '@/lib/store'
 import { useOrchestrator } from '@/hooks/use-orchestrator'
 import { InlinePlanApproval } from './plan-approval'
 import { AppliedSummaryPanel } from './applied-summary'
 import { VisionInput } from './vision-input'
 import { ExecutionTrace } from './execution-trace'
+import { DesignWizard } from './design-wizard'
 
-// ─── LeftSidebar ──────────────────────────────────────────────────────────────
-// ─── LeftSidebar ──────────────────────────────────────────────────────────────
+// ─── LeftSidebar ──────────────────────────────────────────────────────────────────
 // Orchestrator shell — delegates to focused sub-components
 
 export function LeftSidebar() {
@@ -29,17 +29,19 @@ export function LeftSidebar() {
   const { startOrchestrator } = useOrchestrator()
   const [droppedImage, setDroppedImage] = useState<string | null>(null)
   const [goalText, setGoalText] = useState('')
+  const [inputMode, setInputMode] = useState<'describe' | 'wizard'>('describe')
 
   useEffect(() => {
     fetch('/api/skills')
       .then((r) => r.json())
       .then(({ skills }) => setLoadedSkills(skills))
-      .catch(() => {})
+      .catch(() => { })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function handleSimulate() {
     const textGoal = goalText.trim()
+    if (!textGoal && !droppedImage && !visionUrl) return
     let goal: string
     if (visionUrl) {
       goal = textGoal
@@ -50,7 +52,7 @@ export function LeftSidebar() {
         ? `${textGoal}. Use the attached screenshot as visual reference.`
         : 'Analyze the provided storefront screenshot and redesign to match its visual aesthetic'
     } else {
-      goal = textGoal || 'Propose an improved minimalist design for the current storefront configuration'
+      goal = textGoal
     }
     startOrchestrator(goal, {
       visionUrl: visionUrl || undefined,
@@ -58,6 +60,12 @@ export function LeftSidebar() {
       currentConfig: config,
       planFeedback: null,
     })
+  }
+
+  function handleWizardComplete(goal: string) {
+    setGoalText(goal)
+    setInputMode('describe')
+    // Switch to describe mode so user can review the synthesized goal before clicking Simulate
   }
 
   function handleReset() {
@@ -69,6 +77,7 @@ export function LeftSidebar() {
   const isAwaitingApproval = agentStep === 'awaiting-approval'
   const skillsLoaded = loadedSkills.length > 0
   const isRunning = agentStep !== 'idle' && agentStep !== 'complete' && agentStep !== 'awaiting-approval'
+  const hasInput = goalText.trim().length > 0 || !!droppedImage || !!visionUrl
 
   return (
     <div data-testid="left-sidebar" className="flex h-full w-72 shrink-0 flex-col border-r border-border bg-background">
@@ -88,24 +97,46 @@ export function LeftSidebar() {
             </>
           ) : (
             <>
-              <div data-testid="goal-input-section" className="space-y-2">
-                <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  Design Goal
-                </h3>
-                <textarea
-                  data-testid="goal-text-input"
-                  placeholder="Describe what you want, e.g. 'Make it feel more premium and dark'..."
-                  value={goalText}
-                  onChange={(e) => setGoalText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSimulate() }}
-                  rows={3}
-                  className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <p className="text-[10px] text-muted-foreground">⌘ + Enter to run &nbsp;·&nbsp; URL and image below are optional</p>
+              <div className="flex overflow-hidden rounded-md border border-border text-xs" data-testid="input-mode-toggle">
+                {(['describe', 'wizard'] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setInputMode(m)}
+                    data-testid={`input-mode-${m}`}
+                    className={`flex flex-1 items-center justify-center gap-1.5 py-1.5 font-medium transition-colors ${inputMode === m ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
+                      }`}
+                  >
+                    {m === 'describe'
+                      ? <><MessageSquare className="h-3 w-3" />Describe</>
+                      : <><Wand2 className="h-3 w-3" />Guide Me</>}
+                  </button>
+                ))}
               </div>
 
-              <VisionInput droppedImage={droppedImage} onImageReady={setDroppedImage} />
+              {inputMode === 'wizard' ? (
+                <DesignWizard onComplete={handleWizardComplete} />
+              ) : (
+                <>
+                  <div data-testid="goal-input-section" className="space-y-2">
+                    <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      Design Goal
+                    </h3>
+                    <textarea
+                      data-testid="goal-text-input"
+                      placeholder="Describe what you want, e.g. 'Make it feel more premium and dark'..."
+                      value={goalText}
+                      onChange={(e) => setGoalText(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSimulate() }}
+                      rows={3}
+                      className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    <p className="text-[10px] text-muted-foreground">⌘ + Enter to run &nbsp;·&nbsp; URL and image below are optional</p>
+                  </div>
+
+                  <VisionInput droppedImage={droppedImage} onImageReady={setDroppedImage} />
+                </>
+              )}
 
               {agentStep !== 'idle' && <ExecutionTrace agentStep={agentStep} />}
             </>
@@ -127,7 +158,7 @@ export function LeftSidebar() {
           <button
             data-testid="simulate-button"
             onClick={handleSimulate}
-            disabled={isRunning || isAwaitingApproval || !skillsLoaded}
+            disabled={isRunning || isAwaitingApproval || !skillsLoaded || !hasInput}
             className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isRunning ? (
@@ -143,4 +174,3 @@ export function LeftSidebar() {
     </div>
   )
 }
-

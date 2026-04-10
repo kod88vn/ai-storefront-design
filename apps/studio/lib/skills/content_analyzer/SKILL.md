@@ -1,5 +1,9 @@
 # Skill: content_analyzer
 
+## Tags
+
+content
+
 ## Purpose
 
 Analyze storefront copy, messaging, and brand voice from a URL, screenshot OCR, or plain text. Produces structured guidance that `section_composer` uses to write on-brand copy for every section. Also extracts hero titles, subtitles, badge text, and CTA labels that directly populate `HeroConfig`.

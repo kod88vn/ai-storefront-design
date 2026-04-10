@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight, Brain, Sparkles } from 'lucide-react'
 import type { AppliedSummary } from '@ai-storefront/types'
 
 function ValueRow({ label, before, after }: { label: string; before: string; after: string }) {
@@ -41,9 +41,12 @@ export function AppliedSummaryPanel({ summary }: { summary: AppliedSummary }) {
             )}
 
             {summary.planDescription && (
-                <div data-testid="summary-plan-description" className="rounded-md border border-border bg-muted/40 px-3 py-2">
-                    <p className="mb-0.5 text-xs font-medium text-muted-foreground">Plan</p>
-                    <p className="text-xs text-foreground">{summary.planDescription}</p>
+                <div data-testid="summary-plan-description" className="rounded-md border border-primary/20 bg-primary/5 px-3 py-3">
+                    <div className="mb-2 flex items-center gap-1.5">
+                        <Brain className="h-3.5 w-3.5 text-primary" />
+                        <p className="text-xs font-semibold text-primary">Why these changes?</p>
+                    </div>
+                    <p className="text-xs leading-relaxed text-foreground">{summary.planDescription}</p>
                 </div>
             )}
 
@@ -53,6 +56,9 @@ export function AppliedSummaryPanel({ summary }: { summary: AppliedSummary }) {
                     {summary.theme.primaryColor && <ColorRow label="Primary" before={summary.theme.primaryColor.before} after={summary.theme.primaryColor.after} />}
                     {summary.theme.secondaryColor && <ColorRow label="Secondary" before={summary.theme.secondaryColor.before} after={summary.theme.secondaryColor.after} />}
                     {summary.theme.borderRadius && <ValueRow label="Border Radius" before={summary.theme.borderRadius.before} after={summary.theme.borderRadius.after} />}
+                    {summary.theme.fontStyle && <ValueRow label="Font Style" before={summary.theme.fontStyle.before} after={summary.theme.fontStyle.after} />}
+                    {summary.theme.navStyle && <ValueRow label="Nav Style" before={summary.theme.navStyle.before} after={summary.theme.navStyle.after} />}
+                    {summary.theme.colorScheme && <ValueRow label="Color Scheme" before={summary.theme.colorScheme.before} after={summary.theme.colorScheme.after} />}
                 </div>
             )}
 

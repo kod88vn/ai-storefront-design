@@ -3,8 +3,21 @@
 export interface ThemeConfig {
   primaryColor: string;
   secondaryColor: string;
-  borderRadius: "none" | "md" | "full";
+  borderRadius: "none" | "sm" | "md" | "lg" | "xl" | "full";
   fontFamily?: "sans" | "serif" | "mono";
+  navStyle?: "bordered" | "transparent" | "filled";
+  colorScheme?: "light" | "dark";
+  fontStyle?:
+    | "modern-sans"
+    | "geometric-sans"
+    | "humanist-sans"
+    | "editorial-serif"
+    | "display-serif"
+    | "slab-serif"
+    | "mono-tech"
+    | "handwritten"
+    | "condensed"
+    | "rounded";
 }
 
 // ─── Section types ────────────────────────────────────────────────────────────
