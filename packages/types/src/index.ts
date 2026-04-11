@@ -118,6 +118,8 @@ export interface BenefitItem {
 
 export interface BenefitsBarConfig {
   items: BenefitItem[];
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 export interface FeaturedCollectionConfig {
@@ -125,6 +127,8 @@ export interface FeaturedCollectionConfig {
   subheading?: string;
   layout: "grid" | "horizontal-scroll";
   productIds?: string[];
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 export interface TestimonialItem {
@@ -140,6 +144,8 @@ export interface TestimonialsConfig {
   layout: "grid" | "carousel" | "list" | "featured";
   items: TestimonialItem[];
   showRatings?: boolean;
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 export interface NewsletterConfig {
@@ -148,6 +154,7 @@ export interface NewsletterConfig {
   placeholder?: string;
   buttonText: string;
   backgroundColor?: string;
+  textColor?: string;
   /** Incentive hook shown above headline — e.g. "Get 10% off your first order" */
   incentive?: string;
 }
@@ -168,11 +175,15 @@ export interface TrustBadgeItem {
 
 export interface TrustBadgesConfig {
   items: TrustBadgeItem[];
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 export interface BrandStripConfig {
   heading?: string;
   brands: Array<{ name: string; logoText?: string }>;
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 // ─── Master section data map ──────────────────────────────────────────────────

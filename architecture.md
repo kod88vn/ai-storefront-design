@@ -587,7 +587,7 @@ Returns hero variant and all micro-parameters:
 | Layer         | Technology                                                           |
 | ------------- | -------------------------------------------------------------------- |
 | Primary LLM   | xAI Grok-3 via `@ai-sdk/xai` (text-only)                             |
-| Vision LLM    | `grok-2-vision-1212` — image pre-analysis only                       |
+| Vision LLM    | `grok-4-0709` — image pre-analysis only                              |
 | AI SDK        | Vercel AI SDK v6 (`ai@6.0.152`)                                      |
 | Transport     | Server-Sent Events (SSE) at `/api/orchestrate`                       |
 | Tool protocol | MCP server at `/api/mcp` (JSON-RPC 2.0)                              |

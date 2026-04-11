@@ -19,8 +19,10 @@ function ProductStars({ rating }: { rating: number }) {
 
 export function StorefrontProductGrid({ config, theme }: ProductGridProps) {
     const gridClass = config.columns === 2 ? 'sm:grid-cols-2' : config.columns === 4 ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3'
+    const isDark = (theme.colorScheme ?? 'light') === 'dark'
+    const bg = isDark ? '#111111' : '#ffffff'
     return (
-        <section data-testid="storefront-product-grid" className="bg-white px-4 py-12 sm:px-6">
+        <section data-testid="storefront-product-grid" className="px-4 py-12 sm:px-6" style={{ backgroundColor: bg }}>
             <div className="mx-auto max-w-7xl">
                 <h2 className="mb-6 text-2xl font-semibold" style={{ color: theme.primaryColor }}>Featured Products</h2>
                 <div className={`grid grid-cols-1 gap-6 ${gridClass}`}>

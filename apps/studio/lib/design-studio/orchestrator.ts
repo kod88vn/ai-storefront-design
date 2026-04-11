@@ -30,7 +30,7 @@ import type {
 const MAX_STEPS = 15;
 const AI_MODEL = process.env.AI_MODEL ?? "grok-3";
 // grok-3 does not support vision — use a dedicated vision model for image analysis
-const VISION_MODEL = "grok-2-vision-1212";
+const VISION_MODEL = "grok-4-0709";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -60,24 +60,27 @@ interface LoadedSkill {
 
 async function loadSkills(): Promise<LoadedSkill[]> {
   const skillsDir = path.join(process.cwd(), "lib/skills");
-  const skills: LoadedSkill[] = [];
   try {
     const folders = await fs.readdir(skillsDir);
-    for (const folder of folders) {
-      try {
-        const content = await fs.readFile(
-          path.join(skillsDir, folder, "SKILL.md"),
-          "utf-8",
-        );
-        skills.push({ name: folder, content });
-      } catch {
-        // SKILL.md missing for this folder — skip
-      }
-    }
+    const results = await Promise.all(
+      folders.map(async (folder) => {
+        try {
+          const content = await fs.readFile(
+            path.join(skillsDir, folder, "SKILL.md"),
+            "utf-8",
+          );
+          return { name: folder, content } satisfies LoadedSkill;
+        } catch {
+          // SKILL.md missing for this folder — skip
+          return null;
+        }
+      }),
+    );
+    return results.filter((s): s is LoadedSkill => s !== null);
   } catch {
     // lib/skills directory doesn't exist — safe to continue with empty skills
+    return [];
   }
-  return skills;
 }
 
 function parseTags(content: string): string[] {
@@ -104,8 +107,6 @@ function getActiveTags(
 
 // ─── MCP client ───────────────────────────────────────────────────────────────
 
-let _mcpId = 0;
-
 async function mcpCall(
   method: string,
   params: Record<string, unknown>,
@@ -113,7 +114,13 @@ async function mcpCall(
   const res = await fetch(`${getBaseUrl()}/api/mcp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: ++_mcpId, method, params }),
+    // Use a UUID per call — avoids sharing a mutable counter across concurrent requests
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: crypto.randomUUID(),
+      method,
+      params,
+    }),
   });
   const json = await res.json();
   if (json.error) throw new Error(json.error.message);
@@ -181,6 +188,8 @@ export async function* runOrchestrator(
   // the pre-computed values directly in plan_feedback and apply_config_update.
 
   let preComputedTokens = "";
+  let visionFailed = false;
+
   if (context.imageData) {
     yield progress("Analyzing uploaded image...", "thinking");
     try {
@@ -198,7 +207,10 @@ export async function* runOrchestrator(
 {
   "primaryColor": "<exact hex of dominant brand color — navbar, buttons, or headings>",
   "secondaryColor": "<exact hex of accent or CTA button color>",
+  "backgroundColor": "<exact hex of the main page/canvas background color>",
+  "sectionBackgroundColor": "<exact hex of secondary surface color — announcement bars, benefit strips, newsletter panels>",
   "colorScheme": "<light|dark>",
+  "dominantStyle": "<dark-luxury|organic|editorial|bold-playful|clean|earthy|maximalist|minimalist|mission-driven|tech-precision>",
   "fontStyle": "<modern-sans|geometric-sans|humanist-sans|editorial-serif|display-serif|slab-serif|mono-tech|handwritten|condensed|rounded>",
   "navStyle": "<bordered|transparent|filled>",
   "borderRadius": "<none|sm|md|lg|xl|full>",
@@ -216,37 +228,70 @@ Rules: sample real hex values from the visible pixels; never use generic placeho
         ],
       });
 
+      // ── Parse response ────────────────────────────────────────────────────
       let parsed: Record<string, unknown> = {};
+      let parseError: string | null = null;
       try {
         const raw = visionResult.text
           .trim()
           .replace(/^```json\s*|```\s*$/g, "");
         parsed = JSON.parse(raw);
-      } catch {
-        parsed = { observations: visionResult.text };
+      } catch (e) {
+        parseError = (e as Error).message;
       }
 
-      preComputedTokens = [
-        `primaryColor: ${parsed.primaryColor ?? "not detected"}`,
-        `secondaryColor: ${parsed.secondaryColor ?? "not detected"}`,
-        `colorScheme: ${parsed.colorScheme ?? "light"}`,
-        `fontStyle: ${parsed.fontStyle ?? "modern-sans"}`,
-        `navStyle: ${parsed.navStyle ?? "bordered"}`,
-        `borderRadius: ${parsed.borderRadius ?? "md"}`,
-        `heroLayout: ${parsed.heroLayout ?? "split"}`,
-        `productGridColumns: ${parsed.productGridColumns ?? 3}`,
-        `mood: ${parsed.mood ?? ""}`,
-        `observations: ${parsed.observations ?? ""}`,
-      ].join("\n");
+      // ── Validate that we got real hex color values ────────────────────────
+      const hexRe = /^#[0-9a-fA-F]{6}$/;
+      const primaryOk = hexRe.test(String(parsed.primaryColor ?? ""));
+      const secondaryOk = hexRe.test(String(parsed.secondaryColor ?? ""));
 
-      yield progress("Image analyzed — proceeding with design...", "thinking");
+      if (parseError || !primaryOk) {
+        // Surface the failure visibly in the audit trail
+        yield audit("vision/parse-error", {
+          model: VISION_MODEL,
+          parseError,
+          rawResponse: visionResult.text.slice(0, 500),
+          primaryColorValid: primaryOk,
+          secondaryColorValid: secondaryOk,
+        });
+        visionFailed = true;
+        yield progress(
+          `Image analysis failed (${parseError ? "invalid JSON" : "no valid hex colors"}) — falling back to text-only mode.`,
+          "thinking",
+        );
+      } else {
+        // All good — build the token string the system prompt will inject
+        preComputedTokens = [
+          `primaryColor: ${parsed.primaryColor}`,
+          `secondaryColor: ${parsed.secondaryColor}`,
+          `backgroundColor: ${parsed.backgroundColor ?? "#ffffff"}`,
+          `sectionBackgroundColor: ${parsed.sectionBackgroundColor ?? parsed.backgroundColor ?? "#f5f5f5"}`,
+          `colorScheme: ${parsed.colorScheme ?? "light"}`,
+          `dominantStyle: ${parsed.dominantStyle ?? "clean"}`,
+          `fontStyle: ${parsed.fontStyle ?? "modern-sans"}`,
+          `navStyle: ${parsed.navStyle ?? "bordered"}`,
+          `borderRadius: ${parsed.borderRadius ?? "md"}`,
+          `heroLayout: ${parsed.heroLayout ?? "split"}`,
+          `productGridColumns: ${parsed.productGridColumns ?? 3}`,
+          `mood: ${parsed.mood ?? ""}`,
+          `observations: ${parsed.observations ?? ""}`,
+        ].join("\n");
+
+        yield audit("vision/tokens", { model: VISION_MODEL, tokens: parsed });
+        yield progress(
+          "Image analyzed — proceeding with design...",
+          "thinking",
+        );
+      }
     } catch (err) {
-      preComputedTokens = "";
+      const message = (err as Error).message;
+      yield audit("vision/error", { model: VISION_MODEL, error: message });
+      visionFailed = true;
       yield progress(
-        "Image analysis failed — using text goal only.",
+        `Image analysis error (${message}) — falling back to text-only mode.`,
         "thinking",
       );
-      console.error("Vision model error:", (err as Error).message);
+      console.error("Vision model error:", message);
     }
   }
 
@@ -322,8 +367,19 @@ ${preComputedTokens}
 
 Skip Phase 1 entirely and proceed to Phase 2 (plan_feedback) using the tokens above.
 
+**Background color rules — apply to sectionData:**
+- Use \`backgroundColor\` as the page/hero background and for the navbar fill (if navStyle is filled).
+- Use \`sectionBackgroundColor\` as the \`backgroundColor\` for announcement bars, benefits bars, newsletter panels, and any other section that has a \`backgroundColor\` field in sectionData.
+- Do not leave these fields at default white/gray when a reference color was extracted.
+
 `
-    : "";
+    : visionFailed
+      ? `## Vision Analysis Failed
+
+The uploaded image could not be analyzed (model error or invalid response). Treat this as a **text-only request** — infer design direction from the user's goal text alone. DO NOT reference any pre-computed color tokens.
+
+`
+      : "";
 
   const systemPrompt = `You are an AI storefront design agent. Redesign the storefront based on the user's goal.
 
@@ -480,9 +536,12 @@ ${configSummary}${resumeInstruction}`;
   const messages: any[] = [
     {
       role: "user",
-      content: context.imageData
-        ? `Goal: ${goal}\n\n(Image reference uploaded — design tokens are in the system prompt. Use the Pre-Computed Design Tokens from the system prompt for colors and layout.)`
-        : `Goal: ${goal}\nVision Input: ${visionSource}`,
+      content:
+        context.imageData && !visionFailed
+          ? `Goal: ${goal}\n\n(Image reference uploaded — design tokens are in the system prompt. Use the Pre-Computed Design Tokens from the system prompt for colors and layout.)`
+          : context.imageData && visionFailed
+            ? `Goal: ${goal}\n\n(An image was uploaded but could not be analyzed — proceed from text goal only.)`
+            : `Goal: ${goal}\nVision Input: ${visionSource}`,
     },
   ];
 
@@ -529,13 +588,15 @@ ${configSummary}${resumeInstruction}`;
     for (const tc of result.toolCalls) {
       yield audit("tools/call", { name: tc.toolName, input: tc.input });
 
-      // Context fallback resolver — context values are defaults; model args override if defined
+      // Build args: spread model-provided values; inject `source` only for the
+      // analyze_vision_input tool (the only MCP tool that needs it).
       const rawArgs = (tc.input ?? {}) as Record<string, unknown>;
-      const resolvedArgs: Record<string, unknown> = {
-        source: context.visionUrl ?? context.imageData ?? "",
-      };
-      for (const [k, v] of Object.entries(rawArgs)) {
-        if (v !== undefined) resolvedArgs[k] = v;
+      const resolvedArgs: Record<string, unknown> = { ...rawArgs };
+      if (
+        tc.toolName === "analyze_vision_input" &&
+        resolvedArgs.source === undefined
+      ) {
+        resolvedArgs.source = context.visionUrl ?? context.imageData ?? "";
       }
 
       let output: unknown;

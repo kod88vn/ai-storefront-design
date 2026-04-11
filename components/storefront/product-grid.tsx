@@ -27,8 +27,11 @@ export function StorefrontProductGrid({ columns, theme }: StorefrontProductGridP
     4: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4',
   }
 
+  const isDark = (theme.colorScheme ?? 'light') === 'dark'
+  const bg = isDark ? '#111111' : '#ffffff'
+
   return (
-    <section className="bg-white px-4 py-12 sm:px-6">
+    <section className="px-4 py-12 sm:px-6" style={{ backgroundColor: bg }}>
       <div className="mx-auto max-w-7xl">
         <h2
           className="mb-8 text-2xl font-semibold"

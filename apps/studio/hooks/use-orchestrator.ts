@@ -283,9 +283,9 @@ export function useOrchestrator() {
               })()
             : null,
         };
-        useStudioStore.getState().setAppliedSummary(summary);
-        useStudioStore.getState().setAgentStep("complete");
-        useStudioStore.getState().setAgentPlan(null);
+        afterState.setAppliedSummary(summary);
+        afterState.setAgentStep("complete");
+        afterState.setAgentPlan(null);
         resetAccumulators();
         break;
       }
@@ -312,9 +312,7 @@ export function useOrchestrator() {
       s.setAppliedSummary(null);
       // Reset accumulators FIRST, then snapshot config so the snapshot isn't wiped
       resetAccumulators();
-      beforeConfig.current = JSON.parse(
-        JSON.stringify(s.config),
-      ) as StorefrontConfig;
+      beforeConfig.current = structuredClone(s.config);
 
       s.addAuditEntry({
         method: "agent/start",

@@ -1,82 +1,107 @@
 {
   "theme": {
-    "primaryColor": "#111827",
-    "secondaryColor": "#64748b",
+    "primaryColor": "#FF4136",
+    "secondaryColor": "#FFB74D",
     "borderRadius": "none",
-    "navStyle": "bordered",
+    "navStyle": "filled",
     "colorScheme": "light",
-    "fontStyle": "modern-sans"
+    "fontStyle": "slab-serif"
   },
   "sections": [
+    {
+      "id": "announcement-bar",
+      "type": "announcement-bar",
+      "enabled": true,
+      "order": 0
+    },
     {
       "id": "hero",
       "type": "hero",
       "enabled": true,
-      "order": 0
+      "order": 1
     },
     {
       "id": "benefits-bar",
       "type": "benefits-bar",
       "enabled": true,
-      "order": 1
+      "order": 2
     },
     {
       "id": "product-grid",
       "type": "product-grid",
       "enabled": true,
-      "order": 2
+      "order": 3
     },
     {
       "id": "testimonials",
       "type": "testimonials",
       "enabled": true,
-      "order": 3
+      "order": 4
     },
     {
-      "id": "categories",
-      "type": "categories",
+      "id": "newsletter",
+      "type": "newsletter",
       "enabled": true,
-      "order": 4
+      "order": 5
     },
     {
       "id": "footer",
       "type": "footer",
       "enabled": true,
-      "order": 5
+      "order": 6
+    },
+    {
+      "id": "categories",
+      "type": "categories",
+      "enabled": true,
+      "order": 7
     }
   ],
   "hero": {
-    "layout": "minimal",
-    "title": "Curated Home Essentials",
-    "subtitle": "Discover modern designs for every space",
+    "layout": "split",
+    "title": "Refreshing Retro Vibes",
+    "subtitle": "Experience the nostalgic energy with our vibrant collection.",
     "ctaText": "Shop Now",
     "badge": "New Arrivals",
     "textAlign": "left",
     "ctaVariant": "solid",
     "overlayOpacity": 0,
-    "ctaSecondaryText": "Explore More"
+    "ctaSecondaryText": "Learn More"
   },
   "productGrid": {
-    "columns": 3,
-    "showRatings": true
+    "columns": 3
   },
   "sectionData": {
+    "announcement-bar": {
+      "text": "🎉 Free Shipping on Orders Over $50!",
+      "backgroundColor": "#FFB74D",
+      "textColor": "#FF4136",
+      "scrolling": true,
+      "emoji": "🎉",
+      "link": "/shop",
+      "dismissible": false
+    },
     "benefits-bar": {
       "items": [
         {
-          "icon": "truck",
-          "label": "Free Shipping Over $50",
-          "detail": "On all US orders"
+          "icon": "zap",
+          "label": "Fast Delivery",
+          "detail": "Get it in 2-5 days"
+        },
+        {
+          "icon": "heart",
+          "label": "Customer Love",
+          "detail": "Rated 5 stars"
         },
         {
           "icon": "refresh",
-          "label": "30-Day Returns",
-          "detail": "Hassle-free policy"
+          "label": "Easy Returns",
+          "detail": "Hassle-free process"
         },
         {
-          "icon": "shield",
-          "label": "Secure Checkout",
-          "detail": "SSL encrypted"
+          "icon": "truck",
+          "label": "Free Shipping",
+          "detail": "On orders over $50"
         }
       ]
     },
@@ -86,24 +111,32 @@
       "showRatings": true,
       "items": [
         {
-          "quote": "Amazing quality and fast delivery. I'm thrilled with my purchase!",
-          "author": "Sarah M.",
-          "location": "New York, NY",
+          "quote": "Absolutely love the retro vibe of these products! They bring so much energy to my space.",
+          "author": "Jamie L.",
+          "location": "Austin, TX",
           "rating": 5
         },
         {
-          "quote": "The design fits perfectly in my home. Highly recommend!",
-          "author": "James T.",
-          "location": "Los Angeles, CA",
+          "quote": "The quality is amazing, and the colors are just as vibrant as in the pictures!",
+          "author": "Sam K.",
+          "location": "Portland, OR",
           "rating": 5
         },
         {
-          "quote": "Customer service was exceptional. Will shop again.",
-          "author": "Emma R.",
-          "location": "Chicago, IL",
-          "rating": 5
+          "quote": "Fast shipping and fantastic customer service. Will definitely shop again.",
+          "author": "Alex M.",
+          "location": "San Diego, CA",
+          "rating": 4
         }
       ]
+    },
+    "newsletter": {
+      "heading": "Join the Retro Revolution",
+      "subtext": "Be the first to know about new drops and exclusive offers.",
+      "placeholder": "Enter your email",
+      "buttonText": "Subscribe",
+      "backgroundColor": "#FFB74D",
+      "incentive": "Join the community — get 15% off"
     }
   }
 }

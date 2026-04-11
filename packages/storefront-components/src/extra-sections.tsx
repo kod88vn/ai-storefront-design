@@ -75,23 +75,28 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
         }
 
         case 'benefits-bar': {
-            const items = sectionData['benefits-bar']?.items ?? [
+            const data = sectionData['benefits-bar']
+            const items = data?.items ?? [
                 { icon: 'truck' as const, label: '[BENEFIT 1 — Click to edit]', detail: '[Supporting detail text]' },
                 { icon: 'refresh' as const, label: '[BENEFIT 2 — Click to edit]', detail: '[Supporting detail text]' },
                 { icon: 'shield' as const, label: '[BENEFIT 3 — Click to edit]', detail: '[Supporting detail text]' },
                 { icon: 'award' as const, label: '[BENEFIT 4 — Click to edit]', detail: '[Supporting detail text]' },
             ]
+            const isDark = (theme.colorScheme ?? 'light') === 'dark'
+            const bg = data?.backgroundColor ?? (isDark ? '#1a1a1a' : '#f5f5f5')
+            const text = data?.textColor ?? (isDark ? '#e5e5e5' : '#404040')
+            const borderColor = isDark ? '#2a2a2a' : '#e5e5e5'
             return (
-                <section data-testid="benefits-bar" className="border-y border-neutral-200 bg-neutral-50 px-4 py-4">
-                    <div className="mx-auto grid max-w-7xl gap-4 text-sm text-neutral-700 sm:grid-cols-2 lg:grid-cols-4">
+                <section data-testid="benefits-bar" className="border-y px-4 py-4" style={{ backgroundColor: bg, color: text, borderColor }}>
+                    <div className="mx-auto grid max-w-7xl gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                         {items.slice(0, 4).map((item, idx) => (
                             <div key={`${item.label}-${idx}`} className="flex items-center gap-2.5">
                                 <span style={{ color: theme.secondaryColor }}>
                                     <BenefitIcon icon={item.icon} />
                                 </span>
                                 <div>
-                                    <p className="font-medium text-neutral-900">{item.label}</p>
-                                    {item.detail && <p className="text-xs text-neutral-500">{item.detail}</p>}
+                                    <p className="font-medium">{item.label}</p>
+                                    {item.detail && <p className="text-xs opacity-60">{item.detail}</p>}
                                 </div>
                             </div>
                         ))}
@@ -106,14 +111,18 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
                 subheading: '[Describe what makes this collection special]',
                 layout: 'grid' as const,
             }
+            const isDark = (theme.colorScheme ?? 'light') === 'dark'
+            const bg = data.backgroundColor ?? (isDark ? '#111111' : '#ffffff')
+            const text = data.textColor ?? (isDark ? '#e5e5e5' : '#404040')
+            const cardBg = isDark ? '#1a1a1a' : '#f5f5f5'
             return (
-                <section data-testid="featured-collection" className="bg-white px-4 py-12 sm:px-6">
+                <section data-testid="featured-collection" className="px-4 py-12 sm:px-6" style={{ backgroundColor: bg, color: text }}>
                     <div className="mx-auto max-w-7xl">
                         <h2 className="text-2xl font-semibold" style={{ color: theme.primaryColor }}>{data.heading}</h2>
-                        {data.subheading && <p className="mt-2 text-sm text-neutral-600">{data.subheading}</p>}
+                        {data.subheading && <p className="mt-2 text-sm opacity-70">{data.subheading}</p>}
                         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
                             {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="aspect-square rounded-lg bg-neutral-100" />
+                                <div key={i} className="aspect-square rounded-lg" style={{ backgroundColor: cardBg }} />
                             ))}
                         </div>
                     </div>
@@ -135,11 +144,17 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
             }
             const items = data.items?.length ? data.items : DEFAULT_TESTIMONIAL_ITEMS
             const showRatings = data.showRatings !== false
+            const isDark = (theme.colorScheme ?? 'light') === 'dark'
+            const sectionBg = data.backgroundColor ?? (isDark ? '#1a1a1a' : '#f5f5f5')
+            const baseBg = data.backgroundColor ?? (isDark ? '#111111' : '#ffffff')
+            const cardBg = isDark ? '#2a2a2a' : '#ffffff'
+            const text = data.textColor ?? (isDark ? '#e5e5e5' : '#404040')
+            const borderColor = isDark ? '#2a2a2a' : '#e5e5e5'
 
             if (data.layout === 'featured') {
                 const [first, ...rest] = items
                 return (
-                    <section data-testid="testimonials" className="bg-neutral-50 px-4 py-12 sm:px-6">
+                    <section data-testid="testimonials" className="px-4 py-12 sm:px-6" style={{ backgroundColor: sectionBg, color: text }}>
                         <div className="mx-auto max-w-7xl">
                             <h2 className="mb-6 text-2xl font-semibold" style={{ color: theme.primaryColor }}>{data.heading}</h2>
                             <div className="grid gap-4 lg:grid-cols-3">
@@ -150,10 +165,10 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
                                 </blockquote>
                                 <div className="flex flex-col gap-4">
                                     {rest.slice(0, 2).map((item, idx) => (
-                                        <blockquote key={`${item.author}-${idx}`} className="rounded-xl bg-white p-4 text-sm text-neutral-700">
+                                        <blockquote key={`${item.author}-${idx}`} className="rounded-xl p-4 text-sm" style={{ backgroundColor: cardBg, color: text }}>
                                             {showRatings && <StarRating rating={item.rating} />}
                                             <p className="mt-2">"{item.quote}"</p>
-                                            <cite className="mt-2 block font-medium text-neutral-900">— {item.author}</cite>
+                                            <cite className="mt-2 block font-medium">— {item.author}</cite>
                                         </blockquote>
                                     ))}
                                 </div>
@@ -165,15 +180,15 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
 
             if (data.layout === 'list') {
                 return (
-                    <section data-testid="testimonials" className="bg-white px-4 py-12 sm:px-6">
+                    <section data-testid="testimonials" className="px-4 py-12 sm:px-6" style={{ backgroundColor: baseBg, color: text }}>
                         <div className="mx-auto max-w-3xl">
                             <h2 className="mb-8 text-center text-2xl font-semibold" style={{ color: theme.primaryColor }}>{data.heading}</h2>
-                            <div className="space-y-6 divide-y divide-neutral-200">
+                            <div className="space-y-6 divide-y" style={{ borderColor }}>
                                 {items.slice(0, 5).map((item, idx) => (
                                     <blockquote key={`${item.author}-${idx}`} className="pt-6 first:pt-0">
                                         {showRatings && <StarRating rating={item.rating} />}
-                                        <p className="mt-2 text-base text-neutral-700">"{item.quote}"</p>
-                                        <cite className="mt-2 block text-sm font-medium text-neutral-900">— {item.author}{item.location ? `, ${item.location}` : ''}</cite>
+                                        <p className="mt-2 text-base">"{item.quote}"</p>
+                                        <cite className="mt-2 block text-sm font-medium">— {item.author}{item.location ? `, ${item.location}` : ''}</cite>
                                     </blockquote>
                                 ))}
                             </div>
@@ -184,15 +199,15 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
 
             // Default: grid
             return (
-                <section data-testid="testimonials" className="bg-neutral-50 px-4 py-12 sm:px-6">
+                <section data-testid="testimonials" className="px-4 py-12 sm:px-6" style={{ backgroundColor: sectionBg, color: text }}>
                     <div className="mx-auto max-w-7xl">
                         <h2 className="mb-5 text-2xl font-semibold" style={{ color: theme.primaryColor }}>{data.heading}</h2>
                         <div className="grid gap-4 md:grid-cols-3">
                             {items.slice(0, 3).map((item, idx) => (
-                                <blockquote key={`${item.author}-${idx}`} className="rounded-xl bg-white p-5 text-sm text-neutral-700 shadow-sm">
+                                <blockquote key={`${item.author}-${idx}`} className="rounded-xl p-5 text-sm shadow-sm" style={{ backgroundColor: cardBg, color: text }}>
                                     {showRatings && <StarRating rating={item.rating} />}
                                     <p className="mt-2">"{item.quote}"</p>
-                                    <cite className="mt-3 block font-medium text-neutral-900">— {item.author}{item.location ? `, ${item.location}` : ''}</cite>
+                                    <cite className="mt-3 block font-medium">— {item.author}{item.location ? `, ${item.location}` : ''}</cite>
                                 </blockquote>
                             ))}
                         </div>
@@ -202,16 +217,19 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
         }
 
         case 'newsletter': {
+            const isDark = (theme.colorScheme ?? 'light') === 'dark'
             const data = sectionData.newsletter ?? {
                 heading: '[YOUR NEWSLETTER TITLE]',
                 subtext: '[Tell subscribers what they will get by signing up here]',
                 placeholder: 'Enter your email',
                 buttonText: 'Subscribe',
-                backgroundColor: '#f5f5f5',
+                backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
                 incentive: null,
             }
+            const bg = data.backgroundColor ?? (isDark ? '#1a1a1a' : '#f5f5f5')
+            const text = data.textColor ?? (isDark ? '#e5e5e5' : '#404040')
             return (
-                <section data-testid="newsletter" className="px-4 py-12 sm:px-6" style={{ backgroundColor: data.backgroundColor || '#f5f5f5' }}>
+                <section data-testid="newsletter" className="px-4 py-12 sm:px-6" style={{ backgroundColor: bg, color: text }}>
                     <div className="mx-auto max-w-xl text-center">
                         {data.incentive && (
                             <p className="mb-2 inline-block rounded-full px-4 py-1 text-xs font-semibold text-white" style={{ backgroundColor: theme.secondaryColor }}>
@@ -219,7 +237,7 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
                             </p>
                         )}
                         <h2 className="text-2xl font-semibold" style={{ color: theme.primaryColor }}>{data.heading}</h2>
-                        <p className="mt-2 text-sm text-neutral-600">{data.subtext}</p>
+                        <p className="mt-2 text-sm opacity-70">{data.subtext}</p>
                         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
                             <input
                                 type="email"
@@ -239,23 +257,28 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
         }
 
         case 'trust-badges': {
-            const items = sectionData['trust-badges']?.items ?? [
+            const data = sectionData['trust-badges']
+            const items = data?.items ?? [
                 { icon: 'shield' as const, label: '[TRUST POINT 1 — Click to edit]' },
                 { icon: 'truck' as const, label: '[TRUST POINT 2 — Click to edit]' },
                 { icon: 'refresh' as const, label: '[TRUST POINT 3 — Click to edit]' },
                 { icon: 'award' as const, label: '[TRUST POINT 4 — Click to edit]' },
             ]
+            const isDark = (theme.colorScheme ?? 'light') === 'dark'
+            const bg = data?.backgroundColor ?? (isDark ? '#111111' : '#ffffff')
+            const text = data?.textColor ?? (isDark ? '#e5e5e5' : '#404040')
+            const borderColor = isDark ? '#2a2a2a' : '#e5e5e5'
             return (
-                <section data-testid="trust-badges" className="border-y border-neutral-200 bg-white px-4 py-5">
-                    <div className="mx-auto grid max-w-7xl gap-4 text-sm text-neutral-700 sm:grid-cols-2 lg:grid-cols-4">
+                <section data-testid="trust-badges" className="border-y px-4 py-5" style={{ backgroundColor: bg, color: text, borderColor }}>
+                    <div className="mx-auto grid max-w-7xl gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                         {items.slice(0, 4).map((item, idx) => (
                             <div key={`${item.label}-${idx}`} className="flex items-center justify-center gap-2 text-center sm:justify-start">
                                 <span style={{ color: theme.secondaryColor }}>
                                     <TrustBadgeIcon icon={item.icon} />
                                 </span>
                                 <div>
-                                    <p className="font-medium text-neutral-900">{item.label}</p>
-                                    {item.detail && <p className="text-xs text-neutral-500">{item.detail}</p>}
+                                    <p className="font-medium">{item.label}</p>
+                                    {item.detail && <p className="text-xs opacity-60">{item.detail}</p>}
                                 </div>
                             </div>
                         ))}
@@ -275,10 +298,13 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
                 ],
             }
             const brands = data.brands ?? []
+            const isDark = (theme.colorScheme ?? 'light') === 'dark'
+            const bg = data.backgroundColor ?? (isDark ? '#1a1a1a' : '#f5f5f5')
+            const text = data.textColor ?? (isDark ? '#737373' : '#a3a3a3')
             return (
-                <section data-testid="brand-strip" className="bg-neutral-50 px-4 py-6">
-                    {data.heading && <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-neutral-400">{data.heading}</p>}
-                    <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-6 text-sm font-semibold tracking-wide text-neutral-400">
+                <section data-testid="brand-strip" className="px-4 py-6" style={{ backgroundColor: bg }}>
+                    {data.heading && <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest opacity-50">{data.heading}</p>}
+                    <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-6 text-sm font-semibold tracking-wide" style={{ color: text }}>
                         {brands.slice(0, 8).map((brand) => <span key={brand.name}>{brand.logoText || brand.name}</span>)}
                     </div>
                 </section>
