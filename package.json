@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "packageManager": "yarn@1.17.3",
   "scripts": {
-    "dev": "turbo dev",
+    "dev": "turbo dev --filter=studio",
     "build": "turbo build",
     "lint": "turbo lint",
     "studio": "turbo dev --filter=studio",
