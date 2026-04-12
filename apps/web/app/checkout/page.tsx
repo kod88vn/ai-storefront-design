@@ -1,14 +1,18 @@
-import { readStoreConfig } from '../../lib/store-config'
+'use client'
+
 import { StorefrontNavbar, StorefrontFooter } from '@ai-storefront/storefront-components'
+import { useCart } from '../../lib/cart-context'
+import { useConfig } from '../../lib/use-config'
 
-export const dynamic = 'force-dynamic'
+export default function CheckoutPage() {
+    const config = useConfig()
+    const { count } = useCart()
 
-export default async function CheckoutPage() {
-    const config = await readStoreConfig()
+    if (!config) return null
 
     return (
         <div className="min-h-screen" style={{ backgroundColor: (config.theme.colorScheme ?? 'light') === 'dark' ? '#0a0a0a' : '#ffffff', color: (config.theme.colorScheme ?? 'light') === 'dark' ? '#f5f5f5' : '#0a0a0a' }}>
-            <StorefrontNavbar theme={config.theme} navConfig={config.nav} />
+            <StorefrontNavbar theme={config.theme} navConfig={config.nav} cartCount={count} />
             <main className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
                 <div className="max-w-md space-y-4">
                     <div className="text-6xl">🚧</div>

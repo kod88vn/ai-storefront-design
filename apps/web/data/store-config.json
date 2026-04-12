@@ -1,46 +1,46 @@
 {
   "theme": {
-    "primaryColor": "#FF4136",
-    "secondaryColor": "#FFB74D",
-    "borderRadius": "none",
-    "navStyle": "filled",
+    "primaryColor": "#3d2b1f",
+    "secondaryColor": "#a16207",
+    "borderRadius": "md",
+    "navStyle": "bordered",
     "colorScheme": "light",
-    "fontStyle": "slab-serif"
+    "fontStyle": "modern-sans"
   },
   "sections": [
-    {
-      "id": "announcement-bar",
-      "type": "announcement-bar",
-      "enabled": true,
-      "order": 0
-    },
     {
       "id": "hero",
       "type": "hero",
       "enabled": true,
-      "order": 1
+      "order": 0
     },
     {
       "id": "benefits-bar",
       "type": "benefits-bar",
       "enabled": true,
-      "order": 2
+      "order": 1
     },
     {
       "id": "product-grid",
       "type": "product-grid",
       "enabled": true,
-      "order": 3
+      "order": 2
     },
     {
       "id": "testimonials",
       "type": "testimonials",
       "enabled": true,
-      "order": 4
+      "order": 3
     },
     {
       "id": "newsletter",
       "type": "newsletter",
+      "enabled": true,
+      "order": 4
+    },
+    {
+      "id": "categories",
+      "type": "categories",
       "enabled": true,
       "order": 5
     },
@@ -51,92 +51,123 @@
       "order": 6
     },
     {
-      "id": "categories",
-      "type": "categories",
+      "id": "trust-badges",
+      "type": "trust-badges",
       "enabled": true,
       "order": 7
     }
   ],
   "hero": {
     "layout": "split",
-    "title": "Refreshing Retro Vibes",
-    "subtitle": "Experience the nostalgic energy with our vibrant collection.",
+    "title": "Natural Grooming Essentials",
+    "subtitle": "Crafted for the rugged and refined with 100% natural ingredients.",
     "ctaText": "Shop Now",
-    "badge": "New Arrivals",
+    "badge": "100% Natural",
     "textAlign": "left",
     "ctaVariant": "solid",
-    "overlayOpacity": 0,
-    "ctaSecondaryText": "Learn More"
+    "overlayOpacity": 0.3,
+    "ctaSecondaryText": "Discover More"
   },
   "productGrid": {
     "columns": 3
   },
   "sectionData": {
-    "announcement-bar": {
-      "text": "🎉 Free Shipping on Orders Over $50!",
-      "backgroundColor": "#FFB74D",
-      "textColor": "#FF4136",
-      "scrolling": true,
-      "emoji": "🎉",
-      "link": "/shop",
-      "dismissible": false
-    },
     "benefits-bar": {
       "items": [
         {
-          "icon": "zap",
-          "label": "Fast Delivery",
-          "detail": "Get it in 2-5 days"
+          "icon": "leaf",
+          "label": "Natural Ingredients",
+          "detail": "100% plant-based"
         },
         {
           "icon": "heart",
-          "label": "Customer Love",
-          "detail": "Rated 5 stars"
+          "label": "Handcrafted Care",
+          "detail": "Made with love"
         },
         {
-          "icon": "refresh",
-          "label": "Easy Returns",
-          "detail": "Hassle-free process"
+          "icon": "check",
+          "label": "Sustainable",
+          "detail": "Eco-friendly products"
         },
         {
-          "icon": "truck",
-          "label": "Free Shipping",
-          "detail": "On orders over $50"
+          "icon": "award",
+          "label": "Top Quality",
+          "detail": "Customer approved"
         }
       ]
     },
+    "featured-collection": {
+      "heading": "Our Best Sellers",
+      "subheading": "Discover the products customers can't get enough of.",
+      "layout": "grid"
+    },
     "testimonials": {
       "heading": "What Our Customers Say",
-      "layout": "grid",
+      "layout": "list",
       "showRatings": true,
       "items": [
         {
-          "quote": "Absolutely love the retro vibe of these products! They bring so much energy to my space.",
-          "author": "Jamie L.",
+          "quote": "These products have transformed my grooming routine. Absolutely love the natural scents!",
+          "author": "Jake M.",
+          "location": "Denver, CO",
+          "rating": 5
+        },
+        {
+          "quote": "Finally, a brand that prioritizes natural ingredients without compromising on quality.",
+          "author": "Sam T.",
           "location": "Austin, TX",
           "rating": 5
         },
         {
-          "quote": "The quality is amazing, and the colors are just as vibrant as in the pictures!",
-          "author": "Sam K.",
+          "quote": "The soaps are amazing, and I feel good knowing they're eco-friendly.",
+          "author": "Chris R.",
           "location": "Portland, OR",
-          "rating": 5
-        },
-        {
-          "quote": "Fast shipping and fantastic customer service. Will definitely shop again.",
-          "author": "Alex M.",
-          "location": "San Diego, CA",
           "rating": 4
         }
       ]
     },
     "newsletter": {
-      "heading": "Join the Retro Revolution",
-      "subtext": "Be the first to know about new drops and exclusive offers.",
+      "heading": "Join the Squatch Squad",
+      "subtext": "Stay updated with exclusive offers and grooming tips.",
       "placeholder": "Enter your email",
       "buttonText": "Subscribe",
-      "backgroundColor": "#FFB74D",
-      "incentive": "Join the community — get 15% off"
+      "backgroundColor": "#3d2b1f",
+      "incentive": "Get 10% off your first order"
+    },
+    "trust-badges": {
+      "items": [
+        {
+          "icon": "lock",
+          "label": "Secure Payment"
+        },
+        {
+          "icon": "truck",
+          "label": "Fast Delivery"
+        },
+        {
+          "icon": "refresh",
+          "label": "Easy Returns"
+        },
+        {
+          "icon": "award",
+          "label": "Quality Guarantee"
+        }
+      ]
     }
+  },
+  "nav": {
+    "brandName": "STUDIO",
+    "links": [
+      {
+        "id": "nav-home",
+        "label": "Home",
+        "href": "/"
+      },
+      {
+        "id": "nav-shop",
+        "label": "Shop",
+        "href": "/products"
+      }
+    ]
   }
 }

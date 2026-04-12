@@ -8,9 +8,10 @@ import { ExtraSections } from './extra-sections'
 
 interface StorefrontPreviewProps {
     config: StorefrontConfig
+    cartCount?: number
 }
 
-export function StorefrontPreview({ config }: StorefrontPreviewProps) {
+export function StorefrontPreview({ config, cartCount = 0 }: StorefrontPreviewProps) {
     const sortedSections = [...config.sections].sort((a, b) => a.order - b.order)
 
     function renderSection(section: LayoutSection) {
@@ -65,7 +66,7 @@ export function StorefrontPreview({ config }: StorefrontPreviewProps) {
                 color: baseText,
             }}
         >
-            <StorefrontNavbar theme={theme} navConfig={config.nav} />
+            <StorefrontNavbar theme={theme} navConfig={config.nav} cartCount={cartCount} />
             {sortedSections.map(renderSection)}
         </div>
     )

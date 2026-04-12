@@ -63,13 +63,20 @@ function renderPrebuilt(type: SectionType, config: StorefrontConfig) {
   }
 }
 
+function normalizeInjectedHtml(html: string): string {
+  // React warns when <script> appears in client-rendered HTML; convert to inert templates.
+  return html
+    .replace(/<script\b/gi, '<template data-blocked-script')
+    .replace(/<\/script>/gi, '</template>')
+}
+
 function renderComponent(comp: ComponentItem, config: StorefrontConfig) {
   const cls = comp.customClasses || undefined
   switch (comp.kind) {
     case 'prebuilt':
       return <div key={comp.id} className={cls}>{renderPrebuilt(comp.sectionType, config)}</div>
     case 'custom-text':
-      return <div key={comp.id} className={cls} dangerouslySetInnerHTML={{ __html: comp.html || '<p style="padding:2rem;color:#aaa;text-align:center">[Custom text block — click to edit]</p>' }} />
+      return <div key={comp.id} className={cls} dangerouslySetInnerHTML={{ __html: normalizeInjectedHtml(comp.html || '<p style="padding:2rem;color:#aaa;text-align:center">[Custom text block — click to edit]</p>') }} />
     case 'custom-image':
       return (
         <div key={comp.id} className={cls}>

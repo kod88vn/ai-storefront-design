@@ -1,9 +1,14 @@
+'use client'
+
 import { StorefrontPreview } from '@ai-storefront/storefront-components'
-import { readStoreConfig } from '../lib/store-config'
+import { useCart } from '../lib/cart-context'
+import { useConfig } from '../lib/use-config'
 
-export const dynamic = 'force-dynamic'
+export default function HomePage() {
+    const config = useConfig()
+    const { count } = useCart()
 
-export default async function HomePage() {
-    const config = await readStoreConfig()
-    return <StorefrontPreview config={config} />
+    if (!config) return null
+
+    return <StorefrontPreview config={config} cartCount={count} />
 }

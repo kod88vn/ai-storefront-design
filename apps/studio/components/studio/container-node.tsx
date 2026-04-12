@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type DragEvent } from 'react'
 import { GripVertical, Layers, ChevronDown, Trash2, Plus, Pencil, Type, Image as ImageIcon } from 'lucide-react'
 import { useStudioStore } from '@/lib/store'
 import { ContainerLayoutConfig, labelCls } from './container-layout-config'
@@ -35,6 +35,12 @@ export interface ContainerCbs {
     onRemoveChild: (id: string) => void
     onPatchChild: (id: string, patch: Record<string, unknown>) => void
     onRemoveSelf: () => void
+}
+
+interface DragHandleProps {
+    draggable?: boolean
+    onDragStart?: (e: DragEvent<HTMLButtonElement>) => void
+    onDragEnd?: () => void
 }
 
 function ComponentRow({ comp, containerId, onRemove, editable = true }: { comp: ComponentItem; containerId: string; onRemove?: () => void; editable?: boolean }) {
@@ -84,11 +90,12 @@ function ComponentPickerInline({ onAdd, usedTypes, onClose }: {
     )
 }
 
-export function ContainerNode({ id, label, layoutMode, flexConfig, gridConfig, components, usedTypes, depth = 0, cbs }: {
+export function ContainerNode({ id, label, layoutMode, flexConfig, gridConfig, components, usedTypes, depth = 0, cbs, dragHandleProps }: {
     id: string; label: string; layoutMode: ContainerLayoutMode
     flexConfig: FlexContainerConfig; gridConfig: GridContainerConfig
     components: ComponentItem[]; usedTypes: Set<string>; depth?: number
     cbs: ContainerCbs
+    dragHandleProps?: DragHandleProps
 }) {
     const [open, setOpen] = useState(depth === 0)
     const [editing, setEditing] = useState(false)
@@ -102,7 +109,17 @@ export function ContainerNode({ id, label, layoutMode, flexConfig, gridConfig, c
     return (
         <div data-testid={`container-node-${id}`} className={`border-l-2 ${DEPTH_BORDER[d]} ${depth === 0 ? 'border-b border-border' : 'ml-3 mt-2 rounded-r-sm'}`}>
             <div className={`flex items-center gap-1.5 px-2 py-2 ${DEPTH_HEADER[d]}`}>
-                {depth === 0 && <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                {depth === 0 && (
+                    <button
+                        type="button"
+                        data-testid={`drag-container-${id}`}
+                        title="Drag to reorder"
+                        className="cursor-grab rounded p-0.5 text-muted-foreground active:cursor-grabbing"
+                        {...dragHandleProps}
+                    >
+                        <GripVertical className="h-4 w-4 shrink-0" />
+                    </button>
+                )}
                 <Layers className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 {editing
                     ? <input value={labelVal} onChange={(e) => setLabelVal(e.target.value)} onBlur={saveLabel} onKeyDown={(e) => e.key === 'Enter' && saveLabel()} autoFocus className="flex-1 rounded border border-ring bg-background px-1.5 text-xs focus:outline-none" />

@@ -15,14 +15,34 @@ function collectUsedTypes(comps: ComponentItem[], set: Set<string>) {
 
 export function ContainersPanel({ title = 'Containers' }: { title?: string }) {
     const {
-        containers, addContainer, addComponentToContainer, removeContainer,
+        containers, addContainer, addComponentToContainer, removeContainer, reorderContainers,
         updateContainerLabel, updateContainerLayoutMode, updateContainerFlexConfig,
         updateContainerGridConfig, removeComponentFromContainer, updateComponentInContainer,
     } = useStudioStore()
     const [open, setOpen] = useState(false)
+    const [draggingContainerId, setDraggingContainerId] = useState<string | null>(null)
+    const [overContainerId, setOverContainerId] = useState<string | null>(null)
 
     const usedTypes = new Set<string>()
     for (const c of containers) collectUsedTypes(c.components, usedTypes)
+
+    function moveContainer(fromId: string, targetId: string) {
+        if (fromId === targetId) return
+        const from = containers.findIndex((c) => c.id === fromId)
+        const to = containers.findIndex((c) => c.id === targetId)
+        if (from < 0 || to < 0) return
+        const next = [...containers]
+        const [moved] = next.splice(from, 1)
+        next.splice(to, 0, moved)
+        reorderContainers(next)
+    }
+
+    function handleDropOn(targetId: string) {
+        if (!draggingContainerId) return
+        moveContainer(draggingContainerId, targetId)
+        setDraggingContainerId(null)
+        setOverContainerId(null)
+    }
 
     return (
         <div data-testid="containers-panel">
@@ -39,22 +59,52 @@ export function ContainersPanel({ title = 'Containers' }: { title?: string }) {
                     </div>
                     <div data-testid="containers-list">
                         {containers.map((c) => (
-                            <ContainerNode
+                            <div
                                 key={c.id}
-                                id={c.id} label={c.label} layoutMode={c.layoutMode}
-                                flexConfig={c.flexConfig} gridConfig={c.gridConfig} components={c.components}
-                                usedTypes={usedTypes} depth={0}
-                                cbs={{
-                                    onLabelSave: (l) => updateContainerLabel(c.id, l),
-                                    onMode: (m) => updateContainerLayoutMode(c.id, m),
-                                    onFlex: (p) => updateContainerFlexConfig(c.id, p),
-                                    onGrid: (p) => updateContainerGridConfig(c.id, p),
-                                    onAdd: (comp) => addComponentToContainer(c.id, comp),
-                                    onRemoveChild: (compId) => removeComponentFromContainer(c.id, compId),
-                                    onPatchChild: (compId, patch) => updateComponentInContainer(c.id, compId, patch),
-                                    onRemoveSelf: () => removeContainer(c.id),
+                                draggable
+                                onDragStart={(e) => {
+                                    e.dataTransfer.effectAllowed = 'move'
+                                    setDraggingContainerId(c.id)
                                 }}
-                            />
+                                onDragOver={(e) => {
+                                    e.preventDefault()
+                                    if (!draggingContainerId || draggingContainerId === c.id) return
+                                    if (overContainerId !== c.id) {
+                                        setOverContainerId(c.id)
+                                        moveContainer(draggingContainerId, c.id)
+                                    }
+                                }}
+                                onDragLeave={() => {
+                                    if (overContainerId === c.id) setOverContainerId(null)
+                                }}
+                                onDrop={() => handleDropOn(c.id)}
+                                onDragEnd={() => {
+                                    setDraggingContainerId(null)
+                                    setOverContainerId(null)
+                                }}
+                                className={`transition-all duration-150 ${draggingContainerId === c.id
+                                        ? 'scale-[0.99] opacity-55 ring-1 ring-primary/40'
+                                        : overContainerId === c.id
+                                            ? 'translate-y-1 border-t-2 border-primary/50'
+                                            : ''
+                                    }`}
+                            >
+                                <ContainerNode
+                                    id={c.id} label={c.label} layoutMode={c.layoutMode}
+                                    flexConfig={c.flexConfig} gridConfig={c.gridConfig} components={c.components}
+                                    usedTypes={usedTypes} depth={0}
+                                    cbs={{
+                                        onLabelSave: (l) => updateContainerLabel(c.id, l),
+                                        onMode: (m) => updateContainerLayoutMode(c.id, m),
+                                        onFlex: (p) => updateContainerFlexConfig(c.id, p),
+                                        onGrid: (p) => updateContainerGridConfig(c.id, p),
+                                        onAdd: (comp) => addComponentToContainer(c.id, comp),
+                                        onRemoveChild: (compId) => removeComponentFromContainer(c.id, compId),
+                                        onPatchChild: (compId, patch) => updateComponentInContainer(c.id, compId, patch),
+                                        onRemoveSelf: () => removeContainer(c.id),
+                                    }}
+                                />
+                            </div>
                         ))}
                     </div>
                 </>
