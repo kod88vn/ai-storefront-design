@@ -206,6 +206,8 @@ export interface StorefrontConfig {
   hero: HeroConfig;
   productGrid: ProductGridConfig;
   sectionData: StorefrontSectionData;
+  nav?: NavConfig;
+  pages?: Partial<PagesConfig>;
 }
 
 // ─── Product / category ───────────────────────────────────────────────────────
@@ -219,6 +221,8 @@ export interface Product {
   badge?: string;
   rating?: number;
   reviewCount?: number;
+  description?: string;
+  images?: string[];
 }
 
 export interface Category {
@@ -226,6 +230,68 @@ export interface Category {
   name: string;
   slug: string;
   image?: string;
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+
+export interface NavLink {
+  id: string;
+  label: string;
+  href: string;
+}
+
+export interface NavConfig {
+  brandName: string;
+  links: NavLink[];
+}
+
+// ─── Cart ─────────────────────────────────────────────────────────────────────
+
+export interface CartItem {
+  productId: string;
+  title: string;
+  price: number;
+  image: string;
+  qty: number;
+}
+
+// ─── Page types ───────────────────────────────────────────────────────────────
+
+export type PageType =
+  | "home"
+  | "products"
+  | "product-detail"
+  | "cart"
+  | "custom";
+
+export interface ProductsPageConfig {
+  heading: string;
+  subheading?: string;
+  columns: 2 | 3 | 4;
+  showFilters: boolean;
+}
+
+export interface ProductDetailPageConfig {
+  showReviews: boolean;
+  showRelated: boolean;
+}
+
+export interface CartPageConfig {
+  emptyMessage: string;
+  checkoutButtonText: string;
+}
+
+export interface CustomPageConfig {
+  slug: string;
+  title: string;
+  content: string;
+}
+
+export interface PagesConfig {
+  products: ProductsPageConfig;
+  productDetail: ProductDetailPageConfig;
+  cart: CartPageConfig;
+  custom: CustomPageConfig;
 }
 
 // ─── Agent/orchestration ──────────────────────────────────────────────────────
@@ -298,6 +364,8 @@ export interface OrchestratorContext {
   imageData?: string | null;
   currentConfig: StorefrontConfig;
   planFeedback?: PlanFeedback | null;
+  /** The page being edited — drives per-page orchestrator selection */
+  page?: PageType;
 }
 
 export interface OrchestratorConfigUpdate {
@@ -308,6 +376,9 @@ export interface OrchestratorConfigUpdate {
   enableSections?: SectionType[];
   disableSections?: SectionType[];
   sectionData?: Partial<StorefrontSectionData>;
+  navChanges?: Partial<NavConfig>;
+  productsPageChanges?: Partial<ProductsPageConfig>;
+  cartPageChanges?: Partial<CartPageConfig>;
 }
 
 export type OrchestratorEventType =

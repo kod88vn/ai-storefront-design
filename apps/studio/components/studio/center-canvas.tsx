@@ -12,6 +12,9 @@ import {
   StorefrontCategories,
   StorefrontFooter,
   ExtraSections,
+  ProductsPage,
+  ProductDetailPage,
+  CartPage,
 } from '@ai-storefront/storefront-components'
 
 const viewportButtons: { viewport: Viewport; icon: React.ReactNode; label: string }[] = [
@@ -101,7 +104,7 @@ function ContainerCanvas({ config, containers }: { config: StorefrontConfig; con
       className={`min-h-screen ${isTransparentNav ? 'relative' : ''}`}
       style={{ ['--storefront-radius' as string]: radiusVal, fontFamily: fontFamilyVal, backgroundColor: baseBg, color: baseText }}
     >
-      <StorefrontNavbar theme={theme} />
+      <StorefrontNavbar theme={theme} navConfig={config.nav} />
       {containers.map((c) => (
         <div key={c.id} className={containerClass(c)}>
           {c.components.map((comp) => renderComponent(comp, config))}
@@ -112,7 +115,7 @@ function ContainerCanvas({ config, containers }: { config: StorefrontConfig; con
 }
 
 export function CenterCanvas() {
-  const { viewport, setViewport, config, containers } = useStudioStore()
+  const { viewport, setViewport, config, containers, currentPage, cartItems } = useStudioStore()
   const width = viewportWidths[viewport]
 
   return (
@@ -138,7 +141,40 @@ export function CenterCanvas() {
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           style={{ minHeight: '80vh', maxWidth: '100%' }}
         >
-          <ContainerCanvas config={config} containers={containers} />
+          {currentPage === 'home' && <ContainerCanvas config={config} containers={containers} />}
+          {currentPage === 'products' && (
+            <ProductsPage
+              theme={config.theme}
+              navConfig={config.nav}
+              cartItems={cartItems}
+              pagesConfig={config.pages?.products}
+            />
+          )}
+          {currentPage === 'product-detail' && (
+            <ProductDetailPage
+              theme={config.theme}
+              navConfig={config.nav}
+              cartItems={cartItems}
+              pagesConfig={config.pages?.productDetail}
+            />
+          )}
+          {currentPage === 'cart' && (
+            <CartPage
+              theme={config.theme}
+              navConfig={config.nav}
+              cartItems={cartItems}
+              pagesConfig={config.pages?.cart}
+            />
+          )}
+          {currentPage === 'custom' && (
+            <div className="flex min-h-[60vh] items-center justify-center p-12 text-center text-muted-foreground">
+              <div>
+                <p className="text-4xl mb-4">✏️</p>
+                <p className="font-medium">Custom page</p>
+                <p className="text-sm mt-1">Custom page editor coming soon</p>
+              </div>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -X POST \"https://api.blackbox.ai/api/chat\" -H \"Content-Type: application/json\" -d '{\"\"messages\"\":[{\"\"role\"\":\"\"user\"\",\"\"content\"\":\"\"Say hello in one word\"\"}],\"\"model\"\":\"\"blackboxai/anthropic/claude-sonnet-4.6\"\"}' --max-time 15)",
+      "Bash(env)",
+      "Bash(curl -s -X POST \"https://api.blackbox.ai/v1/messages\" -H \"Content-Type: application/json\" -H \"x-api-key: sk-dcWQ3RLHMO1029xkMf6XAw\" -H \"anthropic-version: 2023-06-01\" -d '{\"\"model\"\":\"\"claude-sonnet-4-6\"\",\"\"max_tokens\"\":50,\"\"messages\"\":[{\"\"role\"\":\"\"user\"\",\"\"content\"\":\"\"Say hello in one word\"\"}]}' --max-time 15)",
+      "Bash(curl -s \"https://api.blackbox.ai/v1/models\" -H \"Authorization: Bearer sk-dcWQ3RLHMO1029xkMf6XAw\" --max-time 15)"
+    ]
+  }
+}

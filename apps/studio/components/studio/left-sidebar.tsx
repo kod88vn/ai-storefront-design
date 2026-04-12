@@ -59,6 +59,7 @@ export function LeftSidebar() {
       imageData: droppedImage,
       currentConfig: config,
       planFeedback: null,
+      page: useStudioStore.getState().currentPage,
     })
   }
 

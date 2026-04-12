@@ -5,3 +5,7 @@ export { StorefrontCategories } from "./categories";
 export { StorefrontFooter } from "./footer";
 export { StorefrontPreview } from "./storefront-preview";
 export { ExtraSections } from "./extra-sections";
+export { ProductsPage } from "./pages/products-page";
+export { ProductDetailPage } from "./pages/product-detail-page";
+export { CartPage } from "./pages/cart-page";
+export { sampleProducts, sampleCategories, defaultNavConfig } from "./data";

@@ -2,18 +2,22 @@
 
 import { useState } from 'react'
 import { Search, ShoppingBag, User, Menu, X } from 'lucide-react'
-import type { ThemeConfig } from '@ai-storefront/types'
+import type { NavConfig, ThemeConfig } from '@ai-storefront/types'
+import { defaultNavConfig } from './data'
 
 interface NavbarProps {
     theme: ThemeConfig
+    navConfig?: NavConfig
+    cartCount?: number
+    onCartClick?: () => void
 }
 
-export function StorefrontNavbar({ theme }: NavbarProps) {
+export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick }: NavbarProps) {
     const [menuOpen, setMenuOpen] = useState(false)
+    const nav = navConfig ?? defaultNavConfig
 
     const navStyle = theme.navStyle ?? 'bordered'
 
-    // Compute container classes + inline styles based on navStyle
     const containerCls =
         navStyle === 'transparent'
             ? 'absolute top-0 left-0 right-0 z-20'
@@ -58,23 +62,33 @@ export function StorefrontNavbar({ theme }: NavbarProps) {
     return (
         <nav data-testid="storefront-navbar" className={containerCls} style={containerStyle}>
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-                <a href="#" className="text-lg font-semibold tracking-tight" style={{ color: textColor }}>STUDIO</a>
+                <a href="/" className="text-lg font-semibold tracking-tight" style={{ color: textColor }}>
+                    {nav.brandName}
+                </a>
 
                 {/* Desktop nav links */}
                 <div className={`hidden items-center gap-6 text-sm md:flex ${linkCls}`}>
-                    <a href="#" className={linkCls}>Shop</a>
-                    <a href="#" className={linkCls}>Collections</a>
-                    <a href="#" className={linkCls}>Journal</a>
+                    {nav.links.map((link) => (
+                        <a key={link.id} href={link.href} className={linkCls}>{link.label}</a>
+                    ))}
                 </div>
 
                 <div className={`flex items-center gap-3 ${iconCls}`}>
                     <button data-testid="navbar-search" aria-label="Search" className={iconCls}><Search className="h-4 w-4" /></button>
                     <button data-testid="navbar-user" aria-label="Account" className={iconCls}><User className="h-4 w-4" /></button>
-                    <button data-testid="navbar-cart" aria-label="Cart" className={`relative ${iconCls}`}>
+                    <button
+                        data-testid="navbar-cart"
+                        aria-label="Cart"
+                        className={`relative ${iconCls}`}
+                        onClick={onCartClick}
+                    >
                         <ShoppingBag className="h-4 w-4" />
-                        <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full text-[10px] text-white" style={{ backgroundColor: theme.secondaryColor }}>0</span>
+                        {cartCount > 0 && (
+                            <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full text-[10px] text-white" style={{ backgroundColor: theme.secondaryColor }}>
+                                {cartCount > 9 ? '9+' : cartCount}
+                            </span>
+                        )}
                     </button>
-                    {/* Mobile menu toggle */}
                     <button
                         data-testid="navbar-menu-toggle"
                         aria-label="Menu"
@@ -90,9 +104,9 @@ export function StorefrontNavbar({ theme }: NavbarProps) {
             {menuOpen && (
                 <div data-testid="navbar-mobile-menu" className={`md:hidden ${mobileBorderCls}`} style={mobileContainerStyle}>
                     <div className={`flex flex-col gap-4 px-4 py-4 text-sm ${linkCls}`}>
-                        <a href="#" className={linkCls} onClick={() => setMenuOpen(false)}>Shop</a>
-                        <a href="#" className={linkCls} onClick={() => setMenuOpen(false)}>Collections</a>
-                        <a href="#" className={linkCls} onClick={() => setMenuOpen(false)}>Journal</a>
+                        {nav.links.map((link) => (
+                            <a key={link.id} href={link.href} className={linkCls} onClick={() => setMenuOpen(false)}>{link.label}</a>
+                        ))}
                     </div>
                 </div>
             )}

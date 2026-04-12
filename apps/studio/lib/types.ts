@@ -217,6 +217,13 @@ export interface LoadedSkill {
 
 export type Viewport = "desktop" | "tablet" | "mobile";
 
+export type PageType =
+  | "home"
+  | "products"
+  | "product-detail"
+  | "cart"
+  | "custom";
+
 export const viewportWidths: Record<Viewport, number> = {
   desktop: 1440,
   tablet: 768,
@@ -243,6 +250,7 @@ export interface OrchestratorContext {
   imageData?: string | null;
   currentConfig: StorefrontConfig;
   planFeedback?: PlanFeedback | null;
+  page?: PageType;
 }
 
 export interface OrchestratorConfigUpdate {

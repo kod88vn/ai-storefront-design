@@ -65,7 +65,7 @@ export function StorefrontPreview({ config }: StorefrontPreviewProps) {
                 color: baseText,
             }}
         >
-            <StorefrontNavbar theme={theme} />
+            <StorefrontNavbar theme={theme} navConfig={config.nav} />
             {sortedSections.map(renderSection)}
         </div>
     )

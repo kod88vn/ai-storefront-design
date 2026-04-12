@@ -12,7 +12,7 @@ const labelCls = 'text-[10px] font-medium uppercase tracking-wider text-muted-fo
 export function ThemePanel() {
     const { config, updateTheme } = useStudioStore()
     const { theme } = config
-    const [open, setOpen] = useState(true)
+    const [open, setOpen] = useState(false)
     return (
         <div data-testid="theme-panel" className="border-b border-border">
             <button onClick={() => setOpen((o) => !o)} data-testid="theme-panel-toggle" className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-muted/50">

@@ -168,6 +168,17 @@ export function useOrchestrator() {
         if (u.sectionData) {
           s.updateSectionData(u.sectionData);
         }
+        if (u.navChanges) {
+          if (u.navChanges.brandName !== undefined) {
+            s.updateNavBrandName(u.navChanges.brandName);
+          }
+        }
+        if (u.productsPageChanges) {
+          s.updateProductsPageConfig(u.productsPageChanges);
+        }
+        if (u.cartPageChanges) {
+          s.updateCartPageConfig(u.cartPageChanges);
+        }
         break;
       }
 

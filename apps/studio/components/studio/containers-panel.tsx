@@ -13,7 +13,7 @@ function collectUsedTypes(comps: ComponentItem[], set: Set<string>) {
     }
 }
 
-export function ContainersPanel() {
+export function ContainersPanel({ title = 'Containers' }: { title?: string }) {
     const {
         containers, addContainer, addComponentToContainer, removeContainer,
         updateContainerLabel, updateContainerLayoutMode, updateContainerFlexConfig,
@@ -27,7 +27,7 @@ export function ContainersPanel() {
     return (
         <div data-testid="containers-panel">
             <button onClick={() => setOpen((o) => !o)} data-testid="containers-panel-toggle" className="flex w-full items-center justify-between border-b border-border px-3 py-2 text-xs font-semibold hover:bg-muted/50">
-                <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5" />Containers</span>
+                <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5" />{title}</span>
                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
             {open && (

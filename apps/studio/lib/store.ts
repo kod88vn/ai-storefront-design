@@ -16,6 +16,13 @@ import type {
   LoadedSkill,
   OrchestratorContext,
   AppliedSummary,
+  NavConfig,
+  NavLink,
+  PageType,
+  ProductsPageConfig,
+  ProductDetailPageConfig,
+  CartPageConfig,
+  CartItem,
 } from "@ai-storefront/types";
 import type {
   DesignerContainer,
@@ -106,6 +113,30 @@ interface StudioState {
   // Storefront Configuration
   config: StorefrontConfig;
 
+  // Current page being edited
+  currentPage: PageType;
+  setCurrentPage: (page: PageType) => void;
+
+  // Nav config
+  updateNavBrandName: (name: string) => void;
+  addNavLink: () => void;
+  updateNavLink: (id: string, patch: Partial<NavLink>) => void;
+  removeNavLink: (id: string) => void;
+  reorderNavLinks: (links: NavLink[]) => void;
+
+  // Cart (for AI preview)
+  cartItems: CartItem[];
+  addCartItem: (item: CartItem) => void;
+  removeCartItem: (productId: string) => void;
+  updateCartQty: (productId: string, qty: number) => void;
+
+  // Pages config
+  updateProductsPageConfig: (patch: Partial<ProductsPageConfig>) => void;
+  updateProductDetailPageConfig: (
+    patch: Partial<ProductDetailPageConfig>,
+  ) => void;
+  updateCartPageConfig: (patch: Partial<CartPageConfig>) => void;
+
   // Viewport
   viewport: Viewport;
   setViewport: (viewport: Viewport) => void;
@@ -195,6 +226,16 @@ interface StudioState {
   setAppliedSummary: (summary: AppliedSummary | null) => void;
 }
 
+const defaultNavConfig: NavConfig = {
+  brandName: "STUDIO",
+  links: [
+    { id: "nav-home", label: "Home", href: "/" },
+    { id: "nav-shop", label: "Shop", href: "/products" },
+    { id: "nav-collections", label: "Collections", href: "/products" },
+    { id: "nav-journal", label: "Journal", href: "#" },
+  ],
+};
+
 const defaultConfig: StorefrontConfig = {
   theme: {
     primaryColor: "#1a1a1a",
@@ -217,6 +258,7 @@ const defaultConfig: StorefrontConfig = {
     columns: 3,
   },
   sectionData: {},
+  nav: defaultNavConfig,
 };
 
 export const useStudioStore = create<StudioState>((set, get) => ({
@@ -234,6 +276,146 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   appliedSummary: null,
   containers: defaultContainers,
   selectedComponent: null,
+  currentPage: "home",
+  cartItems: [],
+
+  // Current page
+  setCurrentPage: (currentPage) => set({ currentPage }),
+
+  // Nav config
+  updateNavBrandName: (brandName) => {
+    set((state) => ({
+      config: { ...state.config, nav: { ...state.config.nav!, brandName } },
+    }));
+  },
+  addNavLink: () => {
+    const id = `nav-${crypto.randomUUID().slice(0, 8)}`;
+    set((state) => ({
+      config: {
+        ...state.config,
+        nav: {
+          ...state.config.nav!,
+          links: [
+            ...state.config.nav!.links,
+            { id, label: "New Link", href: "/" },
+          ],
+        },
+      },
+    }));
+  },
+  updateNavLink: (id, patch) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        nav: {
+          ...state.config.nav!,
+          links: state.config.nav!.links.map((l) =>
+            l.id === id ? { ...l, ...patch } : l,
+          ),
+        },
+      },
+    }));
+  },
+  removeNavLink: (id) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        nav: {
+          ...state.config.nav!,
+          links: state.config.nav!.links.filter((l) => l.id !== id),
+        },
+      },
+    }));
+  },
+  reorderNavLinks: (links) => {
+    set((state) => ({
+      config: { ...state.config, nav: { ...state.config.nav!, links } },
+    }));
+  },
+
+  // Cart
+  addCartItem: (item) => {
+    set((state) => {
+      const exists = state.cartItems.find(
+        (i) => i.productId === item.productId,
+      );
+      if (exists) {
+        return {
+          cartItems: state.cartItems.map((i) =>
+            i.productId === item.productId ? { ...i, qty: i.qty + 1 } : i,
+          ),
+        };
+      }
+      return { cartItems: [...state.cartItems, item] };
+    });
+  },
+  removeCartItem: (productId) => {
+    set((state) => ({
+      cartItems: state.cartItems.filter((i) => i.productId !== productId),
+    }));
+  },
+  updateCartQty: (productId, qty) => {
+    if (qty <= 0) {
+      get().removeCartItem(productId);
+      return;
+    }
+    set((state) => ({
+      cartItems: state.cartItems.map((i) =>
+        i.productId === productId ? { ...i, qty } : i,
+      ),
+    }));
+  },
+
+  // Pages config
+  updateProductsPageConfig: (patch) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        pages: {
+          ...state.config.pages,
+          products: {
+            columns: 3,
+            showFilters: true,
+            heading: "All Products",
+            ...state.config.pages?.products,
+            ...patch,
+          },
+        },
+      },
+    }));
+  },
+  updateProductDetailPageConfig: (patch) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        pages: {
+          ...state.config.pages,
+          productDetail: {
+            showReviews: true,
+            showRelated: true,
+            ...state.config.pages?.productDetail,
+            ...patch,
+          },
+        },
+      },
+    }));
+  },
+  updateCartPageConfig: (patch) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        pages: {
+          ...state.config.pages,
+          cart: {
+            emptyMessage: "Your cart is empty.",
+            checkoutButtonText: "Checkout",
+            ...state.config.pages?.cart,
+            ...patch,
+          },
+        },
+      },
+    }));
+  },
 
   // Viewport
   setViewport: (viewport) => {

@@ -6,7 +6,9 @@ import { Save, Check } from 'lucide-react'
 import { useStudioStore } from '@/lib/store'
 import { ComponentEditor } from '@/components/studio/component-editor'
 import { ThemePanel } from './theme-panel'
-import { ContainersPanel } from './containers-panel'
+import { NavPanel } from './nav-panel'
+import { PageSelector } from './page-selector'
+import { PageSettingsPanel } from './page-settings-panel'
 
 export function RightSidebar() {
   const { config, selectedComponent } = useStudioStore()
@@ -26,10 +28,12 @@ export function RightSidebar() {
       <div data-testid="right-sidebar-header" className="shrink-0 border-b border-border px-4 py-3">
         <h2 className="text-sm font-semibold">Designer</h2>
       </div>
+      <PageSelector />
       <div className="relative min-h-0 flex-1">
         <div data-testid="right-sidebar-content" className="h-full overflow-y-auto">
+          <NavPanel />
           <ThemePanel />
-          <ContainersPanel />
+          <PageSettingsPanel />
         </div>
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background to-transparent" />
       </div>
