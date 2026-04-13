@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 import type { StorefrontConfig } from "@ai-storefront/types";
+import { readStoreConfig, writeStoreConfig } from "@/lib/store-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Resolve path to the web app's data file relative to the studio CWD
-function configPath() {
-  return path.join(process.cwd(), "..", "web", "data", "store-config.json");
-}
-
 export async function GET() {
   try {
-    const raw = await fs.readFile(configPath(), "utf-8");
-    const config = JSON.parse(raw) as StorefrontConfig;
+    const config = await readStoreConfig();
     return NextResponse.json({ config });
   } catch (error) {
     return NextResponse.json(
@@ -34,7 +27,7 @@ export async function PUT(request: NextRequest) {
         { status: 400 },
       );
     }
-    await fs.writeFile(configPath(), JSON.stringify(config, null, 2), "utf-8");
+    await writeStoreConfig(config);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(
