@@ -14,9 +14,15 @@ Decide the hero variant, section ordering, product grid columns, and hero micro-
 {
   "productCategory": "string",
   "dominantStyle": "string",
+  "siteCategory": "string",
+  "businessModel": "string",
   "colorScheme": "light | dark",
   "navStyle": "bordered | transparent | filled",
-  "sourceLayoutType": "split | centered | minimal | grid | editorial | fullbleed"
+  "sourceLayoutType": "split | centered | minimal | grid | editorial | fullbleed",
+  "visualDensity": "sparse | balanced | dense",
+  "ctaStyle": "utility-first | promotion-first | brand-first | editorial-soft",
+  "imageryStyle": "product-cutout | lifestyle | editorial-campaign | app-ui | restaurant-food | mixed",
+  "sectionOrder": ["string"]
 }
 ```
 
@@ -68,6 +74,15 @@ Decide the hero variant, section ordering, product grid columns, and hero micro-
 - `trust-badges` just above or just below the fold — a second trust signal near the CTA
 - `newsletter` second-to-last — captures intent after browse
 - `footer` always last
+
+## Business Model / Density Overrides
+
+- If `businessModel = marketplace`, prefer denser scanning-friendly ordering and avoid overly cinematic heroes unless the source strongly supports it.
+- If `siteCategory = food-delivery`, bias toward `heroVariant: minimal` or `centered`, earlier discovery sections, and `productGridColumns: 3` or `4`.
+- If `siteCategory = footwear` or `fashion` and `imageryStyle = editorial-campaign`, bias toward `heroVariant: fullbleed` or `editorial` and fewer, larger visual sections.
+- If `visualDensity = dense`, avoid overly sparse minimalist adaptations.
+- If `ctaStyle = utility-first`, keep hierarchy tighter and conversion-first rather than narrative-first.
+- If `sectionOrder` is present from the extractor, treat it as a strong prior and only change it when it clearly conflicts with storefront constraints.
 
 ## Hero micro-parameters
 

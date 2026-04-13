@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Monitor, Tablet, Smartphone } from 'lucide-react'
 import { useStudioStore } from '@/lib/store'
@@ -124,6 +125,45 @@ function ContainerCanvas({ config, containers }: { config: StorefrontConfig; con
 export function CenterCanvas() {
   const { viewport, setViewport, config, containers, currentPage, cartItems } = useStudioStore()
   const width = viewportWidths[viewport]
+  const previewShellRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const shell = previewShellRef.current
+    if (!shell) return
+
+    const scope = shell.querySelector('[data-testid="storefront-preview"]') as HTMLElement | null
+    if (!scope) return
+
+    const nodes = [scope as Element, ...Array.from(scope.querySelectorAll('[class]'))]
+    for (const node of nodes) {
+      const original =
+        node.getAttribute('data-original-class') ??
+        node.getAttribute('class') ??
+        ''
+
+      if (!node.getAttribute('data-original-class')) {
+        node.setAttribute('data-original-class', original)
+      }
+
+      if (viewport === 'desktop') {
+        node.setAttribute('class', original)
+        continue
+      }
+
+      const strip = viewport === 'mobile'
+        ? /^(sm:|md:|lg:|xl:|2xl:)/
+        : /^(lg:|xl:|2xl:)/
+
+      node.setAttribute(
+        'class',
+        original
+          .split(/\s+/)
+          .filter(Boolean)
+          .filter((token) => !strip.test(token))
+          .join(' '),
+      )
+    }
+  }, [viewport, currentPage, config, containers, cartItems])
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-muted/30">
@@ -143,7 +183,8 @@ export function CenterCanvas() {
       </div>
       <div className="flex flex-1 items-start justify-center overflow-auto p-6">
         <motion.div
-          className="relative origin-top overflow-hidden rounded-lg border border-border bg-background shadow-2xl"
+          ref={previewShellRef}
+          className="relative origin-top overflow-hidden rounded-lg border border-border bg-background shadow-2xl [&_a]:pointer-events-none [&_button]:pointer-events-none"
           animate={{ width }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           style={{ minHeight: '80vh', maxWidth: '100%' }}

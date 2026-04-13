@@ -13,12 +13,16 @@ Generate a cohesive `ThemeConfig` from extracted design signals or a target aest
 ```json
 {
   "dominantStyle": "minimalist | maximalist | editorial | clean | dark-luxury | organic | bold-playful | earthy",
+  "siteCategory": "string",
+  "businessModel": "string",
   "primaryColors": ["#hex"],
   "colorTemperature": "warm | cool | neutral",
   "colorScheme": "light | dark",
   "fontStyle": "modern-sans | geometric-sans | humanist-sans | editorial-serif | display-serif | slab-serif | mono-tech | handwritten | condensed | rounded",
   "navStyle": "bordered | transparent | filled",
-  "targetAesthetic": "string (e.g. 'organic', 'luxury', 'tech', 'artisan')"
+  "targetAesthetic": "string (e.g. 'organic', 'luxury', 'tech', 'artisan')",
+  "ctaStyle": "utility-first | promotion-first | brand-first | editorial-soft",
+  "imageryStyle": "product-cutout | lifestyle | editorial-campaign | app-ui | restaurant-food | mixed"
 }
 ```
 
@@ -63,3 +67,7 @@ Use these as complete starting points when mimicking a known style archetype:
 - `fontStyle: "editorial-serif"` is best for lifestyle, artisan, or heritage brands — not tech or health
 - `colorScheme: "dark"` overrides the base background to near-black; the AI should use `colorScheme: "dark"` + `navStyle: "transparent"` together for luxury dark sites
 - Never use `borderRadius: "full"` for furniture or sharp-edged product brands
+- If `businessModel = marketplace`, prefer more functional palettes and stronger surface contrast over purely expressive luxury/art-direction choices.
+- If `siteCategory = food-delivery`, avoid overfitting to fashion/editorial presets even when the screenshot is visually clean.
+- If `imageryStyle = editorial-campaign`, color and typography can be more dramatic; if `imageryStyle = app-ui` or `restaurant-food`, favor utility and clarity.
+- `ctaStyle = utility-first` should bias toward clearer, higher-contrast accents and less ornamental styling.

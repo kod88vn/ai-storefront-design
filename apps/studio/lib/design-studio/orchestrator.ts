@@ -205,6 +205,8 @@ export async function* runOrchestrator(
                 text: `You are a design analyst. Extract structured design tokens from this storefront screenshot and respond with ONLY a raw JSON object (no markdown fences):
 
 {
+  "siteCategory": "<food-delivery|fashion|footwear|beauty|electronics|home|marketplace|grocery|wellness|other>",
+  "businessModel": "<marketplace|single-brand-dtc|multi-brand-retail|editorial-commerce|service-led-commerce>",
   "primaryColor": "<exact hex of dominant brand color — navbar, buttons, or headings>",
   "secondaryColor": "<exact hex of accent or CTA button color>",
   "backgroundColor": "<exact hex of the main page/canvas background color>",
@@ -216,11 +218,22 @@ export async function* runOrchestrator(
   "borderRadius": "<none|sm|md|lg|xl|full>",
   "heroLayout": "<split|centered|minimal|fullbleed|editorial>",
   "productGridColumns": <2|3|4>,
+  "visualDensity": "<sparse|balanced|dense>",
+  "ctaStyle": "<utility-first|promotion-first|brand-first|editorial-soft>",
+  "imageryStyle": "<product-cutout|lifestyle|editorial-campaign|app-ui|restaurant-food|mixed>",
+  "headlineTone": "<performance|premium|playful|functional|editorial|urgent>",
+  "navigationDensity": "<minimal|medium|dense>",
+  "sectionOrder": ["<hero>", "<category chips>", "<promo banners>", "<product grid>", "<collections>", "<social proof>", "<footer>"],
   "mood": "<2–3 word aesthetic>",
+  "brandSignals": ["<3-6 short concrete signals that distinguish this brand experience>"],
   "observations": "<1–2 sentences on typography, sections, imagery>"
 }
 
-Rules: sample real hex values from the visible pixels; never use generic placeholders.`,
+Rules:
+- sample real hex values from visible pixels; never use placeholders.
+- prefer concrete structural differences over generic adjectives.
+- brandSignals must mention specific distinguishing cues such as sticky category chips, monochrome product cutouts, promo card density, restaurant cards, performance athlete imagery, etc.
+- Uber Eats and Nike should not collapse to the same answer: food marketplace UI should differ clearly from performance retail brand UI.`,
               },
               { type: "image", image: context.imageData },
             ] as any,
@@ -262,6 +275,8 @@ Rules: sample real hex values from the visible pixels; never use generic placeho
       } else {
         // All good — build the token string the system prompt will inject
         preComputedTokens = [
+          `siteCategory: ${parsed.siteCategory ?? "other"}`,
+          `businessModel: ${parsed.businessModel ?? "single-brand-dtc"}`,
           `primaryColor: ${parsed.primaryColor}`,
           `secondaryColor: ${parsed.secondaryColor}`,
           `backgroundColor: ${parsed.backgroundColor ?? "#ffffff"}`,
@@ -273,7 +288,14 @@ Rules: sample real hex values from the visible pixels; never use generic placeho
           `borderRadius: ${parsed.borderRadius ?? "md"}`,
           `heroLayout: ${parsed.heroLayout ?? "split"}`,
           `productGridColumns: ${parsed.productGridColumns ?? 3}`,
+          `visualDensity: ${parsed.visualDensity ?? "balanced"}`,
+          `ctaStyle: ${parsed.ctaStyle ?? "brand-first"}`,
+          `imageryStyle: ${parsed.imageryStyle ?? "mixed"}`,
+          `headlineTone: ${parsed.headlineTone ?? "functional"}`,
+          `navigationDensity: ${parsed.navigationDensity ?? "medium"}`,
+          `sectionOrder: ${JSON.stringify(parsed.sectionOrder ?? [])}`,
           `mood: ${parsed.mood ?? ""}`,
+          `brandSignals: ${JSON.stringify(parsed.brandSignals ?? [])}`,
           `observations: ${parsed.observations ?? ""}`,
         ].join("\n");
 
@@ -366,6 +388,14 @@ Use these extracted values directly when calling \`plan_feedback\` and \`apply_c
 ${preComputedTokens}
 
 Skip Phase 1 entirely and proceed to Phase 2 (plan_feedback) using the tokens above.
+
+## High-Priority Interpretation Rules
+
+- Treat \`siteCategory\`, \`businessModel\`, \`ctaStyle\`, \`imageryStyle\`, \`headlineTone\`, \`visualDensity\`, \`navigationDensity\`, \`sectionOrder\`, and \`brandSignals\` as more important than generic labels like \`dominantStyle\` or \`mood\`.
+- Use these concrete signals to produce materially different outputs for different brands. A food-delivery marketplace should not generate the same layout, spacing, hierarchy, and section mix as a performance DTC brand.
+- When \`businessModel = marketplace\`, favor utility-first UX: denser navigation, category discovery, promo surfaces, trust/transaction cues, and faster scanning.
+- When \`businessModel = single-brand-dtc\`, favor brand storytelling: stronger hero presence, campaign imagery, fewer but larger merchandising surfaces, and more whitespace.
+- Use \`brandSignals\` verbatim as evidence in \`plan_feedback\` so the rationale references visible differences instead of abstract adjectives.
 
 **Background color rules — apply to sectionData:**
 - Use \`backgroundColor\` as the page/hero background and for the navbar fill (if navStyle is filled).

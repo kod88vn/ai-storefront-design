@@ -16,6 +16,9 @@ Do NOT modify any content that is already present on the storefront: product nam
 **Rule 2 — New sections render with built-in component defaults.**
 Every section component has hardcoded placeholder content (generic copy, lorem-style testimonials, common brand names). You do not need to define fallback values — the components handle that. Always supply `sectionData` for sections you enable so the merchant can distinguish AI-generated copy from the built-in defaults.
 
+**Rule 3 — Concrete brand signals outrank generic aesthetics.**
+If vision tokens include `siteCategory`, `businessModel`, `ctaStyle`, `imageryStyle`, `headlineTone`, `visualDensity`, `navigationDensity`, `sectionOrder`, or `brandSignals`, use those as the primary design driver. Do not let two very different experiences collapse into the same plan just because they both look "clean" or "light".
+
 ## Phase 1 — Understand
 
 **If a `visionUrl` or image source is provided:**
@@ -35,6 +38,7 @@ Every section component has hardcoded placeholder content (generic copy, lorem-s
 Before applying **any** changes, call `plan_feedback` with a rich, specific proposal:
 
 - `description`: 2–4 sentences explaining what will change and why — reference the goal and the design signals. Be specific (mention actual hex colors, hero layout names, sections being added).
+- `description` must cite at least 2 concrete brand signals when a vision source exists. Examples: "sticky category chips", "restaurant cards with ETA + fee metadata", "athlete campaign photography", "oversized monochrome footwear cutouts".
 - `layoutProposal`: hero layout variant + notable section additions. Examples:
   - `"Editorial hero + benefits-bar + featured testimonials (featured layout)"`
   - `"Fullbleed hero (overlay 0.5) + scrolling announcement bar + grid testimonials"`
@@ -126,6 +130,8 @@ Before applying **any** changes, call `plan_feedback` with a rich, specific prop
 
 Always include at minimum: hero layout, primary color, accent color. Add one item for **every** additional config field you are changing (nav style, color scheme, font style, border radius, grid columns, hero badge, each new section). Do not bundle multiple changes into one item.
 
+When visual evidence suggests a marketplace or service-led interface, planned changes should skew toward discovery and scanning. When evidence suggests a brand-led DTC interface, planned changes should skew toward campaign hierarchy and emotional merchandising.
+
 **Do NOT call MCP tools OR `apply_config_update` before the user approves.** The SSE stream stops after `plan_feedback`. The orchestrator resumes when the user responds.
 
 ## Phase 3 — Execute (after approval only)
@@ -161,6 +167,25 @@ Use these rules to infer config values from goal text or extracted design signal
 | "mission", "cause", "sustainable"      | mission-driven | light       | filled      | fullbleed              | editorial-serif | md           |
 | "hardware", "specs", "precision"       | tech-precision | dark        | transparent | editorial              | mono-tech       | none         |
 
+## Business Model Overrides
+
+Use these overrides even when they conflict with the softer archetype defaults above:
+
+| Signal / cue                        | Override behavior                                                                |
+| ----------------------------------- | -------------------------------------------------------------------------------- |
+| `businessModel = marketplace`       | Prioritize dense discovery, utility copy, scanning, chips, promo modules         |
+| `businessModel = single-brand-dtc`  | Prioritize brand hero, whitespace, campaign imagery, fewer larger content blocks |
+| `siteCategory = food-delivery`      | Minimal hero, filled nav, dense navigation, promotional surfaces                 |
+| `siteCategory = footwear`           | Fullbleed/editorial hero, strong lifestyle or campaign imagery                   |
+| `ctaStyle = utility-first`          | More immediate scanning hierarchy, less editorial whitespace                     |
+| `ctaStyle = brand-first`            | Fewer competing CTAs, stronger art direction and hero prominence                 |
+| `imageryStyle = restaurant-food`    | Card-heavy visual merchandising, quicker scan rhythm                             |
+| `imageryStyle = editorial-campaign` | Large image-led sections, fewer dense UI clusters                                |
+| `headlineTone = functional`         | Short service-oriented copy and trust cues                                       |
+| `headlineTone = performance`        | Aspirational campaign framing, stronger brand stance                             |
+
+If these overrides point to a materially different experience, follow the override.
+
 ## Section Composition by Archetype
 
 | Archetype      | Enable sections                                                        | Testimonial layout | Newsletter incentive           | Announcement bar             |
@@ -171,3 +196,10 @@ Use these rules to infer config values from goal text or extracted design signal
 | editorial      | featured-collection, testimonials, newsletter                          | featured           | null                           | no                           |
 | clean (health) | announcement-bar, benefits-bar, trust-badges, testimonials, newsletter | grid               | "Subscribe and save 20%"       | no                           |
 | minimalist     | benefits-bar, testimonials                                             | grid               | null                           | no                           |
+
+## Divergence Rules
+
+- For food-delivery or marketplace references: avoid large editorial heroes unless the source clearly has one. Prefer denser layout, promo-first ordering, categories/discovery earlier, and stronger filled surfaces.
+- For fashion, footwear, or performance DTC references: prefer larger hero imagery, more whitespace, stronger campaign framing, and lower navigation density.
+- If `sectionOrder` is present from vision extraction, use it as a strong prior instead of defaulting back to the archetype table.
+- `brandSignals` should directly influence `plannedChanges` labels and descriptions so the user can see why the proposed design differs.
