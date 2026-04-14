@@ -32,7 +32,7 @@ Extract visual design elements from a URL or image. Analyzes colors, typography,
   "primaryColors": ["#hex"],
   "fontStack": "string",
   "fontStyle": "modern-sans | geometric-sans | humanist-sans | editorial-serif | display-serif | slab-serif | mono-tech | handwritten | condensed | rounded",
-  "layoutType": "split | centered | minimal | grid | editorial | fullbleed",
+  "layoutType": "split | centered | editorial | grid",
   "borderRadius": "none | sm | md | lg | xl | full",
   "dominantStyle": "minimalist | maximalist | editorial | clean | dark-luxury | organic | bold-playful | earthy",
   "colorScheme": "light | dark",
@@ -62,11 +62,11 @@ Use this table to map observed site characteristics to `dominantStyle`:
 
 | Site archetype                     | dominantStyle  | colorScheme | navStyle    | fontStyle       | heroLayout |
 | ---------------------------------- | -------------- | ----------- | ----------- | --------------- | ---------- |
-| Master & Dynamic (luxury audio)    | dark-luxury    | dark        | transparent | modern-sans     | fullbleed  |
+| Master & Dynamic (luxury audio)    | dark-luxury    | dark        | transparent | modern-sans     | editorial  |
 | Outdoor Voices (athleisure)        | bold-playful   | light       | bordered    | modern-sans     | centered   |
-| Nike (performance retail)          | tech-precision | light       | bordered    | condensed       | fullbleed  |
-| Uber Eats (delivery marketplace)   | clean          | light       | filled      | modern-sans     | minimal    |
-| Kit and Ace (minimal fashion)      | minimalist     | light       | bordered    | modern-sans     | minimal    |
+| Nike (performance retail)          | tech-precision | light       | bordered    | condensed       | editorial  |
+| Uber Eats (delivery marketplace)   | clean          | light       | filled      | modern-sans     | centered   |
+| Kit and Ace (minimal fashion)      | minimalist     | light       | bordered    | modern-sans     | centered   |
 | Rocky Mountain Soap (organic)      | organic        | light       | bordered    | modern-sans     | split      |
 | Dr. Squatch (earthy personal care) | earthy         | light       | bordered    | modern-sans     | split      |
 | Figs (bold medical apparel)        | maximalist     | light       | filled      | modern-sans     | split      |

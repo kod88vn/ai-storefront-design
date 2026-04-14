@@ -360,6 +360,24 @@ export function useOrchestrator() {
         return;
       }
 
+      if (!response.ok) {
+        let body = "";
+        try {
+          body = await response.text();
+        } catch {
+          /* ignore */
+        }
+        useStudioStore.getState().setAgentStep("idle");
+        useStudioStore.getState().addAuditEntry({
+          method: "agent/error",
+          params: {
+            error: `HTTP ${response.status} ${response.statusText}`,
+            body: body.slice(0, 500),
+          },
+        });
+        return;
+      }
+
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       if (!reader) return;
@@ -378,8 +396,12 @@ export function useOrchestrator() {
             try {
               const event = JSON.parse(frame.slice(6)) as OrchestratorEvent;
               handleEvent(event);
-            } catch {
-              // skip malformed frame
+            } catch (parseErr) {
+              console.error(
+                "[orchestrator] Failed to parse SSE frame:",
+                frame.slice(0, 200),
+                parseErr,
+              );
             }
           }
         }

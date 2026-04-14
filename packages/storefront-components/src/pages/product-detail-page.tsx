@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Star, ChevronLeft, ShoppingBag, Minus, Plus } from 'lucide-react'
 import type { CartItem, NavConfig, ProductDetailPageConfig, ThemeConfig } from '@ai-storefront/types'
 import { StorefrontNavbar } from '../navbar'
-import { StorefrontFooter } from '../footer'
 import { sampleProducts } from '../data'
 
 interface ProductDetailPageProps {
@@ -167,8 +166,6 @@ export function ProductDetailPage({ theme, navConfig, productId, pagesConfig, ca
                     </section>
                 )}
             </main>
-
-            <StorefrontFooter theme={theme} />
         </div>
     )
 }

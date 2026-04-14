@@ -7,6 +7,9 @@ import type {
   FontStyle,
   SectionType,
   FontSize,
+  BenefitIconType,
+  CollectionLayout,
+  TestimonialLayout,
 } from "./schema";
 export * from "./schema";
 
@@ -71,7 +74,7 @@ export interface HeroConfig {
   badge?: string;
   /** Text alignment inside split/centered/editorial layouts */
   textAlign?: "left" | "center";
-  /** Overlay darkness for fullbleed (0–1, default 0.4) */
+  /** Overlay darkness for editorial layout heroes (0–1, default 0.4) */
   overlayOpacity?: number;
   /** CTA button style — solid fills with secondaryColor, outline/ghost for dark or image backgrounds */
   ctaVariant?: HeroCtaVariant;
@@ -121,19 +124,7 @@ export interface AnnouncementBarConfig {
 }
 
 export interface BenefitItem {
-  icon:
-    | "truck"
-    | "shield"
-    | "refresh"
-    | "award"
-    | "clock"
-    | "leaf"
-    | "star"
-    | "heart"
-    | "check"
-    | "zap"
-    | "globe"
-    | "tag";
+  icon: BenefitIconType;
   label: string;
   detail?: string;
 }
@@ -147,7 +138,7 @@ export interface BenefitsBarConfig {
 export interface FeaturedCollectionConfig {
   heading: string;
   subheading?: string;
-  layout: "grid" | "horizontal-scroll";
+  layout: CollectionLayout;
   productIds?: string[];
   backgroundColor?: string;
   textColor?: string;
@@ -163,7 +154,7 @@ export interface TestimonialItem {
 export interface TestimonialsConfig {
   heading: string;
   /** grid = 3-col cards, list = full-width quotes, featured = one large quote + smaller grid */
-  layout: "grid" | "carousel" | "list" | "featured";
+  layout: TestimonialLayout;
   items: TestimonialItem[];
   showRatings?: boolean;
   backgroundColor?: string;

@@ -15,10 +15,12 @@ function collectUsedTypes(comps: ComponentItem[], set: Set<string>) {
 
 export function ContainersPanel({ title = 'Containers' }: { title?: string }) {
     const {
-        containers, addContainer, addComponentToContainer, removeContainer, reorderContainers,
+        pageContainers, currentPage,
+        addContainer, addComponentToContainer, removeContainer, reorderContainers,
         updateContainerLabel, updateContainerLayoutMode, updateContainerFlexConfig,
         updateContainerGridConfig, removeComponentFromContainer, updateComponentInContainer,
     } = useStudioStore()
+    const containers = pageContainers[currentPage] ?? []
     const [open, setOpen] = useState(false)
     const [draggingContainerId, setDraggingContainerId] = useState<string | null>(null)
     const [overContainerId, setOverContainerId] = useState<string | null>(null)
@@ -83,10 +85,10 @@ export function ContainersPanel({ title = 'Containers' }: { title?: string }) {
                                     setOverContainerId(null)
                                 }}
                                 className={`transition-all duration-150 ${draggingContainerId === c.id
-                                        ? 'scale-[0.99] opacity-55 ring-1 ring-primary/40'
-                                        : overContainerId === c.id
-                                            ? 'translate-y-1 border-t-2 border-primary/50'
-                                            : ''
+                                    ? 'scale-[0.99] opacity-55 ring-1 ring-primary/40'
+                                    : overContainerId === c.id
+                                        ? 'translate-y-1 border-t-2 border-primary/50'
+                                        : ''
                                     }`}
                             >
                                 <ContainerNode

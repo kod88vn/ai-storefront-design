@@ -3,7 +3,6 @@
 import { Trash2, ShoppingBag, ArrowRight, Minus, Plus } from 'lucide-react'
 import type { CartItem, CartPageConfig, NavConfig, ThemeConfig } from '@ai-storefront/types'
 import { StorefrontNavbar } from '../navbar'
-import { StorefrontFooter } from '../footer'
 
 interface CartPageProps {
     theme: ThemeConfig
@@ -153,8 +152,6 @@ export function CartPage({ theme, navConfig, cartItems = [], pagesConfig, onUpda
                     </div>
                 )}
             </main>
-
-            <StorefrontFooter theme={theme} />
         </div>
     )
 }

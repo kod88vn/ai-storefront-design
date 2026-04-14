@@ -111,6 +111,23 @@ const defaultContainers: DesignerContainer[] = [
   makeBlock("c-footer", "Footer", "footer"),
 ];
 
+const defaultPageContainers: Record<string, DesignerContainer[]> = {
+  home: defaultContainers,
+  products: [
+    makeBlock("p-listing", "Products Listing", "products-listing"),
+    makeBlock("p-footer", "Footer", "footer"),
+  ],
+  "product-detail": [
+    makeBlock("pd-content", "Product Detail", "product-detail-content"),
+    makeBlock("pd-footer", "Footer", "footer"),
+  ],
+  cart: [
+    makeBlock("cart-body", "Cart", "cart-content"),
+    makeBlock("cart-footer", "Footer", "footer"),
+  ],
+  custom: [],
+};
+
 interface StudioState {
   // Storefront Configuration
   config: StorefrontConfig;
@@ -167,8 +184,8 @@ interface StudioState {
   disableSection: (type: SectionType) => void;
   updateSectionData: (data: Partial<StorefrontSectionData>) => void;
 
-  // Designer Containers
-  containers: DesignerContainer[];
+  // Designer Containers (per-page)
+  pageContainers: Record<string, DesignerContainer[]>;
   selectedComponent: SelectedComponentRef;
   addContainer: () => void;
   removeContainer: (id: string) => void;
@@ -283,7 +300,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   orchestratorGoal: null,
   orchestratorContext: null,
   appliedSummary: null,
-  containers: defaultContainers,
+  pageContainers: defaultPageContainers,
   selectedComponent: null,
   currentPage: "home",
   cartItems: [],
@@ -663,8 +680,10 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   setSelectedComponent: (ref) => set({ selectedComponent: ref }),
 
   addContainer: () => {
+    const page = get().currentPage;
     const id = `c-${crypto.randomUUID().slice(0, 8)}`;
-    const n = get().containers.length + 1;
+    const currentContainers = get().pageContainers[page] ?? [];
+    const n = currentContainers.length + 1;
     const newContainer: DesignerContainer = {
       id,
       label: `Container ${n}`,
@@ -674,86 +693,125 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       components: [],
     };
     set((state) => {
-      const containers = [...state.containers, newContainer];
+      const newContainers = [
+        ...(state.pageContainers[page] ?? []),
+        newContainer,
+      ];
+      const pageContainers = { ...state.pageContainers, [page]: newContainers };
       return {
-        containers,
-        config: {
-          ...state.config,
-          sections: syncSectionsFromContainers(containers),
-        },
+        pageContainers,
+        ...(page === "home"
+          ? {
+              config: {
+                ...state.config,
+                sections: syncSectionsFromContainers(newContainers),
+              },
+            }
+          : {}),
       };
     });
   },
 
   removeContainer: (id) => {
+    const page = get().currentPage;
     set((state) => {
-      const containers = state.containers.filter((c) => c.id !== id);
+      const newContainers = (state.pageContainers[page] ?? []).filter(
+        (c) => c.id !== id,
+      );
+      const pageContainers = { ...state.pageContainers, [page]: newContainers };
       return {
-        containers,
+        pageContainers,
         selectedComponent:
           state.selectedComponent?.containerId === id
             ? null
             : state.selectedComponent,
-        config: {
-          ...state.config,
-          sections: syncSectionsFromContainers(containers),
-        },
+        ...(page === "home"
+          ? {
+              config: {
+                ...state.config,
+                sections: syncSectionsFromContainers(newContainers),
+              },
+            }
+          : {}),
       };
     });
   },
 
   updateContainerLabel: (id, label) => {
+    const page = get().currentPage;
     set((state) => ({
-      containers: state.containers.map((c) =>
-        c.id === id ? { ...c, label } : c,
-      ),
+      pageContainers: {
+        ...state.pageContainers,
+        [page]: (state.pageContainers[page] ?? []).map((c) =>
+          c.id === id ? { ...c, label } : c,
+        ),
+      },
     }));
   },
 
   updateContainerLayoutMode: (id, mode) => {
+    const page = get().currentPage;
     set((state) => ({
-      containers: state.containers.map((c) =>
-        c.id === id ? { ...c, layoutMode: mode } : c,
-      ),
+      pageContainers: {
+        ...state.pageContainers,
+        [page]: (state.pageContainers[page] ?? []).map((c) =>
+          c.id === id ? { ...c, layoutMode: mode } : c,
+        ),
+      },
     }));
   },
 
   updateContainerFlexConfig: (id, patch) => {
+    const page = get().currentPage;
     set((state) => ({
-      containers: state.containers.map((c) =>
-        c.id === id ? { ...c, flexConfig: { ...c.flexConfig, ...patch } } : c,
-      ),
+      pageContainers: {
+        ...state.pageContainers,
+        [page]: (state.pageContainers[page] ?? []).map((c) =>
+          c.id === id ? { ...c, flexConfig: { ...c.flexConfig, ...patch } } : c,
+        ),
+      },
     }));
   },
 
   updateContainerGridConfig: (id, patch) => {
+    const page = get().currentPage;
     set((state) => ({
-      containers: state.containers.map((c) =>
-        c.id === id ? { ...c, gridConfig: { ...c.gridConfig, ...patch } } : c,
-      ),
+      pageContainers: {
+        ...state.pageContainers,
+        [page]: (state.pageContainers[page] ?? []).map((c) =>
+          c.id === id ? { ...c, gridConfig: { ...c.gridConfig, ...patch } } : c,
+        ),
+      },
     }));
   },
 
   addComponentToContainer: (containerId, comp) => {
+    const page = get().currentPage;
     set((state) => {
-      const containers = state.containers.map((c) =>
+      const newContainers = (state.pageContainers[page] ?? []).map((c) =>
         c.id === containerId
           ? { ...c, components: [...c.components, comp] }
           : c,
       );
+      const pageContainers = { ...state.pageContainers, [page]: newContainers };
       return {
-        containers,
-        config: {
-          ...state.config,
-          sections: syncSectionsFromContainers(containers),
-        },
+        pageContainers,
+        ...(page === "home"
+          ? {
+              config: {
+                ...state.config,
+                sections: syncSectionsFromContainers(newContainers),
+              },
+            }
+          : {}),
       };
     });
   },
 
   removeComponentFromContainer: (containerId, componentId) => {
+    const page = get().currentPage;
     set((state) => {
-      const containers = state.containers.map((c) =>
+      const newContainers = (state.pageContainers[page] ?? []).map((c) =>
         c.id === containerId
           ? {
               ...c,
@@ -763,39 +821,51 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             }
           : c,
       );
+      const pageContainers = { ...state.pageContainers, [page]: newContainers };
       return {
-        containers,
+        pageContainers,
         selectedComponent:
           state.selectedComponent?.containerId === containerId &&
           state.selectedComponent.componentId === componentId
             ? null
             : state.selectedComponent,
-        config: {
-          ...state.config,
-          sections: syncSectionsFromContainers(containers),
-        },
+        ...(page === "home"
+          ? {
+              config: {
+                ...state.config,
+                sections: syncSectionsFromContainers(newContainers),
+              },
+            }
+          : {}),
       };
     });
   },
 
   reorderContainerComponents: (containerId, components) => {
+    const page = get().currentPage;
     set((state) => {
-      const containers = state.containers.map((c) =>
+      const newContainers = (state.pageContainers[page] ?? []).map((c) =>
         c.id === containerId ? { ...c, components } : c,
       );
+      const pageContainers = { ...state.pageContainers, [page]: newContainers };
       return {
-        containers,
-        config: {
-          ...state.config,
-          sections: syncSectionsFromContainers(containers),
-        },
+        pageContainers,
+        ...(page === "home"
+          ? {
+              config: {
+                ...state.config,
+                sections: syncSectionsFromContainers(newContainers),
+              },
+            }
+          : {}),
       };
     });
   },
 
   updateComponentInContainer: (containerId, componentId, patch) => {
+    const page = get().currentPage;
     set((state) => {
-      const containers = state.containers.map((c) => {
+      const newContainers = (state.pageContainers[page] ?? []).map((c) => {
         if (c.id === containerId) {
           // Direct parent is a top-level container
           return {
@@ -818,23 +888,33 @@ export const useStudioStore = create<StudioState>((set, get) => ({
           ),
         };
       });
+      const pageContainers = { ...state.pageContainers, [page]: newContainers };
       return {
-        containers,
-        config: {
-          ...state.config,
-          sections: syncSectionsFromContainers(containers),
-        },
+        pageContainers,
+        ...(page === "home"
+          ? {
+              config: {
+                ...state.config,
+                sections: syncSectionsFromContainers(newContainers),
+              },
+            }
+          : {}),
       };
     });
   },
 
   reorderContainers: (containers) => {
+    const page = get().currentPage;
     set((state) => ({
-      containers,
-      config: {
-        ...state.config,
-        sections: syncSectionsFromContainers(containers),
-      },
+      pageContainers: { ...state.pageContainers, [page]: containers },
+      ...(page === "home"
+        ? {
+            config: {
+              ...state.config,
+              sections: syncSectionsFromContainers(containers),
+            },
+          }
+        : {}),
     }));
   },
 }));

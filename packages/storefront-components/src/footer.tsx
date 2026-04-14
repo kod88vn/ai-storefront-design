@@ -13,41 +13,43 @@ export function StorefrontFooter({ theme, footerConfig }: FooterProps) {
     const borderColor = isDark ? '#2a2a2a' : '#e5e5e5'
     const headingColor = footerConfig?.textColor ?? (isDark ? '#f5f5f5' : '#171717')
     const mutedColor = footerConfig?.textColor ?? '#737373'
-    const effectiveFontSize = footerConfig?.fontSize ? FONT_SIZE_MAP[footerConfig.fontSize] : undefined
+    // Always set a base font-size so children that don't have explicit Tailwind text classes will scale.
+    // Default 'sm' keeps the footer compact; changing fontSize in the editor will now have a visible effect.
+    const effectiveFontSize = FONT_SIZE_MAP[footerConfig?.fontSize ?? 'sm']
     return (
         <footer data-testid="storefront-footer" className="border-t px-4 py-12 sm:px-6" style={{ backgroundColor: effectiveBg, borderColor, fontSize: effectiveFontSize }}>
             <div className="mx-auto max-w-7xl">
                 <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
                     <div className="col-span-2 md:col-span-1">
                         <h3 className="text-lg font-semibold" style={{ color: theme.primaryColor }}>STUDIO</h3>
-                        <p className="mt-3 text-sm" style={{ color: mutedColor }}>{footerConfig?.tagline ?? 'Curated pieces for modern living.'}</p>
+                        <p className="mt-3" style={{ color: mutedColor }}>{footerConfig?.tagline ?? 'Curated pieces for modern living.'}</p>
                     </div>
                     <div>
-                        <h4 className="text-sm font-semibold" style={{ color: headingColor }}>Shop</h4>
-                        <ul className="mt-3 space-y-2 text-sm" style={{ color: mutedColor }}>
+                        <h4 className="font-semibold" style={{ color: headingColor }}>Shop</h4>
+                        <ul className="mt-3 space-y-2" style={{ color: mutedColor }}>
                             <li><a href="#">New Arrivals</a></li>
                             <li><a href="#">Collections</a></li>
                             <li><a href="#">Sale</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-sm font-semibold" style={{ color: headingColor }}>Support</h4>
-                        <ul className="mt-3 space-y-2 text-sm" style={{ color: mutedColor }}>
+                        <h4 className="font-semibold" style={{ color: headingColor }}>Support</h4>
+                        <ul className="mt-3 space-y-2" style={{ color: mutedColor }}>
                             <li><a href="#">FAQ</a></li>
                             <li><a href="#">Shipping</a></li>
                             <li><a href="#">Returns</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-sm font-semibold" style={{ color: headingColor }}>Company</h4>
-                        <ul className="mt-3 space-y-2 text-sm" style={{ color: mutedColor }}>
+                        <h4 className="font-semibold" style={{ color: headingColor }}>Company</h4>
+                        <ul className="mt-3 space-y-2" style={{ color: mutedColor }}>
                             <li><a href="#">About</a></li>
                             <li><a href="#">Journal</a></li>
                             <li><a href="#">Contact</a></li>
                         </ul>
                     </div>
                 </div>
-                <div className="mt-10 border-t pt-6 text-xs" style={{ borderColor, color: mutedColor }}>
+                <div className="mt-10 border-t pt-6" style={{ borderColor, color: mutedColor, fontSize: '0.8em' }}>
                     © {new Date().getFullYear()} Studio. All rights reserved.
                 </div>
             </div>

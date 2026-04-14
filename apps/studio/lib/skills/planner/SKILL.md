@@ -87,7 +87,7 @@ Before applying **any** changes, call `plan_feedback` with a rich, specific prop
     "id": "nav-style",
     "category": "theme",
     "label": "Navbar Style",
-    "description": "transparent — overlaps the fullbleed hero"
+    "description": "transparent — overlaps the editorial hero"
   },
   {
     "id": "color-scheme",
@@ -155,18 +155,18 @@ If `planFeedback.approved === false`, the user has provided `modifications`. Rev
 
 Use these rules to infer config values from goal text or extracted design signals:
 
-| Goal / Style cues                      | dominantStyle  | colorScheme | navStyle    | heroLayout             | fontStyle       | borderRadius |
-| -------------------------------------- | -------------- | ----------- | ----------- | ---------------------- | --------------- | ------------ |
-| "luxury", "premium", "gold", dark bg   | dark-luxury    | dark        | transparent | fullbleed or editorial | modern-sans     | none         |
-| "organic", "natural", "plant", "soap"  | organic        | light       | bordered    | split                  | modern-sans     | md           |
-| "earthy", "rustic", "handmade", "wood" | earthy         | light       | bordered    | split                  | modern-sans     | md           |
-| "bold", "playful", "colorful", "kids"  | bold-playful   | light       | bordered    | centered               | modern-sans     | full         |
-| "Activewear", "athleisure", "outdoor"  | bold-playful   | light       | bordered    | centered               | modern-sans     | full         |
-| "editorial", "artisan", "journal"      | editorial      | light       | bordered    | editorial              | editorial-serif | none         |
-| "health", "supplements", "clinical"    | clean          | light       | bordered    | centered               | modern-sans     | md           |
-| "minimal", "clean", "modern", "tech"   | minimalist     | light       | bordered    | minimal                | modern-sans     | none         |
-| "mission", "cause", "sustainable"      | mission-driven | light       | filled      | fullbleed              | editorial-serif | md           |
-| "hardware", "specs", "precision"       | tech-precision | dark        | transparent | editorial              | mono-tech       | none         |
+| Goal / Style cues                      | dominantStyle  | colorScheme | navStyle    | heroLayout | fontStyle       | borderRadius |
+| -------------------------------------- | -------------- | ----------- | ----------- | ---------- | --------------- | ------------ |
+| "luxury", "premium", "gold", dark bg   | dark-luxury    | dark        | transparent | editorial  | modern-sans     | none         |
+| "organic", "natural", "plant", "soap"  | organic        | light       | bordered    | split      | modern-sans     | md           |
+| "earthy", "rustic", "handmade", "wood" | earthy         | light       | bordered    | split      | modern-sans     | md           |
+| "bold", "playful", "colorful", "kids"  | bold-playful   | light       | bordered    | centered   | modern-sans     | full         |
+| "Activewear", "athleisure", "outdoor"  | bold-playful   | light       | bordered    | centered   | modern-sans     | full         |
+| "editorial", "artisan", "journal"      | editorial      | light       | bordered    | editorial  | editorial-serif | none         |
+| "health", "supplements", "clinical"    | clean          | light       | bordered    | centered   | modern-sans     | md           |
+| "minimal", "clean", "modern", "tech"   | minimalist     | light       | bordered    | centered   | modern-sans     | none         |
+| "mission", "cause", "sustainable"      | mission-driven | light       | filled      | centered   | editorial-serif | md           |
+| "hardware", "specs", "precision"       | tech-precision | dark        | transparent | editorial  | mono-tech       | none         |
 
 ## Business Model Overrides
 

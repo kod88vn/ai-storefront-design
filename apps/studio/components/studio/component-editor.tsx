@@ -82,11 +82,13 @@ const COMPONENT_LABELS: Record<string, string> = {
     'announcement-bar': 'Announcement Bar', 'benefits-bar': 'Benefits Bar',
     'featured-collection': 'Featured Collection', testimonials: 'Testimonials',
     newsletter: 'Newsletter', 'trust-badges': 'Trust Badges', 'brand-strip': 'Brand Strip',
+    'products-listing': 'Products Listing', 'product-detail-content': 'Product Detail', 'cart-content': 'Cart',
     'custom-text': 'Custom Text', 'custom-image': 'Custom Image',
 }
 
 export function ComponentEditor({ containerId, componentId }: { containerId: string; componentId: string }) {
-    const { containers, setSelectedComponent } = useStudioStore()
+    const { pageContainers, currentPage, setSelectedComponent } = useStudioStore()
+    const containers = pageContainers[currentPage] ?? []
     const comp = findComponentDeep(containers, containerId, componentId)
     if (!comp) return null
 

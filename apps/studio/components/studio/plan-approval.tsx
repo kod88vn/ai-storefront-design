@@ -9,7 +9,7 @@ import type { AgentPlan, PlanChange } from '@ai-storefront/types'
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 export function getChanges(plan: AgentPlan): PlanChange[] {
-    if (plan.plannedChanges?.length) return plan.plannedChanges
+    if (Array.isArray(plan.plannedChanges) && plan.plannedChanges.length) return plan.plannedChanges
     const changes: PlanChange[] = []
     if (plan.colorProposal) changes.push({ id: 'primary-color', category: 'theme', label: 'Primary Color', description: plan.colorProposal })
     if (plan.navStyleProposal) changes.push({ id: 'nav-style', category: 'theme', label: 'Navbar Style', description: plan.navStyleProposal })
@@ -115,7 +115,7 @@ function CustomChangeInput({ onAdd }: { onAdd: (description: string) => void }) 
 export function InlinePlanApproval({ plan }: { plan: AgentPlan }) {
     const aiChanges = getChanges(plan)
     const [checked, setChecked] = useState<Record<string, boolean>>(
-        () => Object.fromEntries(aiChanges.map((c) => [c.id, true]))
+        () => Object.fromEntries((Array.isArray(aiChanges) ? aiChanges : []).map((c) => [c.id, true]))
     )
     const [customChanges, setCustomChanges] = useState<PlanChange[]>([])
     const { setAgentStep, setAgentPlan, addAuditEntry } = useStudioStore()

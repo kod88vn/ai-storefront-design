@@ -52,7 +52,7 @@ Generate conversion-focused layout and UX recommendations. Synthesizes all upstr
 
 ### Dark Luxury (Master & Dynamic)
 
-- Hero: `fullbleed`, `ctaVariant: ghost`, `overlayOpacity: 0.5` — product hero image fills the screen
+- Hero: `editorial`, `ctaVariant: ghost`, `overlayOpacity: 0.5` — large type brand statement fills the screen
 - Trust: `trust-badges` with icons: `award`, `globe`, `shield` ("Worldwide shipping", "2-year warranty")
 - Social proof: `testimonials` with `featured` layout — one hero quote in brand color
 - Skip `newsletter` incentive — luxury brands don't discount
@@ -97,4 +97,4 @@ Generate conversion-focused layout and UX recommendations. Synthesizes all upstr
 - `trust-badges` near the CTA reduces cart abandonment — place above or below the product grid
 - Social proof (`testimonials`) converts best when placed AFTER the product grid (post-consideration)
 - Avoid enabling more than 7 sections total — page depth beyond that hurts mobile completion rates
-- On dark-scheme sites: `navStyle: transparent` + `fullbleed` hero creates the immersive premium experience
+- On dark-scheme sites: `navStyle: transparent` + `editorial` hero creates the immersive premium experience

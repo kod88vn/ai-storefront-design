@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { Monitor, Tablet, Smartphone } from 'lucide-react'
 import { useStudioStore } from '@/lib/store'
 import { viewportWidths, type Viewport, type DesignerContainer, type ComponentItem } from '@/lib/types'
-import type { StorefrontConfig, SectionType } from '@ai-storefront/types'
+import type { CartItem, StorefrontConfig, SectionType } from '@ai-storefront/types'
 import {
   StorefrontNavbar,
   StorefrontHero,
@@ -53,13 +53,25 @@ function containerClass(c: LayoutLike): string {
   return ''
 }
 
-function renderPrebuilt(type: SectionType, config: StorefrontConfig) {
+// Page-level section types that render their own navbar — ContainerCanvas skips its own nav when these are present
+const FULL_PAGE_SECTIONS = new Set<SectionType>(['products-listing', 'product-detail-content', 'cart-content'])
+
+function hasFullPageSection(containers: DesignerContainer[]): boolean {
+  return containers.some((c) =>
+    c.components.some((comp) => comp.kind === 'prebuilt' && FULL_PAGE_SECTIONS.has(comp.sectionType))
+  )
+}
+
+function renderPrebuilt(type: SectionType, config: StorefrontConfig, cartItems: CartItem[]) {
   const section = { id: type, type, enabled: true, order: 0 }
   switch (type) {
     case 'hero': return <StorefrontHero key={config.hero.layout} config={config.hero} theme={config.theme} />
     case 'product-grid': return <StorefrontProductGrid config={config.productGrid} theme={config.theme} />
-    case 'categories': return <StorefrontCategories theme={config.theme} />
-    case 'footer': return <StorefrontFooter theme={config.theme} />
+    case 'categories': return <StorefrontCategories theme={config.theme} categoriesConfig={config.categories} />
+    case 'footer': return <StorefrontFooter theme={config.theme} footerConfig={config.footer} />
+    case 'products-listing': return <ProductsPage theme={config.theme} navConfig={config.nav} pagesConfig={config.pages?.products} cartItems={cartItems} />
+    case 'product-detail-content': return <ProductDetailPage theme={config.theme} navConfig={config.nav} pagesConfig={config.pages?.productDetail} cartItems={cartItems} />
+    case 'cart-content': return <CartPage theme={config.theme} navConfig={config.nav} cartItems={cartItems} pagesConfig={config.pages?.cart} />
     default: return <ExtraSections section={section} config={config} />
   }
 }
@@ -71,11 +83,11 @@ function normalizeInjectedHtml(html: string): string {
     .replace(/<\/script>/gi, '</template>')
 }
 
-function renderComponent(comp: ComponentItem, config: StorefrontConfig) {
+function renderComponent(comp: ComponentItem, config: StorefrontConfig, cartItems: CartItem[]) {
   const cls = comp.customClasses || undefined
   switch (comp.kind) {
     case 'prebuilt':
-      return <div key={comp.id} className={cls}>{renderPrebuilt(comp.sectionType, config)}</div>
+      return <div key={comp.id} className={cls}>{renderPrebuilt(comp.sectionType, config, cartItems)}</div>
     case 'custom-text':
       return <div key={comp.id} className={cls} dangerouslySetInnerHTML={{ __html: normalizeInjectedHtml(comp.html || '<p style="padding:2rem;color:#aaa;text-align:center">[Custom text block — click to edit]</p>') }} />
     case 'custom-image':
@@ -91,20 +103,22 @@ function renderComponent(comp: ComponentItem, config: StorefrontConfig) {
       const combinedCls = [containerClass(comp), comp.customClasses].filter(Boolean).join(' ') || undefined
       return (
         <div key={comp.id} className={combinedCls}>
-          {comp.components.map((c) => renderComponent(c, config))}
+          {comp.components.map((c) => renderComponent(c, config, cartItems))}
         </div>
       )
     }
   }
 }
 
-function ContainerCanvas({ config, containers }: { config: StorefrontConfig; containers: DesignerContainer[] }) {
+function ContainerCanvas({ config, containers, cartItems }: { config: StorefrontConfig; containers: DesignerContainer[]; cartItems: CartItem[] }) {
   const { theme } = config
   const radiusVal = theme.borderRadius === 'none' ? '0px' : theme.borderRadius === 'full' ? '9999px' : '8px'
   const fontFamilyVal = theme.fontStyle === 'editorial-serif' ? 'Georgia, "Times New Roman", serif' : theme.fontStyle === 'mono-tech' ? '"Courier New", monospace' : 'system-ui, sans-serif'
   const baseBg = theme.colorScheme === 'dark' ? '#0a0a0a' : '#ffffff'
   const baseText = theme.colorScheme === 'dark' ? '#f5f5f5' : '#0a0a0a'
   const isTransparentNav = theme.navStyle === 'transparent'
+  // Full-page sections (products-listing, cart-content, etc.) render their own navbar
+  const showNav = !hasFullPageSection(containers)
 
   return (
     <div
@@ -112,10 +126,10 @@ function ContainerCanvas({ config, containers }: { config: StorefrontConfig; con
       className={`min-h-screen ${isTransparentNav ? 'relative' : ''}`}
       style={{ ['--storefront-radius' as string]: radiusVal, fontFamily: fontFamilyVal, backgroundColor: baseBg, color: baseText }}
     >
-      <StorefrontNavbar theme={theme} navConfig={config.nav} />
+      {showNav && <StorefrontNavbar theme={theme} navConfig={config.nav} />}
       {containers.map((c) => (
         <div key={c.id} className={containerClass(c)}>
-          {c.components.map((comp) => renderComponent(comp, config))}
+          {c.components.map((comp) => renderComponent(comp, config, cartItems))}
         </div>
       ))}
     </div>
@@ -123,7 +137,8 @@ function ContainerCanvas({ config, containers }: { config: StorefrontConfig; con
 }
 
 export function CenterCanvas() {
-  const { viewport, setViewport, config, containers, currentPage, cartItems } = useStudioStore()
+  const { viewport, setViewport, config, pageContainers, currentPage, cartItems } = useStudioStore()
+  const containers = pageContainers[currentPage] ?? []
   const width = viewportWidths[viewport]
   const previewShellRef = useRef<HTMLDivElement | null>(null)
 
@@ -189,40 +204,8 @@ export function CenterCanvas() {
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           style={{ minHeight: '80vh', maxWidth: '100%' }}
         >
-          {currentPage === 'home' && <ContainerCanvas config={config} containers={containers} />}
-          {currentPage === 'products' && (
-            <ProductsPage
-              theme={config.theme}
-              navConfig={config.nav}
-              cartItems={cartItems}
-              pagesConfig={config.pages?.products}
-            />
-          )}
-          {currentPage === 'product-detail' && (
-            <ProductDetailPage
-              theme={config.theme}
-              navConfig={config.nav}
-              cartItems={cartItems}
-              pagesConfig={config.pages?.productDetail}
-            />
-          )}
-          {currentPage === 'cart' && (
-            <CartPage
-              theme={config.theme}
-              navConfig={config.nav}
-              cartItems={cartItems}
-              pagesConfig={config.pages?.cart}
-            />
-          )}
-          {currentPage === 'custom' && (
-            <div className="flex min-h-[60vh] items-center justify-center p-12 text-center text-muted-foreground">
-              <div>
-                <p className="text-4xl mb-4">✏️</p>
-                <p className="font-medium">Custom page</p>
-                <p className="text-sm mt-1">Custom page editor coming soon</p>
-              </div>
-            </div>
-          )}
+          {/* All pages now use ContainerCanvas with per-page containers — each page's sections live in pageContainers[page] */}
+          <ContainerCanvas config={config} containers={containers} cartItems={cartItems} />
         </motion.div>
       </div>
     </div>

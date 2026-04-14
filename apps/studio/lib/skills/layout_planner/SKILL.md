@@ -78,7 +78,7 @@ Decide the hero variant, section ordering, product grid columns, and hero micro-
 ## Business Model / Density Overrides
 
 - If `businessModel = marketplace`, prefer denser scanning-friendly ordering and avoid overly cinematic heroes unless the source strongly supports it.
-- If `siteCategory = food-delivery`, bias toward `heroVariant: minimal` or `centered`, earlier discovery sections, and `productGridColumns: 3` or `4`.
+- If `siteCategory = food-delivery`, bias toward `heroVariant: centered`, earlier discovery sections, and `productGridColumns: 3` or `4`.
 - If `siteCategory = footwear` or `fashion` and `imageryStyle = editorial-campaign`, bias toward `heroVariant: editorial` and fewer, larger visual sections.
 - If `visualDensity = dense`, avoid overly sparse minimalist adaptations.
 - If `ctaStyle = utility-first`, keep hierarchy tighter and conversion-first rather than narrative-first.

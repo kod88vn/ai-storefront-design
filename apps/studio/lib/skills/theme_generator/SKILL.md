@@ -79,7 +79,7 @@ When calling `apply_config_update`, you output `themeChanges` (the global theme)
 
 - Only populate `componentStyleChanges` fields you actually change — omit the rest (they inherit from the theme).
 - `navbar.backgroundColor` takes precedence over `navStyle`-derived colors. Use it when the brand color for the nav differs from `primaryColor`.
-- `hero.backgroundColor` overrides the layout-default section background (white/neutral). Set it for editorial or fullbleed heroes with a custom brand color.
+- `hero.backgroundColor` overrides the layout-default section background (white/neutral). Set it for editorial heroes with a custom brand color.
 - `footer.backgroundColor` is commonly dark even on light sites — set it to `#0d0d0d` or brand dark for a grounding footer.
 - `categories.backgroundColor` is commonly a light tint — use `sectionBackgroundColor` from extracted tokens when available.
 - Do not set redundant values: if `hero.textColor` would be the same as the theme-derived default, omit it.
@@ -105,7 +105,7 @@ Use these as complete starting points when mimicking a known style archetype:
 
 - `primaryColor` drives all text headings and the logo wordmark — needs strong contrast on both light and dark backgrounds
 - `secondaryColor` drives CTA buttons, badge pills, icon accents, cart count badge — must pass WCAG AA on white AND on `primaryColor`
-- `navStyle: "transparent"` must be paired with a fullbleed or editorial hero that has a dark overlay
+- `navStyle: "transparent"` must be paired with an editorial hero that has a dark overlay
 - `navStyle: "filled"` works best with `colorScheme: "light"` so the colored navbar provides contrast
 - `borderRadius: "none"` signals premium/architectural brands; `"full"` signals approachable/wellness brands
 - `fontStyle: "editorial-serif"` is best for lifestyle, artisan, or heritage brands — not tech or health

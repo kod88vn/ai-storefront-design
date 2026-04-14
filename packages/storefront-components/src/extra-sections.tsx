@@ -1,4 +1,4 @@
-import type { StorefrontConfig, LayoutSection, BenefitItem, TrustIcon } from '@ai-storefront/types'
+import type { StorefrontConfig, LayoutSection, BenefitItem, TrustIcon, TestimonialsConfig, NewsletterConfig } from '@ai-storefront/types'
 import { sampleProducts } from './data'
 import {
     Truck, Shield, RefreshCw, Award, Clock, Leaf,
@@ -11,10 +11,12 @@ interface ExtraSectionsProps {
 }
 
 // Map BenefitItem.icon string to a Lucide component
+// Add entries here automatically by adding to BENEFIT_ICONS in packages/types/src/schema.ts
 const ICON_MAP: Record<BenefitItem['icon'], LucideIcon> = {
     truck: Truck, shield: Shield, refresh: RefreshCw, award: Award,
     clock: Clock, leaf: Leaf, star: Star, heart: Heart,
     check: Check, zap: Zap, globe: Globe, tag: Tag,
+    lock: Lock, phone: Phone,
 }
 
 function BenefitIcon({ icon }: { icon: BenefitItem['icon'] }) {
@@ -149,12 +151,12 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
                 { quote: '[CUSTOMER TESTIMONIAL — Write a real quote here]', author: '[Customer Name]', location: '[City, Country]', rating: 5 },
                 { quote: '[CUSTOMER TESTIMONIAL — Write a real quote here]', author: '[Customer Name]', location: '[City, Country]', rating: 5 },
             ]
-            const data = sectionData.testimonials ?? {
+            const data = (sectionData.testimonials ?? {
                 heading: '[TESTIMONIALS HEADING]',
                 layout: 'grid' as const,
                 showRatings: true,
                 items: DEFAULT_TESTIMONIAL_ITEMS,
-            }
+            }) as TestimonialsConfig
             const items = data.items?.length ? data.items : DEFAULT_TESTIMONIAL_ITEMS
             const showRatings = data.showRatings !== false
             const isDark = (theme.colorScheme ?? 'light') === 'dark'
@@ -231,14 +233,14 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
 
         case 'newsletter': {
             const isDark = (theme.colorScheme ?? 'light') === 'dark'
-            const data = sectionData.newsletter ?? {
+            const data = (sectionData.newsletter ?? {
                 heading: '[YOUR NEWSLETTER TITLE]',
                 subtext: '[Tell subscribers what they will get by signing up here]',
                 placeholder: 'Enter your email',
                 buttonText: 'Subscribe',
                 backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
                 incentive: null,
-            }
+            }) as NewsletterConfig
             const bg = data.backgroundColor ?? (isDark ? '#1a1a1a' : '#f5f5f5')
             const text = data.textColor ?? (isDark ? '#e5e5e5' : '#404040')
             return (

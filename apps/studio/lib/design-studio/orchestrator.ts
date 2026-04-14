@@ -29,9 +29,10 @@ import { SKILL_TEMPLATE_VARS } from "@ai-storefront/types";
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const MAX_STEPS = 15;
-const AI_MODEL = process.env.AI_MODEL ?? "grok-3";
-// grok-3 does not support vision — use a dedicated vision model for image analysis
-const VISION_MODEL = "grok-4-0709";
+// Use the xAI Responses API model names (chat/completions is not available on this account)
+const AI_MODEL = process.env.AI_MODEL ?? "grok-4-1-fast-reasoning";
+// Vision-capable model — same model supports vision on the Responses API
+const VISION_MODEL = process.env.VISION_MODEL ?? "grok-4-1-fast-reasoning";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -182,7 +183,23 @@ export async function* runOrchestrator(
   // ── 2. Discover MCP tools ───────────────────────────────────────────────────
   yield progress("Discovering tools via MCP...", "decomposing");
 
-  const mcpTools = await mcpListTools();
+  let mcpTools: Array<{
+    name: string;
+    description: string;
+    inputSchema: unknown;
+  }> = [];
+  try {
+    mcpTools = await mcpListTools();
+  } catch (err) {
+    const e = err as Error;
+    yield audit("tools/list-error", {
+      message: e.message,
+      stack: e.stack?.slice(0, 500),
+    });
+    console.error("[orchestrator] mcpListTools failed:", e.message);
+    yield { type: "error", error: `Failed to list MCP tools: ${e.message}` };
+    return;
+  }
   yield audit("tools/list", { tools: mcpTools.map((t) => t.name) });
 
   // ── 3. Image pre-analysis (vision model → structured tokens) ────────────────
@@ -200,7 +217,7 @@ export async function* runOrchestrator(
     yield progress("Analyzing uploaded image...", "thinking");
     try {
       const visionResult = await generateText({
-        model: xai(VISION_MODEL),
+        model: xai.responses(VISION_MODEL),
         messages: [
           {
             role: "user",
@@ -222,7 +239,7 @@ export async function* runOrchestrator(
   "fontStyle": "<modern-sans|geometric-sans|humanist-sans|editorial-serif|display-serif|slab-serif|mono-tech|handwritten|condensed|rounded>",
   "navStyle": "<bordered|transparent|filled>",
   "borderRadius": "<none|sm|md|lg|xl|full>",
-  "heroLayout": "<split|centered|minimal|fullbleed|editorial>",
+  "heroLayout": "<split|centered|editorial>",
   "productGridColumns": <2|3|4>,
   "visualDensity": "<sparse|balanced|dense>",
   "ctaStyle": "<utility-first|promotion-first|brand-first|editorial-soft>",
@@ -535,9 +552,7 @@ ${configSummary}${resumeInstruction}`;
           .optional(),
         heroChanges: z
           .object({
-            layout: z
-              .enum(["split", "centered", "minimal", "fullbleed", "editorial"])
-              .optional(),
+            layout: z.enum(["split", "centered", "editorial"]).optional(),
             title: z.string().optional(),
             subtitle: z.string().optional(),
             badge: z.string().optional(),
@@ -630,13 +645,65 @@ ${configSummary}${resumeInstruction}`;
     let result: any;
     try {
       result = await generateText({
-        model: xai(AI_MODEL),
+        // xai.responses() uses the /v1/responses endpoint instead of /v1/chat/completions
+        model: xai.responses(AI_MODEL),
         system: systemPrompt,
         messages,
         tools,
       });
     } catch (err) {
-      yield { type: "error", error: (err as Error).message };
+      // AI SDK errors carry extra diagnostic fields — extract them all so the
+      // audit trail shows exactly what went wrong (status code, response body, etc.)
+      type SdkError = Error & {
+        statusCode?: number;
+        url?: string;
+        responseBody?: string;
+        requestBodyValues?: unknown;
+        cause?: Error;
+        errors?: Error[]; // RetryError wraps multiple attempt errors
+      };
+      const e = err as SdkError;
+
+      // Surface the last individual attempt error for RetryError
+      const lastCause = Array.isArray(e.errors)
+        ? e.errors[e.errors.length - 1]
+        : e.cause;
+      const lastCauseFields = lastCause
+        ? {
+            causeName: lastCause.name,
+            causeMessage: lastCause.message,
+            causeStatusCode: (lastCause as SdkError).statusCode,
+            causeResponseBody: (lastCause as SdkError).responseBody?.slice(
+              0,
+              2000,
+            ),
+            causeUrl: (lastCause as SdkError).url,
+          }
+        : {};
+
+      yield audit("agent/generate-error", {
+        step,
+        model: AI_MODEL,
+        errorName: e.name,
+        message: e.message,
+        statusCode: e.statusCode,
+        url: e.url,
+        responseBody: e.responseBody?.slice(0, 2000),
+        ...lastCauseFields,
+      });
+
+      console.error("[orchestrator] generateText failed at step", step, {
+        model: AI_MODEL,
+        errorName: e.name,
+        message: e.message,
+        statusCode: e.statusCode,
+        url: e.url,
+        responseBody: e.responseBody,
+        cause: lastCause?.message,
+        stack: e.stack,
+      });
+
+      yield { type: "error", error: e.message };
       return;
     }
 
@@ -706,7 +773,12 @@ ${configSummary}${resumeInstruction}`;
             colorProposal: input.colorProposal,
             navStyleProposal: input.navStyleProposal,
             colorSchemeProposal: input.colorSchemeProposal,
-            plannedChanges: input.plannedChanges as never,
+            // Ensure plannedChanges is always a proper array (Responses API may return object-keyed arrays)
+            plannedChanges: Array.isArray(input.plannedChanges)
+              ? (input.plannedChanges as never)
+              : input.plannedChanges
+                ? (Object.values(input.plannedChanges) as never)
+                : undefined,
           },
         };
 

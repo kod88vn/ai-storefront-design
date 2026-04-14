@@ -99,6 +99,43 @@ export type GridColumns = (typeof GRID_COLUMNS)[number];
 export const FONT_SIZES = ["sm", "base", "lg", "xl"] as const;
 export type FontSize = (typeof FONT_SIZES)[number];
 
+// ─── Benefit icons ───────────────────────────────────────────────────────────
+// Add new icons here — they automatically appear in the prebuilt-editor dropdown
+// and in SKILL.md via {{BENEFIT_ICONS}} without touching any other file.
+
+export const BENEFIT_ICONS = [
+  "truck",
+  "shield",
+  "refresh",
+  "award",
+  "clock",
+  "leaf",
+  "star",
+  "heart",
+  "check",
+  "zap",
+  "globe",
+  "tag",
+  "lock",
+  "phone",
+] as const;
+export type BenefitIconType = (typeof BENEFIT_ICONS)[number];
+
+// ─── Collection layouts ───────────────────────────────────────────────────────
+
+export const COLLECTION_LAYOUTS = ["grid", "horizontal-scroll"] as const;
+export type CollectionLayout = (typeof COLLECTION_LAYOUTS)[number];
+
+// ─── Testimonial layouts ──────────────────────────────────────────────────────
+
+export const TESTIMONIAL_LAYOUTS = [
+  "grid",
+  "carousel",
+  "list",
+  "featured",
+] as const;
+export type TestimonialLayout = (typeof TESTIMONIAL_LAYOUTS)[number];
+
 // ─── Section types ────────────────────────────────────────────────────────────
 
 export const SECTION_TYPES = [
@@ -113,6 +150,10 @@ export const SECTION_TYPES = [
   "newsletter",
   "trust-badges",
   "brand-strip",
+  // Page-level content blocks — rendered in per-page container layouts
+  "products-listing",
+  "product-detail-content",
+  "cart-content",
 ] as const;
 export type SectionType = (typeof SECTION_TYPES)[number];
 
@@ -129,4 +170,7 @@ export const SKILL_TEMPLATE_VARS: Record<string, string> = {
   HERO_CTA_VARIANTS: HERO_CTA_VARIANTS.join(" | "),
   FONT_SIZES: FONT_SIZES.join(" | "),
   GRID_COLUMNS: GRID_COLUMNS.join(" | "),
+  BENEFIT_ICONS: BENEFIT_ICONS.join(" | "),
+  COLLECTION_LAYOUTS: COLLECTION_LAYOUTS.join(" | "),
+  TESTIMONIAL_LAYOUTS: TESTIMONIAL_LAYOUTS.join(" | "),
 };
