@@ -150,3 +150,71 @@ lib/                    Store, types, utilities, orchestrator
 lib/skills/*/SKILL.md   AI skill definitions (loaded at runtime)
 hooks/                  Client hooks (use-orchestrator, use-toast)
 ```
+
+## Single Source of Truth — `packages/types/src/schema.ts`
+
+**All option arrays (hero layouts, dominant styles, nav styles, font styles, etc.) live exclusively in `schema.ts`.** Do not redeclare them anywhere else.
+
+```ts
+// packages/types/src/schema.ts
+export const HERO_LAYOUTS = ["split", "centered", "editorial"] as const;
+export const DOMINANT_STYLES = ["minimalist", "maximalist", ...] as const;
+export const NAV_STYLES = ["bordered", "transparent", "filled"] as const;
+export const FONT_STYLES = ["modern-sans", "geometric-sans", ...] as const;
+// ... BORDER_RADII, COLOR_SCHEMES, HERO_CTA_VARIANTS, FONT_SIZES, etc.
+```
+
+When you add or remove a hero layout (or any other option):
+
+1. **Edit only `schema.ts`** — the array + `SKILL_TEMPLATE_VARS` entry
+2. Everything else updates automatically:
+   - TypeScript unions: `type HeroLayout = typeof HERO_LAYOUTS[number]`
+   - MCP route enums: `import { HERO_LAYOUTS } from "@ai-storefront/types"`
+   - Studio dropdowns: `import { HERO_LAYOUTS } from "@ai-storefront/types"`
+   - SKILL.md prompts: `{{HERO_LAYOUTS}}` interpolated at load time by the orchestrator
+
+**Never** hardcode `"split" | "centered" | "editorial"` inline in interfaces, MCP enums, or UI arrays. Always import from `@ai-storefront/types`.
+
+## Storefront Component Rules
+
+Hero has **3 layouts** (`split`, `centered`, `editorial`). `minimal` and `fullbleed` are removed. Do not reference them.
+
+Each storefront section supports **per-section style overrides** (`ComponentStyle`) that take precedence over the global theme:
+
+```ts
+interface ComponentStyle {
+  backgroundColor?: string;
+  textColor?: string;
+  fontSize?: "sm" | "base" | "lg" | "xl"; // FontSize
+}
+```
+
+These overrides are stored in `config.hero`, `config.nav`, `config.productGrid`, `config.categories`, and `config.footer`. When rendering, always check the override before falling back to the theme value.
+
+## AI Skill Rules
+
+SKILL.md files under `lib/skills/*/SKILL.md` use `{{VAR}}` template placeholders that are replaced at load time:
+
+```markdown
+"heroVariant": "{{HERO_LAYOUTS}}"
+→ rendered as →
+"heroVariant": "split | centered | editorial"
+```
+
+Available variables: `{{HERO_LAYOUTS}}`, `{{DOMINANT_STYLES}}`, `{{NAV_STYLES}}`, `{{COLOR_SCHEMES}}`, `{{FONT_STYLES}}`, `{{BORDER_RADII}}`, `{{HERO_CTA_VARIANTS}}`, `{{FONT_SIZES}}`, `{{GRID_COLUMNS}}`, `{{SOURCE_LAYOUT_TYPES}}`.
+
+When editing schema option values, update the corresponding SKILL.md placeholders to use `{{VAR}}` if they don't already — never hardcode the list directly in the markdown.
+
+## Hero Layout Keying Rule
+
+When rendering `StorefrontHero` in the studio canvas or preview, always key it on `config.hero.layout`:
+
+```tsx
+<StorefrontHero
+  key={config.hero.layout}
+  config={config.hero}
+  theme={config.theme}
+/>
+```
+
+This forces a full DOM remount on layout change, preventing stale `data-original-class` caches from the viewport-stripping `useEffect` in `center-canvas.tsx` from corrupting the new layout's classes.
