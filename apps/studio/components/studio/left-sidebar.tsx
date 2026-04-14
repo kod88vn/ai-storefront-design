@@ -42,11 +42,25 @@ export function LeftSidebar() {
   function handleSimulate() {
     const textGoal = goalText.trim()
     if (!textGoal && !droppedImage && !visionUrl) return
-    let goal: string
+
+    // Validate URL — ignore visionUrl if it's not a valid http/https URL
+    let effectiveVisionUrl: string | undefined
     if (visionUrl) {
+      try {
+        const parsed = new URL(visionUrl.trim())
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+          effectiveVisionUrl = visionUrl.trim()
+        }
+      } catch {
+        // not a valid URL — ignore it, treat as text-only
+      }
+    }
+
+    let goal: string
+    if (effectiveVisionUrl) {
       goal = textGoal
-        ? `${textGoal}. Use this storefront as visual reference: ${visionUrl}`
-        : `Analyze this storefront URL and redesign it to match its visual aesthetic: ${visionUrl}`
+        ? `${textGoal}. Use this storefront as visual reference: ${effectiveVisionUrl}`
+        : `Analyze this storefront URL and redesign it to match its visual aesthetic: ${effectiveVisionUrl}`
     } else if (droppedImage) {
       goal = textGoal
         ? `${textGoal}. Use the attached screenshot as visual reference.`
@@ -55,7 +69,7 @@ export function LeftSidebar() {
       goal = textGoal
     }
     startOrchestrator(goal, {
-      visionUrl: visionUrl || undefined,
+      visionUrl: effectiveVisionUrl,
       imageData: droppedImage,
       currentConfig: config,
       planFeedback: null,

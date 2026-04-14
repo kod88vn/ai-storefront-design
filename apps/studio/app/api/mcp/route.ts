@@ -376,23 +376,18 @@ async function executeTool(
       const style = String(args.dominantStyle ?? "minimalist") as DominantStyle;
       const colorScheme = String(args.colorScheme ?? "light");
 
-      type HeroVariant =
-        | "split"
-        | "centered"
-        | "minimal"
-        | "fullbleed"
-        | "editorial";
+      type HeroVariant = "split" | "centered" | "editorial";
 
       const heroMap: Record<DominantStyle, HeroVariant> = {
-        "dark-luxury": "fullbleed",
+        "dark-luxury": "editorial",
         organic: "split",
         editorial: "editorial",
         "bold-playful": "centered",
         clean: "centered",
         earthy: "split",
         maximalist: "centered",
-        minimalist: "minimal",
-        "mission-driven": "fullbleed",
+        minimalist: "split",
+        "mission-driven": "centered",
         "tech-precision": "editorial",
       };
 

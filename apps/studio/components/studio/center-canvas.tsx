@@ -56,7 +56,7 @@ function containerClass(c: LayoutLike): string {
 function renderPrebuilt(type: SectionType, config: StorefrontConfig) {
   const section = { id: type, type, enabled: true, order: 0 }
   switch (type) {
-    case 'hero': return <StorefrontHero config={config.hero} theme={config.theme} />
+    case 'hero': return <StorefrontHero key={config.hero.layout} config={config.hero} theme={config.theme} />
     case 'product-grid': return <StorefrontProductGrid config={config.productGrid} theme={config.theme} />
     case 'categories': return <StorefrontCategories theme={config.theme} />
     case 'footer': return <StorefrontFooter theme={config.theme} />

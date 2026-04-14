@@ -179,6 +179,20 @@ export function useOrchestrator() {
         if (u.cartPageChanges) {
           s.updateCartPageConfig(u.cartPageChanges);
         }
+        if (u.componentStyleChanges) {
+          const cs = u.componentStyleChanges as Record<
+            string,
+            Record<string, string | undefined>
+          >;
+          if (cs.navbar)
+            s.updateNavStyle(
+              cs.navbar as Parameters<typeof s.updateNavStyle>[0],
+            );
+          if (cs.hero) s.updateHero(cs.hero);
+          if (cs.productGrid) s.updateProductGrid(cs.productGrid);
+          if (cs.categories) s.updateCategoriesConfig(cs.categories);
+          if (cs.footer) s.updateFooterConfig(cs.footer);
+        }
         break;
       }
 

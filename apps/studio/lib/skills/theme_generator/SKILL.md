@@ -26,19 +26,63 @@ Generate a cohesive `ThemeConfig` from extracted design signals or a target aest
 }
 ```
 
-## Output Schema — ThemeConfig
+## Output Schema — ThemeConfig + componentStyleChanges
+
+When calling `apply_config_update`, you output `themeChanges` (the global theme) and optionally `componentStyleChanges` (per-section overrides for background color, text color, and font size). Use `componentStyleChanges` when a section needs to deviate from the global theme — for example:
+
+- A dark footer on an otherwise light site
+- A brand-colored hero background that differs from the page background
+- A tinted categories strip
+- An announcement bar–style navbar
 
 ```json
 {
-  "primaryColor": "#hex",
-  "secondaryColor": "#hex",
-  "borderRadius": "none | sm | md | lg | xl | full",
-  "fontStyle": "modern-sans | geometric-sans | humanist-sans | editorial-serif | display-serif | slab-serif | mono-tech | handwritten | condensed | rounded",
-  "navStyle": "bordered | transparent | filled",
-  "colorScheme": "light | dark",
-  "rationale": "string"
+  "themeChanges": {
+    "primaryColor": "#hex",
+    "secondaryColor": "#hex",
+    "borderRadius": "none | sm | md | lg | xl | full",
+    "fontStyle": "modern-sans | geometric-sans | ...",
+    "navStyle": "bordered | transparent | filled",
+    "colorScheme": "light | dark"
+  },
+  "componentStyleChanges": {
+    "navbar": {
+      "backgroundColor": "#hex (optional — overrides navStyle-derived color)",
+      "textColor": "#hex (optional — overrides derived text color)",
+      "fontSize": "sm | base | lg | xl (optional)"
+    },
+    "hero": {
+      "backgroundColor": "#hex (optional)",
+      "textColor": "#hex (optional)",
+      "fontSize": "sm | base | lg | xl (optional)"
+    },
+    "productGrid": {
+      "backgroundColor": "#hex (optional)",
+      "textColor": "#hex (optional)",
+      "fontSize": "sm | base | lg | xl (optional)"
+    },
+    "categories": {
+      "backgroundColor": "#hex (optional)",
+      "textColor": "#hex (optional)",
+      "fontSize": "sm | base | lg | xl (optional)"
+    },
+    "footer": {
+      "backgroundColor": "#hex (optional)",
+      "textColor": "#hex (optional)",
+      "fontSize": "sm | base | lg | xl (optional)"
+    }
+  }
 }
 ```
+
+### Per-section style rules
+
+- Only populate `componentStyleChanges` fields you actually change — omit the rest (they inherit from the theme).
+- `navbar.backgroundColor` takes precedence over `navStyle`-derived colors. Use it when the brand color for the nav differs from `primaryColor`.
+- `hero.backgroundColor` overrides the layout-default section background (white/neutral). Set it for editorial or fullbleed heroes with a custom brand color.
+- `footer.backgroundColor` is commonly dark even on light sites — set it to `#0d0d0d` or brand dark for a grounding footer.
+- `categories.backgroundColor` is commonly a light tint — use `sectionBackgroundColor` from extracted tokens when available.
+- Do not set redundant values: if `hero.textColor` would be the same as the theme-derived default, omit it.
 
 ## Aesthetic → Full Theme Presets
 

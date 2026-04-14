@@ -12,6 +12,8 @@ interface NavbarProps {
     onCartClick?: () => void
 }
 
+const FONT_SIZE_MAP = { sm: '0.875rem', base: '1rem', lg: '1.125rem', xl: '1.25rem' } as const
+
 export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick }: NavbarProps) {
     const [menuOpen, setMenuOpen] = useState(false)
     const nav = navConfig ?? defaultNavConfig
@@ -25,35 +27,41 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
                 ? 'border-b border-transparent'
                 : 'border-b border-neutral-200 bg-white'
 
-    const containerStyle =
-        navStyle === 'filled'
-            ? { backgroundColor: theme.primaryColor }
-            : navStyle === 'transparent'
-                ? { backgroundColor: 'transparent' }
-                : {}
+    // NavConfig style overrides take precedence over theme-derived defaults
+    const overrideBg = nav.backgroundColor
+    const overrideText = nav.textColor
+    const overrideFontSize = nav.fontSize ? FONT_SIZE_MAP[nav.fontSize] : undefined
 
-    const textColor =
-        navStyle === 'transparent' || navStyle === 'filled'
-            ? '#ffffff'
-            : theme.primaryColor
+    const containerStyle = {
+        ...(overrideBg
+            ? { backgroundColor: overrideBg }
+            : navStyle === 'filled'
+                ? { backgroundColor: theme.primaryColor }
+                : navStyle === 'transparent'
+                    ? { backgroundColor: 'transparent' }
+                    : {}),
+        ...(overrideFontSize ? { fontSize: overrideFontSize } : {}),
+    }
+
+    const textColor = overrideText ?? (navStyle === 'transparent' || navStyle === 'filled' ? '#ffffff' : theme.primaryColor)
 
     const linkCls =
-        navStyle === 'transparent' || navStyle === 'filled'
-            ? 'text-white/80 hover:text-white'
-            : 'text-neutral-600 hover:text-neutral-900'
+        overrideText
+            ? ''
+            : navStyle === 'transparent' || navStyle === 'filled'
+                ? 'text-white/80 hover:text-white'
+                : 'text-neutral-600 hover:text-neutral-900'
 
-    const iconCls =
-        navStyle === 'transparent' || navStyle === 'filled'
-            ? 'text-white/80 hover:text-white'
-            : 'text-neutral-600 hover:text-neutral-900'
+    const iconCls = linkCls
 
     const mobileBorderCls =
         navStyle === 'transparent' || navStyle === 'filled'
             ? 'border-t border-white/20'
             : 'border-t border-neutral-200'
 
-    const mobileContainerStyle =
-        navStyle === 'filled'
+    const mobileContainerStyle = overrideBg
+        ? { backgroundColor: overrideBg }
+        : navStyle === 'filled'
             ? { backgroundColor: theme.primaryColor }
             : navStyle === 'transparent'
                 ? { backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }
@@ -67,13 +75,13 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
                 </a>
 
                 {/* Desktop nav links */}
-                <div className={`hidden items-center gap-6 text-sm md:flex ${linkCls}`}>
+                <div className={`hidden items-center gap-6 text-sm md:flex ${linkCls}`} style={overrideText ? { color: overrideText } : {}}>
                     {nav.links.map((link) => (
-                        <a key={link.id} href={link.href} className={linkCls}>{link.label}</a>
+                        <a key={link.id} href={link.href} className={linkCls} style={overrideText ? { color: overrideText } : {}}>{link.label}</a>
                     ))}
                 </div>
 
-                <div className={`flex items-center gap-3 ${iconCls}`}>
+                <div className={`flex items-center gap-3 ${iconCls}`} style={overrideText ? { color: overrideText } : {}}>
                     <button data-testid="navbar-search" aria-label="Search" className={iconCls}><Search className="h-4 w-4" /></button>
                     <button data-testid="navbar-user" aria-label="Account" className={iconCls}><User className="h-4 w-4" /></button>
                     <button
@@ -103,7 +111,7 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
             {/* Mobile menu */}
             {menuOpen && (
                 <div data-testid="navbar-mobile-menu" className={`md:hidden ${mobileBorderCls}`} style={mobileContainerStyle}>
-                    <div className={`flex flex-col gap-4 px-4 py-4 text-sm ${linkCls}`}>
+                    <div className={`flex flex-col gap-4 px-4 py-4 text-sm ${linkCls}`} style={overrideText ? { color: overrideText } : {}}>
                         {nav.links.map((link) => (
                             <a key={link.id} href={link.href} className={linkCls} onClick={() => setMenuOpen(false)}>{link.label}</a>
                         ))}
@@ -113,4 +121,3 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
         </nav>
     )
 }
-

@@ -18,13 +18,13 @@ export function StorefrontPreview({ config, cartCount = 0 }: StorefrontPreviewPr
         if (!section.enabled) return null
         switch (section.type) {
             case 'hero':
-                return <StorefrontHero key={section.id} config={config.hero} theme={config.theme} />
+                return <StorefrontHero key={`${section.id}-${config.hero.layout}`} config={config.hero} theme={config.theme} />
             case 'product-grid':
                 return <StorefrontProductGrid key={section.id} config={config.productGrid} theme={config.theme} />
             case 'categories':
-                return <StorefrontCategories key={section.id} theme={config.theme} />
+                return <StorefrontCategories key={section.id} theme={config.theme} categoriesConfig={config.categories} />
             case 'footer':
-                return <StorefrontFooter key={section.id} theme={config.theme} />
+                return <StorefrontFooter key={section.id} theme={config.theme} footerConfig={config.footer} />
             default:
                 return <ExtraSections key={section.id} section={section} config={config} />
         }

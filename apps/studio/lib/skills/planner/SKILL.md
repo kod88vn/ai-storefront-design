@@ -144,6 +144,7 @@ Once `planFeedback.approved === true`:
    - `heroChanges`: `layout`, `title`, `subtitle`, `badge`, `textAlign`, `ctaVariant`, `overlayOpacity`, `ctaText`, `ctaSecondaryText`
    - `productGridColumns`
    - `sectionOrder`, `enableSections`, `disableSections`, `sectionData`
+   - `componentStyleChanges` (optional): per-section `backgroundColor`, `textColor`, `fontSize` for `navbar`, `hero`, `productGrid`, `categories`, `footer` — see the `theme_generator` skill for rules on when to set these.
 3. Do NOT call `plan_feedback` again.
 
 ## Phase 3 (Rejected) — Revise

@@ -7,6 +7,8 @@ interface ProductGridProps {
     theme: ThemeConfig
 }
 
+const FONT_SIZE_MAP = { sm: '0.875rem', base: '1rem', lg: '1.125rem', xl: '1.25rem' } as const
+
 function ProductStars({ rating }: { rating: number }) {
     return (
         <div className="flex items-center gap-0.5">
@@ -20,11 +22,13 @@ function ProductStars({ rating }: { rating: number }) {
 export function StorefrontProductGrid({ config, theme }: ProductGridProps) {
     const gridClass = config.columns === 2 ? 'sm:grid-cols-2' : config.columns === 4 ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3'
     const isDark = (theme.colorScheme ?? 'light') === 'dark'
-    const bg = isDark ? '#111111' : '#ffffff'
+    const effectiveBg = config.backgroundColor ?? (isDark ? '#111111' : '#ffffff')
+    const effectiveText = config.textColor ?? (isDark ? '#f5f5f5' : theme.primaryColor)
+    const effectiveFontSize = config.fontSize ? FONT_SIZE_MAP[config.fontSize] : undefined
     return (
-        <section data-testid="storefront-product-grid" className="px-4 py-12 sm:px-6" style={{ backgroundColor: bg }}>
+        <section data-testid="storefront-product-grid" className="px-4 py-12 sm:px-6" style={{ backgroundColor: effectiveBg, fontSize: effectiveFontSize }}>
             <div className="mx-auto max-w-7xl">
-                <h2 className="mb-6 text-2xl font-semibold" style={{ color: theme.primaryColor }}>Featured Products</h2>
+                <h2 className="mb-6 text-2xl font-semibold" style={{ color: effectiveText }}>{config.heading ?? 'Featured Products'}</h2>
                 <div className={`grid grid-cols-1 gap-6 ${gridClass}`}>
                     {sampleProducts.map((product) => (
                         <article key={product.id} data-testid="storefront-product-card" className="group cursor-pointer">

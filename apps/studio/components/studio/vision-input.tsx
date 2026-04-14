@@ -15,6 +15,11 @@ export function VisionInput({ onImageReady, droppedImage }: VisionInputProps) {
     const [isDraggingOver, setIsDraggingOver] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    const urlInvalid = visionUrl.trim().length > 0 && (() => {
+        try { const p = new URL(visionUrl.trim()); return p.protocol !== 'http:' && p.protocol !== 'https:' }
+        catch { return true }
+    })()
+
     function compressImage(dataUrl: string, maxWidth = 1200): Promise<string> {
         return new Promise((resolve) => {
             const img = new Image()
@@ -61,8 +66,11 @@ export function VisionInput({ onImageReady, droppedImage }: VisionInputProps) {
                 placeholder="Enter URL to analyze..."
                 value={visionUrl}
                 onChange={(e) => setVisionUrl(e.target.value)}
-                className="h-9 text-sm"
+                className={`h-9 text-sm ${urlInvalid ? 'border-destructive focus-visible:ring-destructive' : ''}`}
             />
+            {urlInvalid && (
+                <p className="text-[11px] text-destructive" data-testid="vision-url-error">Enter a valid http/https URL</p>
+            )}
 
             <div
                 data-testid="image-drop-zone"

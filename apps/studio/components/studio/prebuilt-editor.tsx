@@ -18,7 +18,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     )
 }
 
-const HERO_LAYOUTS = ['split', 'centered', 'minimal', 'fullbleed']
+const HERO_LAYOUTS = ['split', 'centered', 'editorial']
 const GRID_LAYOUTS = ['grid', 'horizontal-scroll']
 const TESTIMONIAL_LAYOUTS = ['grid', 'list', 'featured']
 const BENEFIT_ICONS = ['truck', 'shield', 'refresh', 'award', 'clock', 'leaf', 'star', 'heart', 'check', 'zap', 'globe', 'tag']

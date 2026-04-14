@@ -57,10 +57,20 @@ export interface LayoutSection {
   order: number;
 }
 
+// ─── Shared component style overrides ────────────────────────────────────────
+
+/** Per-component style overrides that take precedence over theme defaults */
+export interface ComponentStyle {
+  backgroundColor?: string;
+  textColor?: string;
+  /** Scales the section's body text: sm=0.75rem, base=1rem, lg=1.125rem, xl=1.25rem */
+  fontSize?: "sm" | "base" | "lg" | "xl";
+}
+
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
 export interface HeroConfig {
-  layout: "split" | "centered" | "minimal" | "fullbleed" | "editorial";
+  layout: "split" | "centered" | "editorial";
   title: string;
   subtitle: string;
   ctaText: string;
@@ -74,6 +84,10 @@ export interface HeroConfig {
   overlayOpacity?: number;
   /** CTA button style — solid fills with secondaryColor, outline/ghost for dark or image backgrounds */
   ctaVariant?: "solid" | "outline" | "ghost";
+  /** Per-hero style overrides */
+  backgroundColor?: string;
+  textColor?: string;
+  fontSize?: "sm" | "base" | "lg" | "xl";
 }
 
 // ─── Product grid ─────────────────────────────────────────────────────────────
@@ -82,6 +96,23 @@ export interface ProductGridConfig {
   columns: 2 | 3 | 4;
   showRatings?: boolean;
   showBadges?: boolean;
+  /** Section heading text */
+  heading?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  fontSize?: "sm" | "base" | "lg" | "xl";
+}
+
+// ─── Categories ───────────────────────────────────────────────────────────────
+
+export interface CategoriesConfig extends ComponentStyle {
+  heading?: string;
+}
+
+// ─── Footer ───────────────────────────────────────────────────────────────────
+
+export interface FooterConfig extends ComponentStyle {
+  tagline?: string;
 }
 
 // ─── New section data types ───────────────────────────────────────────────────
@@ -208,6 +239,8 @@ export interface StorefrontConfig {
   sectionData: StorefrontSectionData;
   nav?: NavConfig;
   pages?: Partial<PagesConfig>;
+  categories?: CategoriesConfig;
+  footer?: FooterConfig;
 }
 
 // ─── Product / category ───────────────────────────────────────────────────────
@@ -243,6 +276,9 @@ export interface NavLink {
 export interface NavConfig {
   brandName: string;
   links: NavLink[];
+  backgroundColor?: string;
+  textColor?: string;
+  fontSize?: "sm" | "base" | "lg" | "xl";
 }
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────
@@ -368,6 +404,12 @@ export interface OrchestratorContext {
   page?: PageType;
 }
 
+export interface ComponentStyleOverride {
+  backgroundColor?: string;
+  textColor?: string;
+  fontSize?: "sm" | "base" | "lg" | "xl";
+}
+
 export interface OrchestratorConfigUpdate {
   themeChanges?: Partial<ThemeConfig>;
   heroChanges?: Partial<HeroConfig>;
@@ -379,6 +421,13 @@ export interface OrchestratorConfigUpdate {
   navChanges?: Partial<NavConfig>;
   productsPageChanges?: Partial<ProductsPageConfig>;
   cartPageChanges?: Partial<CartPageConfig>;
+  componentStyleChanges?: {
+    navbar?: ComponentStyleOverride;
+    hero?: ComponentStyleOverride;
+    productGrid?: ComponentStyleOverride;
+    categories?: ComponentStyleOverride;
+    footer?: ComponentStyleOverride;
+  };
 }
 
 export type OrchestratorEventType =

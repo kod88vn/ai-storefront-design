@@ -5,10 +5,12 @@ interface HeroProps {
     theme: ThemeConfig
 }
 
+const FONT_SIZE_MAP = { sm: '0.875rem', base: '1rem', lg: '1.125rem', xl: '1.25rem' } as const
+
 // Renders the eyebrow badge above the title (used in all layouts)
 function Badge({ text }: { text: string }) {
     return (
-        <span className="mb-4 inline-block rounded-full border border-current px-3 py-1 text-xs font-medium uppercase tracking-widest opacity-70">
+        <span className="mb-4 self-start inline-block rounded-full border border-current px-3 py-1 text-xs font-medium uppercase tracking-widest opacity-70">
             {text}
         </span>
     )
@@ -26,13 +28,24 @@ export function StorefrontHero({ config, theme }: HeroProps) {
     const { layout, title, subtitle, ctaText, ctaSecondaryText, badge, textAlign = 'center', overlayOpacity = 0.45, ctaVariant = 'solid' } = config
     const radius = 'var(--storefront-radius)'
 
+    // Style overrides from per-component config
+    const overrideBg = config.backgroundColor
+    const overrideText = config.textColor
+    const overrideFontSize = config.fontSize ? FONT_SIZE_MAP[config.fontSize] : undefined
+    // Applied to each layout's outer section element
+    const styleOverride = {
+        ...(overrideBg ? { backgroundColor: overrideBg } : {}),
+        ...(overrideText ? { color: overrideText } : {}),
+        ...(overrideFontSize ? { fontSize: overrideFontSize } : {}),
+    }
+
     // ── Editorial: massive dark-background typography, no image ──────────────
     if (layout === 'editorial') {
         const isDark = theme.colorScheme === 'dark'
-        const bg = isDark ? '#0a0a0a' : theme.primaryColor
-        const fg = '#ffffff'
+        const bg = overrideBg ?? (isDark ? '#0a0a0a' : theme.primaryColor)
+        const fg = overrideText ?? '#ffffff'
         return (
-            <section data-testid="storefront-hero" style={{ backgroundColor: bg, color: fg }}>
+            <section data-testid="storefront-hero" style={{ backgroundColor: bg, color: fg, fontSize: overrideFontSize }}>
                 <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-32">
                     {badge && <Badge text={badge} />}
                     <h1 className="max-w-3xl text-5xl font-black uppercase leading-none tracking-tighter sm:text-7xl lg:text-8xl">{title}</h1>
@@ -57,28 +70,12 @@ export function StorefrontHero({ config, theme }: HeroProps) {
         )
     }
 
-    if (layout === 'minimal') {
-        const align = textAlign === 'left' ? 'text-left' : 'text-center mx-auto'
-        return (
-            <section data-testid="storefront-hero" className="bg-white px-4 py-16 sm:px-6">
-                <div className={`max-w-3xl ${align}`}>
-                    {badge && <Badge text={badge} />}
-                    <h1 className="text-3xl font-light tracking-tight sm:text-4xl" style={{ color: theme.primaryColor }}>{title}</h1>
-                    <p className="mt-4 text-neutral-600">{subtitle}</p>
-                    <button className="mt-6 px-6 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ backgroundColor: theme.secondaryColor, borderRadius: radius }}>
-                        {ctaText}
-                    </button>
-                </div>
-            </section>
-        )
-    }
-
     if (layout === 'centered') {
         return (
-            <section data-testid="storefront-hero" className="relative overflow-hidden bg-neutral-50 px-4 py-24 sm:px-6">
+            <section data-testid="storefront-hero" className="relative overflow-hidden bg-neutral-50 px-4 py-24 sm:px-6" style={{ ...styleOverride }}>
                 <div className="mx-auto max-w-4xl text-center">
                     {badge && <Badge text={badge} />}
-                    <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl" style={{ color: theme.primaryColor }}>{title}</h1>
+                    <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl" style={{ color: overrideText ?? theme.primaryColor }}>{title}</h1>
                     <p className="mx-auto mt-6 max-w-2xl text-lg text-neutral-600">{subtitle}</p>
                     <div className="mt-8 flex justify-center gap-4">
                         <button
@@ -101,35 +98,14 @@ export function StorefrontHero({ config, theme }: HeroProps) {
         )
     }
 
-    if (layout === 'fullbleed') {
-        const opacity = Math.max(0, Math.min(1, overlayOpacity))
-        return (
-            <section data-testid="storefront-hero" className="relative h-[70vh] min-h-[500px] overflow-hidden">
-                <img src={config.backgroundImage || 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=1600&h=900&fit=crop'} alt="Hero" className="absolute inset-0 h-full w-full object-cover" />
-                <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${opacity})` }} />
-                <div className="relative flex h-full flex-col items-center justify-center px-4 text-center text-white">
-                    {badge && <Badge text={badge} />}
-                    <h1 className="text-5xl font-semibold tracking-tight sm:text-6xl">{title}</h1>
-                    <p className="mx-auto mt-4 max-w-xl text-lg opacity-90">{subtitle}</p>
-                    <button
-                        className={`mt-8 text-white ${ctaClass(ctaVariant, radius)}`}
-                        style={ctaVariant === 'solid' ? { backgroundColor: theme.secondaryColor, borderRadius: radius } : { borderRadius: radius }}
-                    >
-                        {ctaText}
-                    </button>
-                </div>
-            </section>
-        )
-    }
-
     // Split layout (default)
     const isLeft = textAlign === 'left'
     return (
-        <section data-testid="storefront-hero" className="bg-white">
+        <section data-testid="storefront-hero" className="bg-white" style={{ ...styleOverride }}>
             <div className="mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-2">
                 <div className={`flex flex-col justify-center px-4 py-12 sm:px-6 lg:py-24 ${isLeft ? '' : 'items-center text-center'}`}>
                     {badge && <Badge text={badge} />}
-                    <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl" style={{ color: theme.primaryColor }}>{title}</h1>
+                    <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl" style={{ color: overrideText ?? theme.primaryColor }}>{title}</h1>
                     <p className="mt-6 text-lg text-neutral-600">{subtitle}</p>
                     <div className={`mt-8 flex gap-3 ${isLeft ? '' : 'justify-center'}`}>
                         <button

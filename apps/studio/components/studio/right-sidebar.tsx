@@ -9,6 +9,7 @@ import { ThemePanel } from './theme-panel'
 import { NavPanel } from './nav-panel'
 import { PageSelector } from './page-selector'
 import { PageSettingsPanel } from './page-settings-panel'
+import { ComponentStylesPanel } from './component-styles-panel'
 
 export function RightSidebar() {
   const { config, selectedComponent } = useStudioStore()
@@ -33,6 +34,7 @@ export function RightSidebar() {
         <div data-testid="right-sidebar-content" className="h-full overflow-y-auto">
           <NavPanel />
           <ThemePanel />
+          <ComponentStylesPanel />
           <PageSettingsPanel />
         </div>
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background to-transparent" />

@@ -549,6 +549,48 @@ ${configSummary}${resumeInstruction}`;
         enableSections: z.array(z.string()).optional(),
         disableSections: z.array(z.string()).optional(),
         sectionData: z.record(z.string(), z.unknown()).optional(),
+        componentStyleChanges: z
+          .object({
+            navbar: z
+              .object({
+                backgroundColor: z.string().optional(),
+                textColor: z.string().optional(),
+                fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
+              })
+              .optional(),
+            hero: z
+              .object({
+                backgroundColor: z.string().optional(),
+                textColor: z.string().optional(),
+                fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
+              })
+              .optional(),
+            productGrid: z
+              .object({
+                backgroundColor: z.string().optional(),
+                textColor: z.string().optional(),
+                fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
+              })
+              .optional(),
+            categories: z
+              .object({
+                backgroundColor: z.string().optional(),
+                textColor: z.string().optional(),
+                fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
+              })
+              .optional(),
+            footer: z
+              .object({
+                backgroundColor: z.string().optional(),
+                textColor: z.string().optional(),
+                fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
+              })
+              .optional(),
+          })
+          .optional()
+          .describe(
+            "Per-component background color, text color, and font size overrides",
+          ),
       }),
     }),
 

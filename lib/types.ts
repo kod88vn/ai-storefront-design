@@ -32,7 +32,7 @@ export interface LayoutSection {
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
 export interface HeroConfig {
-  layout: "split" | "centered" | "minimal" | "fullbleed";
+  layout: "split" | "centered" | "editorial";
   title: string;
   subtitle: string;
   ctaText: string;
@@ -224,6 +224,12 @@ export interface OrchestratorContext {
   planFeedback?: PlanFeedback | null;
 }
 
+export interface ComponentStyleOverride {
+  backgroundColor?: string;
+  textColor?: string;
+  fontSize?: "sm" | "base" | "lg" | "xl";
+}
+
 export interface OrchestratorConfigUpdate {
   themeChanges?: Partial<ThemeConfig>;
   heroChanges?: Partial<HeroConfig>;
@@ -232,6 +238,13 @@ export interface OrchestratorConfigUpdate {
   enableSections?: SectionType[];
   disableSections?: SectionType[];
   sectionData?: Partial<StorefrontSectionData>;
+  componentStyleChanges?: {
+    navbar?: ComponentStyleOverride;
+    hero?: ComponentStyleOverride;
+    productGrid?: ComponentStyleOverride;
+    categories?: ComponentStyleOverride;
+    footer?: ComponentStyleOverride;
+  };
 }
 
 export type OrchestratorEventType =

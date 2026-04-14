@@ -23,6 +23,8 @@ import type {
   ProductDetailPageConfig,
   CartPageConfig,
   CartItem,
+  CategoriesConfig,
+  FooterConfig,
 } from "@ai-storefront/types";
 import type {
   DesignerContainer,
@@ -123,6 +125,9 @@ interface StudioState {
   updateNavLink: (id: string, patch: Partial<NavLink>) => void;
   removeNavLink: (id: string) => void;
   reorderNavLinks: (links: NavLink[]) => void;
+  updateNavStyle: (
+    patch: Pick<NavConfig, "backgroundColor" | "textColor" | "fontSize">,
+  ) => void;
 
   // Cart (for AI preview)
   cartItems: CartItem[];
@@ -136,6 +141,10 @@ interface StudioState {
     patch: Partial<ProductDetailPageConfig>,
   ) => void;
   updateCartPageConfig: (patch: Partial<CartPageConfig>) => void;
+
+  // Component-level style configs
+  updateCategoriesConfig: (patch: Partial<CategoriesConfig>) => void;
+  updateFooterConfig: (patch: Partial<FooterConfig>) => void;
 
   // Viewport
   viewport: Viewport;
@@ -332,6 +341,11 @@ export const useStudioStore = create<StudioState>((set, get) => ({
       config: { ...state.config, nav: { ...state.config.nav!, links } },
     }));
   },
+  updateNavStyle: (patch) => {
+    set((state) => ({
+      config: { ...state.config, nav: { ...state.config.nav!, ...patch } },
+    }));
+  },
 
   // Cart
   addCartItem: (item) => {
@@ -414,6 +428,21 @@ export const useStudioStore = create<StudioState>((set, get) => ({
           },
         },
       },
+    }));
+  },
+
+  // Component-level style configs
+  updateCategoriesConfig: (patch) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        categories: { ...state.config.categories, ...patch },
+      },
+    }));
+  },
+  updateFooterConfig: (patch) => {
+    set((state) => ({
+      config: { ...state.config, footer: { ...state.config.footer, ...patch } },
     }));
   },
 

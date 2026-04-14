@@ -1,4 +1,5 @@
 import type { StorefrontConfig, LayoutSection, BenefitItem, TrustIcon } from '@ai-storefront/types'
+import { sampleProducts } from './data'
 import {
     Truck, Shield, RefreshCw, Award, Clock, Leaf,
     Star, Heart, Check, Zap, Globe, Tag, Lock, Phone, LucideIcon
@@ -107,22 +108,34 @@ export function ExtraSections({ section, config }: ExtraSectionsProps) {
 
         case 'featured-collection': {
             const data = sectionData['featured-collection'] ?? {
-                heading: '[FEATURED COLLECTION TITLE]',
-                subheading: '[Describe what makes this collection special]',
+                heading: 'Featured Collection',
+                subheading: 'Handpicked pieces for every space',
                 layout: 'grid' as const,
+                productIds: ['p1', 'p2', 'p3', 'p4'],
             }
             const isDark = (theme.colorScheme ?? 'light') === 'dark'
             const bg = data.backgroundColor ?? (isDark ? '#111111' : '#ffffff')
             const text = data.textColor ?? (isDark ? '#e5e5e5' : '#404040')
             const cardBg = isDark ? '#1a1a1a' : '#f5f5f5'
+            const featured = data.productIds?.length
+                ? data.productIds.map((id) => sampleProducts.find((p) => p.id === id)).filter(Boolean)
+                : sampleProducts.slice(0, 4)
             return (
                 <section data-testid="featured-collection" className="px-4 py-12 sm:px-6" style={{ backgroundColor: bg, color: text }}>
                     <div className="mx-auto max-w-7xl">
                         <h2 className="text-2xl font-semibold" style={{ color: theme.primaryColor }}>{data.heading}</h2>
                         {data.subheading && <p className="mt-2 text-sm opacity-70">{data.subheading}</p>}
                         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-                            {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="aspect-square rounded-lg" style={{ backgroundColor: cardBg }} />
+                            {featured.map((product) => product && (
+                                <div key={product.id} data-testid="featured-collection-item" className="group overflow-hidden rounded-lg" style={{ backgroundColor: cardBg }}>
+                                    <div className="aspect-square overflow-hidden">
+                                        <img src={product.image} alt={product.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                    </div>
+                                    <div className="p-3">
+                                        <p className="text-sm font-medium leading-snug">{product.title}</p>
+                                        <p className="mt-1 text-sm opacity-70">${product.price}</p>
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     </div>
