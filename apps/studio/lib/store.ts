@@ -233,6 +233,11 @@ interface StudioState {
   approvePlan: () => void;
   rejectPlan: (feedback: string) => void;
 
+  // Thinking stream
+  thinkingText: string;
+  appendThinkingText: (chunk: string) => void;
+  clearThinkingText: () => void;
+
   // Audit Log
   auditLog: AuditLogEntry[];
   addAuditEntry: (entry: Omit<AuditLogEntry, "id" | "timestamp">) => void;
@@ -302,6 +307,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   viewport: "desktop",
   agentStep: "idle",
   agentPlan: null,
+  thinkingText: "",
   auditLog: [],
   visionUrl: "",
   activeSkills: ["ui_extractor", "theme_generator", "layout_planner"],
@@ -654,6 +660,10 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   // Agent
   setAgentStep: (agentStep) => set({ agentStep }),
   setAgentPlan: (agentPlan) => set({ agentPlan }),
+
+  appendThinkingText: (chunk) =>
+    set((state) => ({ thinkingText: state.thinkingText + chunk })),
+  clearThinkingText: () => set({ thinkingText: "" }),
 
   approvePlan: () => {
     const plan = get().agentPlan;

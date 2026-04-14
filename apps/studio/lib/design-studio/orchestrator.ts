@@ -13,7 +13,7 @@
  * No hardcoded algorithm — the AI decides which tools to call, in what order.
  */
 
-import { generateText, tool } from "ai";
+import { generateText, streamText, tool } from "ai";
 import { xai } from "@ai-sdk/xai";
 import { z } from "zod";
 import fs from "fs/promises";
@@ -30,9 +30,9 @@ import { SKILL_TEMPLATE_VARS } from "@ai-storefront/types";
 
 const MAX_STEPS = 15;
 // Use the xAI Responses API model names (chat/completions is not available on this account)
-const AI_MODEL = process.env.AI_MODEL ?? "grok-4-1-fast-reasoning";
+const AI_MODEL = process.env.AI_MODEL ?? "grok-3-fast";
 // Vision-capable model — same model supports vision on the Responses API
-const VISION_MODEL = process.env.VISION_MODEL ?? "grok-4-1-fast-reasoning";
+const VISION_MODEL = process.env.VISION_MODEL ?? "grok-3-fast";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -445,14 +445,70 @@ ${configSummary}${resumeInstruction}`;
   // orchestrator directly — NOT forwarded to MCP.
   // External tools wrap MCP calls.
 
+  // Converts a MCP JSON Schema to a Zod schema so the AI model sees named
+  // fields rather than a generic z.record. Nested objects are handled
+  // recursively; the full JSON Schema string in the description covers
+  // fine-grained constraints the model should respect at generation time.
+  function jsonSchemaToZod(schema: unknown): z.ZodTypeAny {
+    if (!schema || typeof schema !== "object") return z.unknown();
+    const s = schema as Record<string, unknown>;
+
+    // String or numeric enum → z.enum / z.union of literals
+    if (Array.isArray(s.enum) && s.enum.length > 0) {
+      const vals = s.enum as (string | number)[];
+      if (typeof vals[0] === "string") {
+        return z.enum(vals as [string, ...string[]]);
+      }
+      const lits = vals.map((v) => z.literal(v as number));
+      return z.union(
+        lits as unknown as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]],
+      );
+    }
+
+    switch (s.type as string) {
+      case "string":
+        return z.string();
+      case "number":
+      case "integer": {
+        let n = z.number();
+        if (typeof s.minimum === "number") n = n.min(s.minimum as number);
+        if (typeof s.maximum === "number") n = n.max(s.maximum as number);
+        return n;
+      }
+      case "boolean":
+        return z.boolean();
+      case "array":
+        return z.array(s.items ? jsonSchemaToZod(s.items) : z.unknown());
+      case "object": {
+        if (!s.properties || typeof s.properties !== "object") {
+          return z.record(z.string(), z.unknown());
+        }
+        const required = new Set<string>(
+          Array.isArray(s.required) ? (s.required as string[]) : [],
+        );
+        const shape = Object.fromEntries(
+          Object.entries(s.properties as Record<string, unknown>).map(
+            ([k, v]) => {
+              const fieldZod = jsonSchemaToZod(v);
+              return [k, required.has(k) ? fieldZod : fieldZod.optional()];
+            },
+          ),
+        );
+        return z.object(shape);
+      }
+      default:
+        return z.unknown();
+    }
+  }
+
   // MCP tools are registered dynamically — no orchestrator edits needed when tools are added.
-  // The full input schema is embedded in each tool's description so the AI knows what to pass.
+  // jsonSchemaToZod converts each tool's inputSchema so the AI sees named fields.
   const dynamicMcpTools = Object.fromEntries(
     mcpTools.map((t) => [
       t.name,
       tool({
         description: `${t.description}\n\nSchema: ${JSON.stringify(t.inputSchema)}`,
-        inputSchema: z.record(z.string(), z.unknown()),
+        inputSchema: jsonSchemaToZod(t.inputSchema as Record<string, unknown>),
       }),
     ]),
   );
@@ -508,105 +564,8 @@ ${configSummary}${resumeInstruction}`;
       }),
     }),
 
-    apply_config_update: tool({
-      description:
-        "Apply approved design changes to the StorefrontConfig. Call this after all MCP tools have returned with concrete values (Phase 3 of the Planner Skill). IMPORTANT: always include componentStyleChanges.navbar.backgroundColor — set it to the page background color (from extracted backgroundColor token, or the theme default). For bordered navs this makes the navbar match the page; for filled navs set it to primaryColor. Never omit it when you have a color to apply.",
-      inputSchema: z.object({
-        themeChanges: z
-          .object({
-            primaryColor: z.string().optional(),
-            secondaryColor: z.string().optional(),
-            borderRadius: z
-              .enum(["none", "sm", "md", "lg", "xl", "full"])
-              .optional(),
-            navStyle: z.enum(["bordered", "transparent", "filled"]).optional(),
-            colorScheme: z.enum(["light", "dark"]).optional(),
-            fontStyle: z
-              .enum([
-                "modern-sans",
-                "geometric-sans",
-                "humanist-sans",
-                "editorial-serif",
-                "display-serif",
-                "slab-serif",
-                "mono-tech",
-                "handwritten",
-                "condensed",
-                "rounded",
-              ])
-              .optional(),
-          })
-          .optional(),
-        heroChanges: z
-          .object({
-            layout: z.enum(["split", "centered", "editorial"]).optional(),
-            title: z.string().optional(),
-            subtitle: z.string().optional(),
-            badge: z.string().optional(),
-            textAlign: z.enum(["left", "center"]).optional(),
-            ctaVariant: z.enum(["solid", "outline", "ghost"]).optional(),
-            overlayOpacity: z.number().min(0).max(1).optional(),
-            ctaText: z.string().optional(),
-            ctaSecondaryText: z.string().optional(),
-          })
-          .optional(),
-        productGridColumns: z
-          .union([z.literal(2), z.literal(3), z.literal(4)])
-          .optional(),
-        sectionOrder: z.array(z.string()).optional(),
-        enableSections: z.array(z.string()).optional(),
-        disableSections: z.array(z.string()).optional(),
-        sectionData: z.record(z.string(), z.unknown()).optional(),
-        componentStyleChanges: z
-          .object({
-            navbar: z
-              .object({
-                backgroundColor: z
-                  .string()
-                  .optional()
-                  .describe(
-                    "Navbar background hex. For bordered navs: set to the page background color (e.g. cream #faf5f0, not white #ffffff when site has a warm background). For filled navs: set to primaryColor. ALWAYS set this when you know the page background color.",
-                  ),
-                textColor: z.string().optional(),
-                fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
-              })
-              .optional(),
-            hero: z
-              .object({
-                backgroundColor: z.string().optional(),
-                textColor: z.string().optional(),
-                fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
-              })
-              .optional(),
-            productGrid: z
-              .object({
-                backgroundColor: z.string().optional(),
-                textColor: z.string().optional(),
-                fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
-              })
-              .optional(),
-            categories: z
-              .object({
-                backgroundColor: z.string().optional(),
-                textColor: z.string().optional(),
-                fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
-              })
-              .optional(),
-            footer: z
-              .object({
-                backgroundColor: z.string().optional(),
-                textColor: z.string().optional(),
-                fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
-              })
-              .optional(),
-          })
-          .optional()
-          .describe(
-            "Per-component background color, text color, and font size overrides. navbar.backgroundColor MUST always be set: use the extracted backgroundColor token for bordered navs (so the nav blends with the page), or primaryColor for filled navs. Never leave navbar.backgroundColor unset when you know the page background color.",
-          ),
-      }),
-    }),
-
+    // Dynamic MCP tools (apply_config_update, analyze_vision_input, etc.) —
+    // registered with full Zod schemas derived from the MCP JSON Schema.
     ...dynamicMcpTools,
   };
 
@@ -634,15 +593,44 @@ ${configSummary}${resumeInstruction}`;
 
   for (let step = 0; step < MAX_STEPS; step++) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let result: any;
+    let collectedToolCalls: any[] = [];
+    let collectedText = "";
+
     try {
-      result = await generateText({
+      const streamResult = streamText({
         // xai.responses() uses the /v1/responses endpoint instead of /v1/chat/completions
         model: xai.responses(AI_MODEL),
         system: systemPrompt,
         messages,
         tools,
       });
+
+      // Stream text, reasoning, and tool-call chunks to the client in real time.
+      // Reasoning models often skip text entirely and go straight to tool calls —
+      // emitting the tool name ensures there's always something visible.
+      for await (const chunk of streamResult.fullStream) {
+        if (chunk.type === "text-delta") {
+          // AI SDK v6: text-delta has `.text` not `.textDelta`
+          const text = (chunk as unknown as { text: string }).text ?? "";
+          collectedText += text;
+          if (text) yield { type: "thinking", thinking: text };
+        } else if (chunk.type === "reasoning-delta") {
+          // AI SDK v6: reasoning-delta has `.textDelta`
+          const delta =
+            (chunk as unknown as { textDelta: string }).textDelta ?? "";
+          if (delta) yield { type: "thinking", thinking: delta };
+        } else if (chunk.type === "tool-call") {
+          // Emit the tool name so the user sees which tool is being invoked
+          yield {
+            type: "thinking",
+            thinking: `→ ${chunk.toolName}\n`,
+          };
+          // tool-call from fullStream uses `.input` in AI SDK v6 (same as generateText)
+          collectedToolCalls.push(chunk);
+        } else if (chunk.type === "error") {
+          throw (chunk as unknown as { error: unknown }).error;
+        }
+      }
     } catch (err) {
       // AI SDK errors carry extra diagnostic fields — extract them all so the
       // audit trail shows exactly what went wrong (status code, response body, etc.)
@@ -684,7 +672,7 @@ ${configSummary}${resumeInstruction}`;
         ...lastCauseFields,
       });
 
-      console.error("[orchestrator] generateText failed at step", step, {
+      console.error("[orchestrator] streamText failed at step", step, {
         model: AI_MODEL,
         errorName: e.name,
         message: e.message,
@@ -700,15 +688,15 @@ ${configSummary}${resumeInstruction}`;
     }
 
     // No more tool calls → model is done
-    if (!result.toolCalls?.length) break;
+    if (!collectedToolCalls.length) break;
 
     // Append assistant turn to message history
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const assistantContent: any[] = [];
-    if (result.text) {
-      assistantContent.push({ type: "text", text: result.text });
+    if (collectedText) {
+      assistantContent.push({ type: "text", text: collectedText });
     }
-    for (const tc of result.toolCalls) {
+    for (const tc of collectedToolCalls) {
       assistantContent.push({
         type: "tool-call",
         toolCallId: tc.toolCallId,
@@ -722,7 +710,7 @@ ${configSummary}${resumeInstruction}`;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const toolResults: any[] = [];
 
-    for (const tc of result.toolCalls) {
+    for (const tc of collectedToolCalls) {
       yield audit("tools/call", { name: tc.toolName, input: tc.input });
 
       // Build args: spread model-provided values; inject `source` only for the
@@ -778,11 +766,18 @@ ${configSummary}${resumeInstruction}`;
         return;
       }
 
-      // ── Internal tool: apply_config_update ────────────────────────────────
+      // ── apply_config_update: call MCP then emit config_update SSE event ──
       if (tc.toolName === "apply_config_update") {
         yield progress("Applying design changes...", "updating");
+        try {
+          output = await mcpToolCall(tc.toolName, resolvedArgs);
+          yield audit("tools/result", { name: tc.toolName }, output);
+        } catch (err) {
+          output = { error: (err as Error).message };
+          yield audit("tools/error", { name: tc.toolName }, output);
+        }
+        // Emit to the UI regardless — the patch is the AI's input, not the MCP echo
         yield { type: "config_update", configUpdate: tc.input };
-        output = { success: true, applied: tc.input };
       } else {
         // ── External MCP tool ───────────────────────────────────────────────
         try {

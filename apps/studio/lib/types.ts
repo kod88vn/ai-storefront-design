@@ -268,6 +268,7 @@ export type OrchestratorEventType =
   | "audit"
   | "plan_description"
   | "config_update"
+  | "thinking"
   | "complete"
   | "error";
 
@@ -279,6 +280,8 @@ export interface OrchestratorEvent {
   entry?: Omit<AuditLogEntry, "id" | "timestamp">;
   plan?: Omit<AgentPlan, "approved">;
   configUpdate?: OrchestratorConfigUpdate;
+  /** Streamed reasoning/text chunk from the model */
+  thinking?: string;
   error?: string;
 }
 

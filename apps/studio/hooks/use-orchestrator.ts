@@ -57,6 +57,12 @@ export function useOrchestrator() {
         }
         break;
 
+      case "thinking":
+        if (event.thinking) {
+          s.appendThinkingText(event.thinking);
+        }
+        break;
+
       case "plan_description":
         if (event.plan) {
           s.setAgentPlan({ ...event.plan, approved: null });
@@ -348,6 +354,7 @@ export function useOrchestrator() {
       s.setOrchestratorContext(context);
       s.setAgentStep("thinking");
       s.setAppliedSummary(null);
+      s.clearThinkingText();
       // Reset accumulators FIRST, then snapshot config so the snapshot isn't wiped
       resetAccumulators();
       beforeConfig.current = structuredClone(s.config);

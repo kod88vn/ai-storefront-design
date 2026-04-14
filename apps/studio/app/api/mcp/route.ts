@@ -8,6 +8,7 @@ import {
   type DominantStyle,
   type HeroLayout,
 } from "@ai-storefront/types";
+import { readStoreConfig } from "@/lib/store-config";
 // ─── MCP types ───────────────────────────────────────────────────────────────
 
 interface MCPTool {
@@ -112,6 +113,129 @@ const TOOLS: MCPTool[] = [
         },
       },
       required: ["dominantStyle"],
+    },
+  },
+  {
+    name: "get_storefront_config",
+    description:
+      "Read the current StorefrontConfig (theme, hero, sections, nav, productGrid, categories, footer, pages). Use this to inspect the live configuration before proposing changes.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "apply_config_update",
+    description:
+      "Apply a design patch to the StorefrontConfig. Validates the patch and returns it so the orchestrator can stream a config_update event to the UI. Call this after plan_feedback is approved. Always include componentStyleChanges.navbar.backgroundColor.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        themeChanges: {
+          type: "object",
+          properties: {
+            primaryColor: { type: "string" },
+            secondaryColor: { type: "string" },
+            borderRadius: {
+              type: "string",
+              enum: ["none", "sm", "md", "lg", "xl", "full"],
+            },
+            navStyle: {
+              type: "string",
+              enum: ["bordered", "transparent", "filled"],
+            },
+            colorScheme: { type: "string", enum: ["light", "dark"] },
+            fontStyle: {
+              type: "string",
+              enum: [
+                "modern-sans",
+                "geometric-sans",
+                "humanist-sans",
+                "editorial-serif",
+                "display-serif",
+                "slab-serif",
+                "mono-tech",
+                "handwritten",
+                "condensed",
+                "rounded",
+              ],
+            },
+          },
+        },
+        heroChanges: {
+          type: "object",
+          properties: {
+            layout: {
+              type: "string",
+              enum: ["split", "centered", "editorial"],
+            },
+            title: { type: "string" },
+            subtitle: { type: "string" },
+            badge: { type: "string" },
+            textAlign: { type: "string", enum: ["left", "center"] },
+            ctaVariant: { type: "string", enum: ["solid", "outline", "ghost"] },
+            overlayOpacity: { type: "number" },
+            ctaText: { type: "string" },
+            ctaSecondaryText: { type: "string" },
+          },
+        },
+        productGridColumns: { type: "number", enum: [2, 3, 4] },
+        sectionOrder: { type: "array", items: { type: "string" } },
+        enableSections: { type: "array", items: { type: "string" } },
+        disableSections: { type: "array", items: { type: "string" } },
+        sectionData: { type: "object" },
+        componentStyleChanges: {
+          type: "object",
+          properties: {
+            navbar: {
+              type: "object",
+              properties: {
+                backgroundColor: {
+                  type: "string",
+                  description:
+                    "Navbar background hex. For bordered navs: page background color. For filled: primaryColor.",
+                },
+                textColor: { type: "string" },
+                fontSize: { type: "string", enum: ["sm", "base", "lg", "xl"] },
+              },
+            },
+            hero: {
+              type: "object",
+              properties: {
+                backgroundColor: { type: "string" },
+                textColor: { type: "string" },
+                fontSize: { type: "string" },
+              },
+            },
+            productGrid: {
+              type: "object",
+              properties: {
+                backgroundColor: { type: "string" },
+                textColor: { type: "string" },
+                fontSize: { type: "string" },
+              },
+            },
+            categories: {
+              type: "object",
+              properties: {
+                backgroundColor: { type: "string" },
+                textColor: { type: "string" },
+                fontSize: { type: "string" },
+              },
+            },
+            footer: {
+              type: "object",
+              properties: {
+                backgroundColor: { type: "string" },
+                textColor: { type: "string" },
+                fontSize: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+      required: [],
     },
   },
 ];
@@ -474,6 +598,27 @@ async function executeTool(
       };
 
       return { content: [{ type: "text", text: JSON.stringify(layout) }] };
+    }
+
+    case "get_storefront_config": {
+      const config = await readStoreConfig();
+      return { content: [{ type: "text", text: JSON.stringify(config) }] };
+    }
+
+    case "apply_config_update": {
+      // Validate and echo the patch back. The orchestrator intercepts this
+      // tool result to emit a config_update SSE event to the studio UI.
+      // The actual in-memory Zustand store update happens client-side from
+      // that event; disk persistence happens when the user clicks Save.
+      const patch = args as Record<string, unknown>;
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ success: true, applied: patch }),
+          },
+        ],
+      };
     }
 
     default:

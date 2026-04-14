@@ -177,7 +177,7 @@ When you add or remove a hero layout (or any other option):
 
 ## Storefront Component Rules
 
-Hero has **3 layouts** (`split`, `centered`, `editorial`). `minimal` and `fullbleed` are removed. Do not reference them.
+Hero has **3 layouts** (`split`, `centered`, `editorial`).
 
 Each storefront section supports **per-section style overrides** (`ComponentStyle`) that take precedence over the global theme:
 

@@ -35,7 +35,7 @@ Single source of truth for all storefront UI. Both apps import from `@ai-storefr
 ```
 packages/storefront-components/src/
 ├── storefront-preview.tsx   # Master renderer — applies theme CSS vars, renders ordered sections
-├── navbar.tsx               # 3 navStyle variants + hamburger mobile menu
+├── navbar.tsx               # 3 navStyle variants + hamburger mobile menu; cart icon is <a href="/cart">
 ├── hero.tsx                 # 3 layout variants: split, centered, editorial
 ├── product-grid.tsx         # Responsive grid with badge overlays and star ratings
 ├── categories.tsx           # Category grid (2 → 4 cols)
@@ -120,6 +120,17 @@ interface StorefrontConfig {
   nav?: NavConfig;
   categories?: CategoriesConfig;
   footer?: FooterConfig;
+  pages?: Partial<PagesConfig>; // per-page config (products, cart, productDetail)
+  customPages?: Array<{
+    id: string;
+    name: string;
+    slug: string; // e.g. "/about"
+    sections?: LayoutSection[]; // saved from studio designer containers
+  }>;
+  pagesSections?: Partial<
+    Record<"products" | "product-detail" | "cart", LayoutSection[]>
+  >;
+  // ^^ saved section order for each core page; falls back to defaults if absent
 }
 
 interface ThemeConfig {
@@ -294,8 +305,9 @@ apps/studio/
 │   ├── page.tsx                     # Renders <StudioLayout />
 │   ├── globals.css                  # Studio dark theme tokens + @source directives
 │   └── api/
-│       ├── mcp/route.ts             # MCP server endpoint (3 tools: analyze_vision_input,
-│       │                            #   generate_theme, plan_layout)
+│       ├── mcp/route.ts             # MCP server endpoint (5 tools: analyze_vision_input,
+│       │                            #   generate_theme, plan_layout,
+│       │                            #   get_storefront_config, apply_config_update)
 │       ├── orchestrate/route.ts     # SSE orchestrator stream
 │       ├── skills/route.ts          # Skill manifest loader
 │       └── store-config/route.ts    # GET/PUT — reads/writes apps/web/data/store-config.json
@@ -320,11 +332,14 @@ apps/studio/
 │   ├── containers-panel.tsx         # Container list header + Add Container button
 │   ├── container-node.tsx           # Recursive container tree node, ComponentRow, picker
 │   ├── container-layout-config.tsx  # Stack / Flex / Grid layout picker (visual 3×3 grid)
+│   ├── nav-panel.tsx                # Navigation panel (brand name, links, bg/text color pickers)
+│   ├── page-selector.tsx            # Page tabs (home, products, cart, product-detail, custom pages)
+│   ├── page-settings-panel.tsx      # Custom page CRUD (create/rename/delete custom pages)
 │   │
 │   │  ── Component editor (editor pane, slides in from bottom of right sidebar)
 │   ├── component-editor.tsx         # Main dispatch + custom-text / custom-image editors
 │   ├── prebuilt-editor.tsx          # Hero, ProductGrid, and all SectionData editors
-│   ├── component-styles-panel.tsx   # Per-section style overrides (bg color, text color, font size)
+│   │                               # Each editor includes its own bg/text/fontSize controls
 │   ├── wysiwyg-editor.tsx           # Rich-text toolbar + contentEditable area
 │   └── advanced-section.tsx         # Tailwind class pill manager
 │
@@ -532,18 +547,26 @@ const dynamicMcpTools = Object.fromEntries(
 );
 ```
 
-### Internal tools (handled by orchestrator directly, not forwarded to MCP)
+### Internal tools (handled by orchestrator directly, never forwarded to MCP)
 
-| Tool                  | Schema key additions vs. previous                                                                                                                                                                                                                        |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `plan_feedback`       | + `navStyleProposal`, + `colorSchemeProposal`                                                                                                                                                                                                            |
-| `apply_config_update` | `themeChanges` now includes `navStyle`, `colorScheme`, `fontStyle`; `heroChanges` now includes `badge`, `textAlign`, `ctaVariant`, `overlayOpacity`, `ctaText`, `ctaSecondaryText`; + `enableSections`, `disableSections`, `sectionOrder`, `sectionData` |
+| Tool            | Purpose                                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plan_feedback` | HITL gate — presents proposal to the user and stops the SSE stream. Includes `navStyleProposal`, `colorSchemeProposal`, `plannedChanges[]` (per-field items). |
+
+### MCP tools (discovered dynamically, forwarded via HTTP)
+
+`apply_config_update` is now a **MCP tool**. When the AI calls it the orchestrator:
+
+1. Forwards the call to `POST /api/mcp` (same as all other MCP tools)
+2. Still intercepts the tool result to emit a `config_update` SSE event to the UI
+
+This means `apply_config_update` is externally reachable — any MCP client can drive storefront changes.
 
 ---
 
 ## MCP Server (`apps/studio/app/api/mcp/route.ts`)
 
-JSON-RPC 2.0 server implementing 3 tools:
+JSON-RPC 2.0 server implementing 5 tools. All tools are discovered at runtime by the orchestrator via `tools/list` — no hardcoded schemas in the orchestrator.
 
 ### `analyze_vision_input`
 
@@ -598,6 +621,16 @@ Returns hero variant and all micro-parameters:
   "productGridColumns": 3
 }
 ```
+
+### `get_storefront_config`
+
+Reads and returns the current live `StorefrontConfig` from `store-config.json` (or KV if configured). Allows external agents and the AI to inspect the full configuration before proposing changes — rather than relying on the summary string embedded in the system prompt.
+
+### `apply_config_update`
+
+Accepts a design patch (same shape as the `apply_config_update` args in the orchestrator — `themeChanges`, `heroChanges`, `sectionOrder`, `componentStyleChanges`, etc.), validates it, and echoes it back. The orchestrator intercepts this tool result to emit a `config_update` SSE event to the studio UI, which triggers the Zustand store update. Disk persistence happens when the user clicks Save.
+
+**Why in MCP:** External agents (or future automation) can call `apply_config_update` directly over the MCP protocol to drive storefront design changes without going through the studio UI.
 
 ---
 
@@ -707,19 +740,54 @@ The web app always reflects the last saved config. No database — the JSON file
 
 ## Web App (`apps/web`)
 
-Minimal Next.js app. No studio UI — purely a storefront renderer.
+Minimal Next.js app. No studio UI — purely a config-driven storefront renderer. Every page uses `StorefrontPreview` with a page-specific `sections` array; there are no separate page templates.
 
 ```
 apps/web/
 ├── app/
-│   ├── page.tsx                   # force-dynamic, reads store-config.json, renders StorefrontPreview
+│   ├── page.tsx                   # Home — renders StorefrontPreview with config.sections
+│   ├── products/page.tsx          # Products listing — sections: config.pagesSections.products
+│   ├── products/[id]/page.tsx     # Product detail — sections: config.pagesSections.product-detail
+│   ├── cart/page.tsx              # Cart — sections: config.pagesSections.cart
+│   ├── [slug]/page.tsx            # Custom pages — sections: customPages[slug].sections
 │   ├── globals.css                # Tailwind import + @source directives
 │   └── api/store-config/route.ts  # GET/PUT for storefront config
 ├── lib/
-│   └── store-config.ts            # readStoreConfig() / writeStoreConfig() helpers
+│   ├── store-config.ts            # readStoreConfig() / writeStoreConfig() helpers
+│   ├── cart-context.tsx           # CartContext — items, addToCart, updateQty, removeFromCart
+│   └── use-config.ts              # useConfig() hook — fetches store-config.json client-side
 └── data/
     └── store-config.json          # Source of truth for live storefront config
 ```
+
+### All-pages config pattern
+
+Every web page follows the same pattern:
+
+```tsx
+const pageConfig = {
+  ...config,
+  sections: config.pagesSections?.["products"] ?? DEFAULT_SECTIONS,
+};
+return (
+  <StorefrontPreview
+    config={pageConfig}
+    cartItems={items}
+    onAddToCart={addToCart}
+  />
+);
+```
+
+`StorefrontPreview` handles section types `products-listing`, `cart-content`, and `product-detail-content` by rendering the corresponding page component (`ProductsPage`, `CartPage`, `ProductDetailPage`) with `showNav={false}` so the outer navbar isn't duplicated.
+
+Default sections (used when `pagesSections` hasn't been saved by the studio):
+
+| Page           | Default sections                                |
+| -------------- | ----------------------------------------------- |
+| products       | `products-listing`, `footer`                    |
+| product-detail | `product-detail-content`, `footer`              |
+| cart           | `cart-content`, `footer`                        |
+| custom `slug`  | whatever was saved in `customPages[i].sections` |
 
 ---
 
@@ -774,3 +842,7 @@ The audit trail panel is collapsible and scrollable, pinned to the bottom of the
 8. **Dark studio, light storefront** — The studio shell uses a zinc-950 dark theme. The storefront preview renders in its own context driven by `ThemeConfig.colorScheme`.
 
 9. **Mobile-first storefront, desktop-only studio** — Storefront components use responsive Tailwind classes. The studio UI assumes a wide desktop viewport.
+
+10. **Per-component style controls in edit panel** — Background color, text color, and font size overrides for each section (hero, product grid, categories, footer) are exposed inside that section's own edit panel in the right sidebar — not in a separate "Section Styles" panel. The navbar color controls live in the Navigation panel. This keeps editing contextual: you change a section's style while looking at its other settings.
+
+11. **All web pages are config-driven** — Every page in the web app (home, products, product-detail, cart, custom slug pages) uses `StorefrontPreview` with a page-specific `sections` array from `StorefrontConfig`. There are no standalone page templates. Section types `products-listing`, `cart-content`, and `product-detail-content` render their respective page components with `showNav={false}` to avoid double navbars.
