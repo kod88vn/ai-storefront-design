@@ -409,6 +409,20 @@ interface StudioStore {
   updateSectionData(patch: Partial<StorefrontSectionData>): void;
   // Atomic container update — updates containers AND syncs config.sections
   reorderContainers(containers: DesignerContainer[]): void;
+
+  // Streaming reasoning display
+  thinkingText: string;
+  appendThinkingText(chunk: string): void;
+  clearThinkingText(): void;
+
+  // Undo / redo
+  configHistory: StorefrontConfig[]; // ring buffer, max MAX_HISTORY entries
+  historyIndex: number; // pointer into configHistory (-1 = no history)
+  canUndo: boolean;
+  canRedo: boolean;
+  _pushHistory(prev: StorefrontConfig): void;
+  undo(): void;
+  redo(): void;
 }
 ```
 
@@ -458,6 +472,7 @@ Skills with no `## Tags` section are always loaded (backwards-compatible).
 | **theme_generator**      | `always`     | Maps `dominantStyle` + `targetAesthetic` to a full `ThemeConfig` including `navStyle`, `colorScheme`, `fontStyle`. 10 preset rows. Supports `componentStyleChanges` for per-section background/text/fontSize overrides. |
 | **layout_planner**       | `always`     | Selects hero variant (`split\|centered\|editorial`), produces `heroBadge`, `heroTextAlign`, `heroCtaVariant`. 15-row category × style decision matrix.                                                                  |
 | **section_composer**     | `always`     | Populates section data payloads. Defines 5 archetype composition guides (dark-luxury, organic, bold-playful, editorial, health).                                                                                        |
+| **vision_context**       | `vision`     | Pre-analysis context for image/URL inputs. Guides the model on interpreting pre-computed design tokens injected into the system prompt by the orchestrator's vision pipeline.                                           |
 | **ui_extractor**         | `vision`     | Extracts `dominantStyle`, `navStyle`, `colorScheme`, `fontStyle`, `heroLayout`, section order from a URL or image. Maps to 10 brand archetypes.                                                                         |
 | **content_analyzer**     | `content`    | Analyzes copy tone and produces hero title/subtitle/badge/CTA text. Tone × copy style table covering 5 voice types.                                                                                                     |
 | **conversion_optimizer** | `conversion` | Conversion playbooks by brand archetype — which sections, testimonial layouts, newsletter incentives, and trust badge placements maximize purchase intent.                                                              |
@@ -505,10 +520,14 @@ A stateless async generator that:
 2. Discovers MCP tools via `tools/list` JSON-RPC call
 3. **(If image supplied)** Runs vision pre-analysis with `grok-4-0709` → extracts exact hex colors + design tokens
 4. Builds the system prompt: planner skill (full) + supporting skills (full, under `## Skill References`) + pre-computed vision tokens + MCP tool schemas + current config
-5. Runs a multi-turn `generateText` loop (AI SDK v6) using the primary model (`grok-3`)
-6. Intercepts `plan_feedback` tool calls → emits `plan_description` SSE event → stops the stream
-7. Intercepts `apply_config_update` → emits `config_update` SSE event
-8. Forwards all other tool calls to the MCP endpoint dynamically
+5. Runs a multi-turn **`streamText`** loop (AI SDK v6) using the primary model (`grok-3-fast`)
+6. Iterates `fullStream`, emitting `thinking` SSE events for:
+   - `text-delta` chunks (model scratchpad / plan narration)
+   - `reasoning-delta` chunks (extended thinking)
+   - `tool-call` chunks (`→ tool_name\n` so UI shows activity even when no text is produced)
+7. Intercepts `plan_feedback` tool calls → emits `plan_description` SSE event → stops the stream
+8. Intercepts `apply_config_update` → emits `config_update` SSE event
+9. Forwards all other tool calls to the MCP endpoint dynamically
 
 ### Vision pipeline (two-step)
 
@@ -533,18 +552,30 @@ These tokens are injected into the system prompt under a `## Pre-Computed Design
 
 ### Dynamic MCP tool registration
 
-MCP tools are registered at runtime from the `tools/list` response — the orchestrator has **no hardcoded tool schemas**. New tools added to the MCP server are automatically available without orchestrator changes:
+MCP tools are registered at runtime from the `tools/list` response — the orchestrator has **no hardcoded tool schemas**. New tools added to the MCP server are automatically available without orchestrator changes.
+
+A `jsonSchemaToZod` helper converts the MCP JSON Schema to a proper recursive Zod schema with named fields (not `z.record`), so the AI SDK validates tool call arguments correctly:
 
 ```typescript
-const dynamicMcpTools = Object.fromEntries(
-  mcpTools.map((t) => [
-    t.name,
-    tool({
-      description: `${t.description}\n\nSchema: ${JSON.stringify(t.inputSchema)}`,
-      inputSchema: z.record(z.string(), z.unknown()),
-    }),
-  ]),
-);
+function jsonSchemaToZod(schema: MCPJsonSchema): z.ZodTypeAny {
+  if (schema.type === "object" && schema.properties) {
+    const shape = Object.fromEntries(
+      Object.entries(schema.properties).map(([k, v]) => [
+        k,
+        schema.required?.includes(k)
+          ? jsonSchemaToZod(v)
+          : jsonSchemaToZod(v).optional(),
+      ]),
+    );
+    return z.object(shape);
+  }
+  if (schema.type === "array")
+    return z.array(jsonSchemaToZod(schema.items ?? {}));
+  if (schema.enum) return z.enum(schema.enum as [string, ...string[]]);
+  if (schema.type === "number") return z.number();
+  if (schema.type === "boolean") return z.boolean();
+  return z.string();
+}
 ```
 
 ### Internal tools (handled by orchestrator directly, never forwarded to MCP)
@@ -674,26 +705,29 @@ Accepts a design patch (same shape as the `apply_config_update` args in the orch
 
 ## AI Stack
 
-| Layer         | Technology                                                           |
-| ------------- | -------------------------------------------------------------------- |
-| Primary LLM   | xAI Grok-3 via `@ai-sdk/xai` (text-only)                             |
-| Vision LLM    | `grok-4-0709` — image pre-analysis only                              |
-| AI SDK        | Vercel AI SDK v6 (`ai@6.0.152`)                                      |
-| Transport     | Server-Sent Events (SSE) at `/api/orchestrate`                       |
-| Tool protocol | MCP server at `/api/mcp` (JSON-RPC 2.0)                              |
-| Skill loading | `lib/skills/*/SKILL.md` — read from disk at runtime, filtered by tag |
+| Layer         | Technology                                                                          |
+| ------------- | ----------------------------------------------------------------------------------- |
+| Primary LLM   | xAI `grok-3-fast` via `@ai-sdk/xai` (text-only, overridable via `AI_MODEL` env var) |
+| Vision LLM    | `grok-4-0709` — image pre-analysis only                                             |
+| AI SDK        | Vercel AI SDK v6 (`ai@6.0.152`)                                                     |
+| Transport     | Server-Sent Events (SSE) at `/api/orchestrate`                                      |
+| Tool protocol | MCP server at `/api/mcp` (JSON-RPC 2.0)                                             |
+| Skill loading | `lib/skills/*/SKILL.md` — read from disk at runtime, filtered by tag                |
 
 ### SSE event types
 
 ```typescript
 type OrchestratorEvent =
   | { type: "progress"; agentStep: AgentStep; message: string }
+  | { type: "thinking"; thinking: string } // streaming model reasoning / tool activity
   | { type: "audit"; entry: Omit<AuditLogEntry, "id" | "timestamp"> }
   | { type: "plan_description"; plan: Omit<AgentPlan, "approved"> }
   | { type: "config_update"; configUpdate: OrchestratorConfigUpdate }
   | { type: "complete"; agentStep: "complete" }
   | { type: "error"; error: string };
 ```
+
+`thinking` events are emitted continuously while the model is running. The `ExecutionTrace` component renders them in a live "AI Activity" box (`ThinkingStream` sub-component) that auto-scrolls as text arrives. Cleared at the start of each new run.
 
 ---
 
@@ -846,3 +880,7 @@ The audit trail panel is collapsible and scrollable, pinned to the bottom of the
 10. **Per-component style controls in edit panel** — Background color, text color, and font size overrides for each section (hero, product grid, categories, footer) are exposed inside that section's own edit panel in the right sidebar — not in a separate "Section Styles" panel. The navbar color controls live in the Navigation panel. This keeps editing contextual: you change a section's style while looking at its other settings.
 
 11. **All web pages are config-driven** — Every page in the web app (home, products, product-detail, cart, custom slug pages) uses `StorefrontPreview` with a page-specific `sections` array from `StorefrontConfig`. There are no standalone page templates. Section types `products-listing`, `cart-content`, and `product-detail-content` render their respective page components with `showNav={false}` to avoid double navbars.
+
+12. **Streaming reasoning visible in UI** — The orchestrator uses `streamText` and forwards all model output (reasoning deltas, text deltas, tool-call announcements) as `thinking` SSE events. The `ThinkingStream` sub-component in `execution-trace.tsx` renders these as a live scrolling "AI Activity" box, giving the user continuous feedback even when the model is planning between tool calls.
+
+13. **Undo/redo with debounced history capture** — The Zustand store maintains a ring buffer (`configHistory`, max 50 entries, configurable via `NEXT_PUBLIC_UNDO_STEPS`) of previous `StorefrontConfig` snapshots. A `useStudioStore.subscribe` watcher outside `create` detects config reference changes and debounces pushes by 1 second — so rapid edits (typing, slider drags) collapse into one history entry. Undo/redo transitions are detected by checking whether `historyIndex` changed in the same tick, preventing double-pushes. History is persisted to `localStorage` and restored on page load. `Cmd+Z` / `Cmd+Shift+Z` trigger undo/redo globally; the center canvas toolbar also renders undo/redo buttons with disabled state feedback.
