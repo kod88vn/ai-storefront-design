@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import {
+  DOMINANT_STYLES,
+  HERO_LAYOUTS,
+  NAV_STYLES,
+  COLOR_SCHEMES,
+  SOURCE_LAYOUT_TYPES,
+  type DominantStyle,
+  type HeroLayout,
+} from "@ai-storefront/types";
 // ─── MCP types ───────────────────────────────────────────────────────────────
 
 interface MCPTool {
@@ -13,21 +21,6 @@ interface MCPToolResult {
 }
 
 // ─── Tool registry ────────────────────────────────────────────────────────────
-
-const DOMINANT_STYLES = [
-  "minimalist",
-  "maximalist",
-  "editorial",
-  "clean",
-  "dark-luxury",
-  "organic",
-  "bold-playful",
-  "earthy",
-  "mission-driven",
-  "tech-precision",
-] as const;
-
-type DominantStyle = (typeof DOMINANT_STYLES)[number];
 
 const TOOLS: MCPTool[] = [
   {
@@ -106,23 +99,16 @@ const TOOLS: MCPTool[] = [
         },
         sourceLayoutType: {
           type: "string",
-          enum: [
-            "split",
-            "centered",
-            "minimal",
-            "grid",
-            "fullbleed",
-            "editorial",
-          ],
+          enum: SOURCE_LAYOUT_TYPES,
           description: "Layout type observed in the vision source, if any",
         },
         colorScheme: {
           type: "string",
-          enum: ["light", "dark"],
+          enum: COLOR_SCHEMES,
         },
         navStyle: {
           type: "string",
-          enum: ["bordered", "transparent", "filled"],
+          enum: NAV_STYLES,
         },
       },
       required: ["dominantStyle"],
@@ -376,7 +362,7 @@ async function executeTool(
       const style = String(args.dominantStyle ?? "minimalist") as DominantStyle;
       const colorScheme = String(args.colorScheme ?? "light");
 
-      type HeroVariant = "split" | "centered" | "editorial";
+      type HeroVariant = HeroLayout;
 
       const heroMap: Record<DominantStyle, HeroVariant> = {
         "dark-luxury": "editorial",

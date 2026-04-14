@@ -24,6 +24,7 @@ import type {
   OrchestratorEvent,
   AgentStep,
 } from "@/lib/types";
+import { SKILL_TEMPLATE_VARS } from "@ai-storefront/types";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -65,9 +66,14 @@ async function loadSkills(): Promise<LoadedSkill[]> {
     const results = await Promise.all(
       folders.map(async (folder) => {
         try {
-          const content = await fs.readFile(
+          const raw = await fs.readFile(
             path.join(skillsDir, folder, "SKILL.md"),
             "utf-8",
+          );
+          // Interpolate {{VAR}} placeholders with values from schema.ts
+          const content = raw.replace(
+            /\{\{(\w+)\}\}/g,
+            (_, key) => SKILL_TEMPLATE_VARS[key] ?? `{{${key}}}`,
           );
           return { name: folder, content } satisfies LoadedSkill;
         } catch {

@@ -12,14 +12,14 @@ Generate a cohesive `ThemeConfig` from extracted design signals or a target aest
 
 ```json
 {
-  "dominantStyle": "minimalist | maximalist | editorial | clean | dark-luxury | organic | bold-playful | earthy",
+  "dominantStyle": "{{DOMINANT_STYLES}}",
   "siteCategory": "string",
   "businessModel": "string",
   "primaryColors": ["#hex"],
   "colorTemperature": "warm | cool | neutral",
-  "colorScheme": "light | dark",
-  "fontStyle": "modern-sans | geometric-sans | humanist-sans | editorial-serif | display-serif | slab-serif | mono-tech | handwritten | condensed | rounded",
-  "navStyle": "bordered | transparent | filled",
+  "colorScheme": "{{COLOR_SCHEMES}}",
+  "fontStyle": "{{FONT_STYLES}}",
+  "navStyle": "{{NAV_STYLES}}",
   "targetAesthetic": "string (e.g. 'organic', 'luxury', 'tech', 'artisan')",
   "ctaStyle": "utility-first | promotion-first | brand-first | editorial-soft",
   "imageryStyle": "product-cutout | lifestyle | editorial-campaign | app-ui | restaurant-food | mixed"
@@ -40,10 +40,10 @@ When calling `apply_config_update`, you output `themeChanges` (the global theme)
   "themeChanges": {
     "primaryColor": "#hex",
     "secondaryColor": "#hex",
-    "borderRadius": "none | sm | md | lg | xl | full",
-    "fontStyle": "modern-sans | geometric-sans | ...",
-    "navStyle": "bordered | transparent | filled",
-    "colorScheme": "light | dark"
+    "borderRadius": "{{BORDER_RADII}}",
+    "fontStyle": "{{FONT_STYLES}}",
+    "navStyle": "{{NAV_STYLES}}",
+    "colorScheme": "{{COLOR_SCHEMES}}"
   },
   "componentStyleChanges": {
     "navbar": {

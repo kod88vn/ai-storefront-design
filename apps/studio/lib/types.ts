@@ -1,39 +1,26 @@
+import type {
+  HeroLayout,
+  SectionType,
+  NavStyle,
+  ColorScheme,
+  FontStyle,
+  BorderRadius,
+} from "@ai-storefront/types";
+export type { SectionType };
+
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
 export interface ThemeConfig {
   primaryColor: string;
   secondaryColor: string;
-  borderRadius: "none" | "sm" | "md" | "lg" | "xl" | "full";
+  borderRadius: BorderRadius;
   fontFamily?: "sans" | "serif" | "mono";
-  navStyle?: "bordered" | "transparent" | "filled";
-  colorScheme?: "light" | "dark";
-  fontStyle?:
-    | "modern-sans"
-    | "geometric-sans"
-    | "humanist-sans"
-    | "editorial-serif"
-    | "display-serif"
-    | "slab-serif"
-    | "mono-tech"
-    | "handwritten"
-    | "condensed"
-    | "rounded";
+  navStyle?: NavStyle;
+  colorScheme?: ColorScheme;
+  fontStyle?: FontStyle;
 }
 
 // ─── Section types ────────────────────────────────────────────────────────────
-
-export type SectionType =
-  | "hero"
-  | "product-grid"
-  | "categories"
-  | "footer"
-  | "announcement-bar"
-  | "benefits-bar"
-  | "featured-collection"
-  | "testimonials"
-  | "newsletter"
-  | "trust-badges"
-  | "brand-strip";
 
 export interface LayoutSection {
   id: string;
@@ -45,7 +32,7 @@ export interface LayoutSection {
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
 export interface HeroConfig {
-  layout: "split" | "centered" | "editorial";
+  layout: HeroLayout;
   title: string;
   subtitle: string;
   ctaText: string;

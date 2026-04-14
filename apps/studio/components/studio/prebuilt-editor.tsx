@@ -4,6 +4,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useStudioStore } from '@/lib/store'
 import { AdvancedSection } from './advanced-section'
 import type { ComponentItem } from '@/lib/types'
+import { HERO_LAYOUTS } from '@ai-storefront/types'
 
 const inputCls = 'h-8 w-full rounded-md border border-border bg-background px-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring'
 const selectCls = 'h-8 w-full rounded-md border border-border bg-background px-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring'
@@ -18,7 +19,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     )
 }
 
-const HERO_LAYOUTS = ['split', 'centered', 'editorial']
 const GRID_LAYOUTS = ['grid', 'horizontal-scroll']
 const TESTIMONIAL_LAYOUTS = ['grid', 'list', 'featured']
 const BENEFIT_ICONS = ['truck', 'shield', 'refresh', 'award', 'clock', 'leaf', 'star', 'heart', 'check', 'zap', 'globe', 'tag']

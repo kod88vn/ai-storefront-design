@@ -16,9 +16,9 @@ Decide the hero variant, section ordering, product grid columns, and hero micro-
   "dominantStyle": "string",
   "siteCategory": "string",
   "businessModel": "string",
-  "colorScheme": "light | dark",
-  "navStyle": "bordered | transparent | filled",
-  "sourceLayoutType": "split | centered | grid | editorial",
+  "colorScheme": "{{COLOR_SCHEMES}}",
+  "navStyle": "{{NAV_STYLES}}",
+  "sourceLayoutType": "{{SOURCE_LAYOUT_TYPES}}",
   "visualDensity": "sparse | balanced | dense",
   "ctaStyle": "utility-first | promotion-first | brand-first | editorial-soft",
   "imageryStyle": "product-cutout | lifestyle | editorial-campaign | app-ui | restaurant-food | mixed",
@@ -30,13 +30,13 @@ Decide the hero variant, section ordering, product grid columns, and hero micro-
 
 ```json
 {
-  "heroVariant": "split | centered | editorial",
+  "heroVariant": "{{HERO_LAYOUTS}}",
   "heroBadge": "string | null",
   "heroTextAlign": "left | center",
-  "heroCtaVariant": "solid | outline | ghost",
+  "heroCtaVariant": "{{HERO_CTA_VARIANTS}}",
   "heroOverlayOpacity": "number (0-1)",
   "sectionOrder": ["hero", "product-grid", "categories", "footer"],
-  "productGridColumns": 2,
+  "productGridColumns": "{{GRID_COLUMNS}}",
   "rationale": "string"
 }
 ```

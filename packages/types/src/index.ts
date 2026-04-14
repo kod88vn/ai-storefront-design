@@ -1,14 +1,26 @@
+import type {
+  HeroLayout,
+  HeroCtaVariant,
+  BorderRadius,
+  NavStyle,
+  ColorScheme,
+  FontStyle,
+  SectionType,
+  FontSize,
+} from "./schema";
+export * from "./schema";
+
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
 export interface ThemeConfig {
   primaryColor: string;
   secondaryColor: string;
-  borderRadius: "none" | "sm" | "md" | "lg" | "xl" | "full";
+  borderRadius: BorderRadius;
   fontFamily?: "sans" | "serif" | "mono";
   /** Visual weight of navbar: white+border (default), transparent overlay, or solid brand color */
-  navStyle?: "bordered" | "transparent" | "filled";
+  navStyle?: NavStyle;
   /** Overall site color scheme — affects base background and text colors */
-  colorScheme?: "light" | "dark";
+  colorScheme?: ColorScheme;
   /**
    * Font personality applied as a font-family to the storefront preview wrapper.
    * modern-sans     → system-ui clean sans
@@ -22,33 +34,12 @@ export interface ThemeConfig {
    * condensed       → Arial Narrow / Impact compressed
    * rounded         → Varela Round friendly rounded
    */
-  fontStyle?:
-    | "modern-sans"
-    | "geometric-sans"
-    | "humanist-sans"
-    | "editorial-serif"
-    | "display-serif"
-    | "slab-serif"
-    | "mono-tech"
-    | "handwritten"
-    | "condensed"
-    | "rounded";
+  fontStyle?: FontStyle;
 }
 
 // ─── Section types ────────────────────────────────────────────────────────────
 
-export type SectionType =
-  | "hero"
-  | "product-grid"
-  | "categories"
-  | "footer"
-  | "announcement-bar"
-  | "benefits-bar"
-  | "featured-collection"
-  | "testimonials"
-  | "newsletter"
-  | "trust-badges"
-  | "brand-strip";
+export type { SectionType };
 
 export interface LayoutSection {
   id: string;
@@ -64,13 +55,13 @@ export interface ComponentStyle {
   backgroundColor?: string;
   textColor?: string;
   /** Scales the section's body text: sm=0.75rem, base=1rem, lg=1.125rem, xl=1.25rem */
-  fontSize?: "sm" | "base" | "lg" | "xl";
+  fontSize?: FontSize;
 }
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
 export interface HeroConfig {
-  layout: "split" | "centered" | "editorial";
+  layout: HeroLayout;
   title: string;
   subtitle: string;
   ctaText: string;
@@ -83,11 +74,11 @@ export interface HeroConfig {
   /** Overlay darkness for fullbleed (0–1, default 0.4) */
   overlayOpacity?: number;
   /** CTA button style — solid fills with secondaryColor, outline/ghost for dark or image backgrounds */
-  ctaVariant?: "solid" | "outline" | "ghost";
+  ctaVariant?: HeroCtaVariant;
   /** Per-hero style overrides */
   backgroundColor?: string;
   textColor?: string;
-  fontSize?: "sm" | "base" | "lg" | "xl";
+  fontSize?: FontSize;
 }
 
 // ─── Product grid ─────────────────────────────────────────────────────────────
@@ -100,7 +91,7 @@ export interface ProductGridConfig {
   heading?: string;
   backgroundColor?: string;
   textColor?: string;
-  fontSize?: "sm" | "base" | "lg" | "xl";
+  fontSize?: FontSize;
 }
 
 // ─── Categories ───────────────────────────────────────────────────────────────

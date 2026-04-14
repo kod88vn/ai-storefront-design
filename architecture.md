@@ -36,7 +36,7 @@ Single source of truth for all storefront UI. Both apps import from `@ai-storefr
 packages/storefront-components/src/
 ├── storefront-preview.tsx   # Master renderer — applies theme CSS vars, renders ordered sections
 ├── navbar.tsx               # 3 navStyle variants + hamburger mobile menu
-├── hero.tsx                 # 5 layout variants: split, centered, minimal, fullbleed, editorial
+├── hero.tsx                 # 3 layout variants: split, centered, editorial
 ├── product-grid.tsx         # Responsive grid with badge overlays and star ratings
 ├── categories.tsx           # Category grid (2 → 4 cols)
 ├── extra-sections.tsx       # announcement-bar, benefits-bar, featured-collection,
@@ -83,6 +83,31 @@ Storefront components are mobile-first. Studio canvas is assumed to be desktop-o
 
 All interfaces live in `packages/types/src/index.ts` and are imported by both apps and the shared package.
 
+### Schema (single source of truth)
+
+`packages/types/src/schema.ts` exports **all `as const` option arrays** for every enum-like value in the system. This is the **only file you need to edit** when adding or removing options (hero layouts, dominant styles, nav styles, etc.).
+
+```typescript
+// packages/types/src/schema.ts
+export const HERO_LAYOUTS = ["split", "centered", "editorial"] as const;
+export const DOMINANT_STYLES = ["minimalist", "maximalist", "editorial", "clean", "dark-luxury", ...] as const;
+export const NAV_STYLES = ["bordered", "transparent", "filled"] as const;
+export const FONT_STYLES = ["modern-sans", "geometric-sans", "humanist-sans", "editorial-serif", ...] as const;
+// ... and BORDER_RADII, COLOR_SCHEMES, HERO_CTA_VARIANTS, SOURCE_LAYOUT_TYPES, etc.
+
+// Skill template vars — injected into SKILL.md {{VAR}} placeholders at load time
+export const SKILL_TEMPLATE_VARS: Record<string, string> = { ... };
+```
+
+Everything else derives from schema automatically:
+
+| Consumer                                            | How it uses schema                                                               |
+| --------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `packages/types/src/index.ts`                       | `HeroLayout = typeof HERO_LAYOUTS[number]` — union types auto-derived            |
+| `apps/studio/app/api/mcp/route.ts`                  | Imports arrays directly — no local re-declarations                               |
+| `apps/studio/components/studio/prebuilt-editor.tsx` | Imports `HERO_LAYOUTS` — dropdown always in sync                                 |
+| `apps/studio/lib/skills/*.SKILL.md`                 | Uses `{{HERO_LAYOUTS}}`, `{{DOMINANT_STYLES}}`, etc. — interpolated at load time |
+
 ### Core config
 
 ```typescript
@@ -92,29 +117,32 @@ interface StorefrontConfig {
   hero: HeroConfig;
   productGrid: ProductGridConfig;
   sectionData: StorefrontSectionData; // keyed by SectionType
+  nav?: NavConfig;
+  categories?: CategoriesConfig;
+  footer?: FooterConfig;
 }
 
 interface ThemeConfig {
   primaryColor: string;
   secondaryColor: string;
-  borderRadius: "none" | "sm" | "md" | "lg" | "xl" | "full";
-  navStyle?: "bordered" | "transparent" | "filled";
-  colorScheme?: "light" | "dark";
+  borderRadius: "none" | "sm" | "md" | "lg" | "xl" | "full"; // BorderRadius
+  navStyle?: "bordered" | "transparent" | "filled"; // NavStyle
+  colorScheme?: "light" | "dark"; // ColorScheme
   fontStyle?:
     | "modern-sans"
+    | "geometric-sans"
+    | "humanist-sans"
     | "editorial-serif"
-    | "mono-tech"
-    | "humanist"
-    | "geometric"
-    | "transitional"
+    | "display-serif"
     | "slab-serif"
-    | "display"
-    | "rounded"
-    | "condensed";
+    | "mono-tech"
+    | "handwritten"
+    | "condensed"
+    | "rounded"; // FontStyle
 }
 
 interface HeroConfig {
-  layout: "split" | "centered" | "minimal" | "fullbleed" | "editorial";
+  layout: "split" | "centered" | "editorial"; // HeroLayout
   title: string;
   subtitle: string;
   ctaText: string;
@@ -122,8 +150,19 @@ interface HeroConfig {
   backgroundImage?: string;
   badge?: string; // eyebrow pill label above headline
   textAlign?: "left" | "center";
-  overlayOpacity?: number; // 0–1 for fullbleed/editorial overlay
-  ctaVariant?: "solid" | "outline" | "ghost";
+  overlayOpacity?: number; // 0–1 for overlays
+  ctaVariant?: "solid" | "outline" | "ghost"; // HeroCtaVariant
+  // Per-section style overrides (take precedence over theme defaults)
+  backgroundColor?: string;
+  textColor?: string;
+  fontSize?: "sm" | "base" | "lg" | "xl";
+}
+
+/** Per-component style overrides shared by hero, productGrid, categories, footer, navbar */
+interface ComponentStyle {
+  backgroundColor?: string;
+  textColor?: string;
+  fontSize?: "sm" | "base" | "lg" | "xl";
 }
 ```
 
@@ -285,6 +324,7 @@ apps/studio/
 │   │  ── Component editor (editor pane, slides in from bottom of right sidebar)
 │   ├── component-editor.tsx         # Main dispatch + custom-text / custom-image editors
 │   ├── prebuilt-editor.tsx          # Hero, ProductGrid, and all SectionData editors
+│   ├── component-styles-panel.tsx   # Per-section style overrides (bg color, text color, font size)
 │   ├── wysiwyg-editor.tsx           # Rich-text toolbar + contentEditable area
 │   └── advanced-section.tsx         # Tailwind class pill manager
 │
@@ -397,15 +437,31 @@ Skills with no `## Tags` section are always loaded (backwards-compatible).
 
 ### Skill Inventory
 
-| Skill                    | Tag          | Purpose                                                                                                                                                                    |
-| ------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **planner**              | `always`     | Defines the three-phase workflow (Understand → Propose → Execute). Brand archetype → config inference rules. Embeds as the main workflow instruction in the system prompt. |
-| **theme_generator**      | `always`     | Maps `dominantStyle` + `targetAesthetic` to a full `ThemeConfig` including `navStyle`, `colorScheme`, `fontStyle`. 10 preset rows.                                         |
-| **layout_planner**       | `always`     | Selects hero variant, produces `heroBadge`, `heroTextAlign`, `heroCtaVariant`, `heroOverlayOpacity`. 15-row category × style decision matrix.                              |
-| **section_composer**     | `always`     | Populates section data payloads. Defines 5 archetype composition guides (dark-luxury, organic, bold-playful, editorial, health).                                           |
-| **ui_extractor**         | `vision`     | Extracts `dominantStyle`, `navStyle`, `colorScheme`, `fontStyle`, `heroLayout`, section order from a URL or image. Maps to 10 brand archetypes.                            |
-| **content_analyzer**     | `content`    | Analyzes copy tone and produces hero title/subtitle/badge/CTA text. Tone × copy style table covering 5 voice types.                                                        |
-| **conversion_optimizer** | `conversion` | Conversion playbooks by brand archetype — which sections, testimonial layouts, newsletter incentives, and trust badge placements maximize purchase intent.                 |
+| Skill                    | Tag          | Purpose                                                                                                                                                                                                                 |
+| ------------------------ | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **planner**              | `always`     | Defines the three-phase workflow (Understand → Propose → Execute). Brand archetype → config inference rules. Embeds as the main workflow instruction in the system prompt.                                              |
+| **theme_generator**      | `always`     | Maps `dominantStyle` + `targetAesthetic` to a full `ThemeConfig` including `navStyle`, `colorScheme`, `fontStyle`. 10 preset rows. Supports `componentStyleChanges` for per-section background/text/fontSize overrides. |
+| **layout_planner**       | `always`     | Selects hero variant (`split\|centered\|editorial`), produces `heroBadge`, `heroTextAlign`, `heroCtaVariant`. 15-row category × style decision matrix.                                                                  |
+| **section_composer**     | `always`     | Populates section data payloads. Defines 5 archetype composition guides (dark-luxury, organic, bold-playful, editorial, health).                                                                                        |
+| **ui_extractor**         | `vision`     | Extracts `dominantStyle`, `navStyle`, `colorScheme`, `fontStyle`, `heroLayout`, section order from a URL or image. Maps to 10 brand archetypes.                                                                         |
+| **content_analyzer**     | `content`    | Analyzes copy tone and produces hero title/subtitle/badge/CTA text. Tone × copy style table covering 5 voice types.                                                                                                     |
+| **conversion_optimizer** | `conversion` | Conversion playbooks by brand archetype — which sections, testimonial layouts, newsletter incentives, and trust badge placements maximize purchase intent.                                                              |
+
+### Skill template interpolation
+
+SKILL.md files use `{{VAR}}` placeholders that are replaced at load time with values from `SKILL_TEMPLATE_VARS` in `schema.ts`. This keeps prompt schemas in sync with TypeScript types automatically.
+
+```markdown
+<!-- In SKILL.md -->
+
+"heroVariant": "{{HERO_LAYOUTS}}"
+
+<!-- Rendered as -->
+
+"heroVariant": "split | centered | editorial"
+```
+
+Available template variables: `{{HERO_LAYOUTS}}`, `{{DOMINANT_STYLES}}`, `{{NAV_STYLES}}`, `{{COLOR_SCHEMES}}`, `{{FONT_STYLES}}`, `{{BORDER_RADII}}`, `{{HERO_CTA_VARIANTS}}`, `{{FONT_SIZES}}`, `{{GRID_COLUMNS}}`, `{{SOURCE_LAYOUT_TYPES}}`.
 
 ### Workflow Phases (driven by `planner/SKILL.md`)
 
@@ -432,7 +488,7 @@ A stateless async generator that:
 
 1. Loads SKILL.md files from disk, filtered by tag for this request
 2. Discovers MCP tools via `tools/list` JSON-RPC call
-3. **(If image supplied)** Runs vision pre-analysis with `grok-2-vision-1212` → extracts exact hex colors + design tokens
+3. **(If image supplied)** Runs vision pre-analysis with `grok-4-0709` → extracts exact hex colors + design tokens
 4. Builds the system prompt: planner skill (full) + supporting skills (full, under `## Skill References`) + pre-computed vision tokens + MCP tool schemas + current config
 5. Runs a multi-turn `generateText` loop (AI SDK v6) using the primary model (`grok-3`)
 6. Intercepts `plan_feedback` tool calls → emits `plan_description` SSE event → stops the stream
@@ -497,7 +553,7 @@ Extracts design signals from a URL or description. Detects 10 brand archetypes f
 {
   "primaryColors": ["#hex"],
   "fontStyle": "modern-sans | editorial-serif | mono-tech",
-  "layoutType": "fullbleed | editorial | centered | split | minimal",
+  "layoutType": "editorial | centered | split",
   "borderRadius": "none | md | full",
   "dominantStyle": "dark-luxury | organic | editorial | bold-playful | clean | earthy | maximalist | minimalist | mission-driven | tech-precision",
   "colorScheme": "light | dark",
@@ -519,12 +575,13 @@ Maps `dominantStyle` + optional `targetAesthetic` / `colorScheme` / `navStyle` t
 | clean          | `#0f4c35`    | `#22c55e`      | md     | bordered    | light  | modern-sans     |
 | earthy         | `#3d2b1f`    | `#a16207`      | md     | bordered    | light  | modern-sans     |
 | minimalist     | `#111827`    | `#6366f1`      | none   | bordered    | light  | modern-sans     |
+| maximalist     | `#1a1a1a`    | `#f97316`      | full   | bordered    | light  | modern-sans     |
 | mission-driven | `#1e3a5f`    | `#0ea5e9`      | md     | filled      | light  | editorial-serif |
 | tech-precision | `#0f172a`    | `#3b82f6`      | none   | transparent | dark   | mono-tech       |
 
 `borderRadius` valid values (expanded): `none`, `sm`, `md`, `lg`, `xl`, `full`
 
-`fontStyle` valid values (expanded): `modern-sans`, `editorial-serif`, `mono-tech`, `humanist`, `geometric`, `transitional`, `slab-serif`, `display`, `rounded`, `condensed`
+`fontStyle` valid values: `modern-sans`, `geometric-sans`, `humanist-sans`, `editorial-serif`, `display-serif`, `slab-serif`, `mono-tech`, `handwritten`, `condensed`, `rounded`
 
 ### `plan_layout`
 
@@ -532,7 +589,7 @@ Returns hero variant and all micro-parameters:
 
 ```json
 {
-  "heroVariant": "split | centered | minimal | fullbleed | editorial",
+  "heroVariant": "split | centered | editorial",
   "heroBadge": "string | null",
   "heroTextAlign": "left | center",
   "heroCtaVariant": "solid | outline | ghost",
@@ -613,14 +670,14 @@ The skill system understands 10 brand archetypes. Each maps to a full config com
 
 | Archetype                             | dominantStyle  | navStyle    | colorScheme | heroLayout | fontStyle       | borderRadius |
 | ------------------------------------- | -------------- | ----------- | ----------- | ---------- | --------------- | ------------ |
-| Dark luxury (Master & Dynamic)        | dark-luxury    | transparent | dark        | fullbleed  | modern-sans     | none         |
+| Dark luxury (Master & Dynamic)        | dark-luxury    | transparent | dark        | editorial  | modern-sans     | none         |
 | Organic/natural (Rocky Mountain Soap) | organic        | bordered    | light       | split      | modern-sans     | md           |
 | Editorial/artisan (Holstee)           | editorial      | bordered    | light       | editorial  | editorial-serif | none         |
 | Bold/playful (Outdoor Voices)         | bold-playful   | bordered    | light       | centered   | modern-sans     | full         |
 | Health/clinical (Kettle & Fire)       | clean          | bordered    | light       | centered   | modern-sans     | md           |
 | Earthy/rustic (Dr. Squatch)           | earthy         | bordered    | light       | split      | modern-sans     | md           |
-| Minimal/modern (Kit and Ace)          | minimalist     | bordered    | light       | minimal    | modern-sans     | none         |
-| Mission/cause (United By Blue)        | mission-driven | filled      | light       | fullbleed  | editorial-serif | md           |
+| Minimal/modern (Kit and Ace)          | minimalist     | bordered    | light       | split      | modern-sans     | none         |
+| Mission/cause (United By Blue)        | mission-driven | filled      | light       | centered   | editorial-serif | md           |
 | Tech/precision (hardware stores)      | tech-precision | transparent | dark        | editorial  | mono-tech       | none         |
 
 ---
