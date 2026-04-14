@@ -128,7 +128,18 @@ Before applying **any** changes, call `plan_feedback` with a rich, specific prop
 ]
 ```
 
-Always include at minimum: hero layout, primary color, accent color. Add one item for **every** additional config field you are changing (nav style, color scheme, font style, border radius, grid columns, hero badge, each new section). Do not bundle multiple changes into one item.
+Always include at minimum: hero layout, primary color, accent color. Add one item for **every** additional config field you are changing (nav style, **navbar background color**, color scheme, font style, border radius, grid columns, hero badge, each new section). Do not bundle multiple changes into one item.
+
+When `componentStyleChanges.navbar.backgroundColor` is being set (always required when extracted backgroundColor ≠ `#ffffff`), include it as its own `plannedChanges` entry with category `"theme"`, e.g.:
+
+```json
+{
+  "id": "navbar-bg",
+  "category": "theme",
+  "label": "Navbar Background",
+  "description": "#faf5f0 — warm cream to match the page background"
+}
+```
 
 When visual evidence suggests a marketplace or service-led interface, planned changes should skew toward discovery and scanning. When evidence suggests a brand-led DTC interface, planned changes should skew toward campaign hierarchy and emotional merchandising.
 
@@ -144,7 +155,7 @@ Once `planFeedback.approved === true`:
    - `heroChanges`: `layout`, `title`, `subtitle`, `badge`, `textAlign`, `ctaVariant`, `overlayOpacity`, `ctaText`, `ctaSecondaryText`
    - `productGridColumns`
    - `sectionOrder`, `enableSections`, `disableSections`, `sectionData`
-   - `componentStyleChanges` (optional): per-section `backgroundColor`, `textColor`, `fontSize` for `navbar`, `hero`, `productGrid`, `categories`, `footer` — see the `theme_generator` skill for rules on when to set these.
+   - `componentStyleChanges`: **always include `navbar.backgroundColor`** — set it to the extracted page background color (e.g. `#faf5f0` for earthy/cream sites) for bordered navs, or to `primaryColor` for filled navs. Also set `footer.backgroundColor` and `categories.backgroundColor` when the archetype calls for them (see `theme_generator` skill).
 3. Do NOT call `plan_feedback` again.
 
 ## Phase 3 (Rejected) — Revise
@@ -189,14 +200,16 @@ If these overrides point to a materially different experience, follow the overri
 
 ## Section Composition by Archetype
 
-| Archetype      | Enable sections                                                        | Testimonial layout | Newsletter incentive           | Announcement bar             |
-| -------------- | ---------------------------------------------------------------------- | ------------------ | ------------------------------ | ---------------------------- |
-| dark-luxury    | benefits-bar, trust-badges, testimonials                               | featured           | null                           | no                           |
-| organic        | benefits-bar, testimonials, newsletter                                 | list               | "Get 10% off your first order" | no                           |
-| bold-playful   | announcement-bar, benefits-bar, brand-strip, testimonials, newsletter  | grid               | "Join the community — 15% off" | scrolling: true, emoji: "🎉" |
-| editorial      | featured-collection, testimonials, newsletter                          | featured           | null                           | no                           |
-| clean (health) | announcement-bar, benefits-bar, trust-badges, testimonials, newsletter | grid               | "Subscribe and save 20%"       | no                           |
-| minimalist     | benefits-bar, testimonials                                             | grid               | null                           | no                           |
+| Archetype      | Enable sections                                                        | Testimonial layout | Newsletter incentive                     | Announcement bar                  |
+| -------------- | ---------------------------------------------------------------------- | ------------------ | ---------------------------------------- | --------------------------------- |
+| dark-luxury    | benefits-bar, trust-badges, testimonials                               | featured           | null                                     | no                                |
+| organic        | benefits-bar, testimonials, newsletter                                 | list               | "Get 10% off your first order"           | no                                |
+| bold-playful   | announcement-bar, benefits-bar, brand-strip, testimonials, newsletter  | grid               | "Join the community — 15% off"           | scrolling: true, emoji: "🎉"      |
+| editorial      | featured-collection, testimonials, newsletter                          | featured           | null                                     | no                                |
+| clean (health) | announcement-bar, benefits-bar, trust-badges, testimonials, newsletter | grid               | "Subscribe and save 20%"                 | no                                |
+| minimalist     | benefits-bar, testimonials                                             | grid               | null                                     | no                                |
+| earthy         | announcement-bar, benefits-bar, brand-strip, testimonials, newsletter  | grid               | "Sign up — get 20% off your first order" | scrolling: true, promo-first text |
+| mission-driven | benefits-bar, brand-strip, testimonials, newsletter                    | featured           | "Join the mission — 10% off first order" | no                                |
 
 ## Divergence Rules
 

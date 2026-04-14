@@ -412,19 +412,6 @@ ${preComputedTokens}
 
 Skip Phase 1 entirely and proceed to Phase 2 (plan_feedback) using the tokens above.
 
-## High-Priority Interpretation Rules
-
-- Treat \`siteCategory\`, \`businessModel\`, \`ctaStyle\`, \`imageryStyle\`, \`headlineTone\`, \`visualDensity\`, \`navigationDensity\`, \`sectionOrder\`, and \`brandSignals\` as more important than generic labels like \`dominantStyle\` or \`mood\`.
-- Use these concrete signals to produce materially different outputs for different brands. A food-delivery marketplace should not generate the same layout, spacing, hierarchy, and section mix as a performance DTC brand.
-- When \`businessModel = marketplace\`, favor utility-first UX: denser navigation, category discovery, promo surfaces, trust/transaction cues, and faster scanning.
-- When \`businessModel = single-brand-dtc\`, favor brand storytelling: stronger hero presence, campaign imagery, fewer but larger merchandising surfaces, and more whitespace.
-- Use \`brandSignals\` verbatim as evidence in \`plan_feedback\` so the rationale references visible differences instead of abstract adjectives.
-
-**Background color rules — apply to sectionData:**
-- Use \`backgroundColor\` as the page/hero background and for the navbar fill (if navStyle is filled).
-- Use \`sectionBackgroundColor\` as the \`backgroundColor\` for announcement bars, benefits bars, newsletter panels, and any other section that has a \`backgroundColor\` field in sectionData.
-- Do not leave these fields at default white/gray when a reference color was extracted.
-
 `
     : visionFailed
       ? `## Vision Analysis Failed
@@ -523,7 +510,7 @@ ${configSummary}${resumeInstruction}`;
 
     apply_config_update: tool({
       description:
-        "Apply approved design changes to the StorefrontConfig. Call this after all MCP tools have returned with concrete values (Phase 3 of the Planner Skill).",
+        "Apply approved design changes to the StorefrontConfig. Call this after all MCP tools have returned with concrete values (Phase 3 of the Planner Skill). IMPORTANT: always include componentStyleChanges.navbar.backgroundColor — set it to the page background color (from extracted backgroundColor token, or the theme default). For bordered navs this makes the navbar match the page; for filled navs set it to primaryColor. Never omit it when you have a color to apply.",
       inputSchema: z.object({
         themeChanges: z
           .object({
@@ -574,7 +561,12 @@ ${configSummary}${resumeInstruction}`;
           .object({
             navbar: z
               .object({
-                backgroundColor: z.string().optional(),
+                backgroundColor: z
+                  .string()
+                  .optional()
+                  .describe(
+                    "Navbar background hex. For bordered navs: set to the page background color (e.g. cream #faf5f0, not white #ffffff when site has a warm background). For filled navs: set to primaryColor. ALWAYS set this when you know the page background color.",
+                  ),
                 textColor: z.string().optional(),
                 fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
               })
@@ -610,7 +602,7 @@ ${configSummary}${resumeInstruction}`;
           })
           .optional()
           .describe(
-            "Per-component background color, text color, and font size overrides",
+            "Per-component background color, text color, and font size overrides. navbar.backgroundColor MUST always be set: use the extracted backgroundColor token for bordered navs (so the nav blends with the page), or primaryColor for filled navs. Never leave navbar.backgroundColor unset when you know the page background color.",
           ),
       }),
     }),

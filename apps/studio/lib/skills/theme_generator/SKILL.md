@@ -78,11 +78,17 @@ When calling `apply_config_update`, you output `themeChanges` (the global theme)
 ### Per-section style rules
 
 - Only populate `componentStyleChanges` fields you actually change — omit the rest (they inherit from the theme).
-- `navbar.backgroundColor` takes precedence over `navStyle`-derived colors. Use it when the brand color for the nav differs from `primaryColor`.
+- `navbar.backgroundColor` takes precedence over `navStyle`-derived colors. **Always set it** in these cases:
+  - When `navStyle = bordered` and the extracted `backgroundColor` is not pure white (`#ffffff`) — the nav should match the page background (e.g. a cream `#faf5f0` page needs `navbar.backgroundColor: #faf5f0`).
+  - When `navStyle = filled` and the nav uses a specific brand color that differs from `primaryColor`.
+  - For earthy, organic, warm-toned sites: ALWAYS set `navbar.backgroundColor` to the extracted `backgroundColor` so the nav blends with the page instead of showing a jarring white strip.
 - `hero.backgroundColor` overrides the layout-default section background (white/neutral). Set it for editorial heroes with a custom brand color.
 - `footer.backgroundColor` is commonly dark even on light sites — set it to `#0d0d0d` or brand dark for a grounding footer.
 - `categories.backgroundColor` is commonly a light tint — use `sectionBackgroundColor` from extracted tokens when available.
 - Do not set redundant values: if `hero.textColor` would be the same as the theme-derived default, omit it.
+- For `dominantStyle: earthy`: set `footer.backgroundColor: "#1b4332"` (dark forest green) and `footer.textColor: "#ffffff"`. Set `categories.backgroundColor: "#f0ebe4"` (warm cream/tan). These two overrides create the layered earthy look (cream page → tinted category strip → dark grounding footer).
+- For `dominantStyle: organic`: set `footer.backgroundColor: "#2d4a22"` (deep forest green) and `footer.textColor: "#ffffff"`. Set `categories.backgroundColor: "#f0f4ee"` (pale sage tint).
+- For `dominantStyle: dark-luxury`: set `footer.backgroundColor` to the same near-black as `primaryColor`. Omit `categories.backgroundColor` — dark luxury sites keep surfaces monochrome.
 
 ## Aesthetic → Full Theme Presets
 

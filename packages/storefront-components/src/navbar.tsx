@@ -25,7 +25,7 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
             ? 'absolute top-0 left-0 right-0 z-20'
             : navStyle === 'filled'
                 ? 'border-b border-transparent'
-                : 'border-b border-neutral-200 bg-white'
+                : 'border-b border-neutral-200'
 
     // NavConfig style overrides take precedence over theme-derived defaults
     const overrideBg = nav.backgroundColor
@@ -39,7 +39,7 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
                 ? { backgroundColor: theme.primaryColor }
                 : navStyle === 'transparent'
                     ? { backgroundColor: 'transparent' }
-                    : {}),
+                    : { backgroundColor: '#ffffff' }),
         ...(overrideFontSize ? { fontSize: overrideFontSize } : {}),
     }
 

@@ -120,7 +120,8 @@ export function useOrchestrator() {
           }
 
           // Step 3: rebuild containers to match — one container per enabled section
-          const existingContainers = currentState.containers;
+          const existingContainers =
+            currentState.pageContainers[currentState.currentPage] ?? [];
           const newContainers = orderedIds
             .map((id) => {
               const sec = allSections.find((sec) => sec.id === id);
@@ -171,6 +172,18 @@ export function useOrchestrator() {
         if (u.navChanges) {
           if (u.navChanges.brandName !== undefined) {
             s.updateNavBrandName(u.navChanges.brandName);
+          }
+          // Apply visual style fields from navChanges (same as componentStyleChanges.navbar)
+          if (
+            u.navChanges.backgroundColor !== undefined ||
+            u.navChanges.textColor !== undefined ||
+            u.navChanges.fontSize !== undefined
+          ) {
+            s.updateNavStyle({
+              backgroundColor: u.navChanges.backgroundColor,
+              textColor: u.navChanges.textColor,
+              fontSize: u.navChanges.fontSize,
+            });
           }
         }
         if (u.productsPageChanges) {

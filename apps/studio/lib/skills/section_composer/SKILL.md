@@ -163,6 +163,16 @@ Every enabled section MUST have complete data. Never emit partial objects.
 - Newsletter: incentive: "Subscribe and save 20%"
 - Voice: utilitarian
 
+### Earthy / Personal Care (Dr. Squatch style)
+
+- Enable: `announcement-bar`, `benefits-bar`, `brand-strip`, `testimonials`, `newsletter`
+- `announcement-bar`: emoji: null, scrolling: true, promo-first text (seasonal, collab, bundle threshold), `backgroundColor: primaryColor` (earthy brown/dark)
+- `benefits-bar` icons: `leaf`, `check`, `shield`, `award` — Natural Ingredients, No Harmful Stuff, Quality Guarantee, Satisfaction Guaranteed
+- Testimonials: `grid` layout, showRatings: true, heading reflects brand voice (e.g. "SQUATCH NATION HAS SPOKEN", "WHAT CUSTOMERS ARE SAYING")
+- Newsletter: incentive: "Sign up and get 20% off your first order", bold headline with brand personality
+- `brand-strip` heading: "As seen in" — mainstream lifestyle/men's press names
+- Voice: bold, confident, irreverent — earthy DTC brands have strong differentiated voices
+
 ## Implementation Notes
 
 - Keep above-the-fold sequence: announcement-bar → hero → benefits-bar

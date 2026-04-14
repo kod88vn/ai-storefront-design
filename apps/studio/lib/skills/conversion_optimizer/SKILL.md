@@ -67,6 +67,18 @@ Generate conversion-focused layout and UX recommendations. Synthesizes all upstr
 - Newsletter: `incentive: "Get 10% off your first order"` — drives first-purchase conversion
 - `borderRadius: md` — softness signals approachability
 
+### Earthy / DTC Personal Care (Dr. Squatch style)
+
+- Hero: `split`, product-on-lifestyle photography, `badge` with seasonal promo or "Natural Ingredients"
+- `announcement-bar` always on, `scrolling: true`, promo-first text (limited editions, collabs, bundle deals) linked to a featured product or collection
+- Benefits: `leaf`, `check`, `shield`, `award` — Natural Products, No Harmful Ingredients, Satisfaction Guaranteed, Quality Guarantee
+- `brand-strip` with mainstream lifestyle press (Men's Health, GQ, Birchbox, NYT Wirecutter) — legitimacy for skeptical buyers
+- Testimonials: `grid` layout with star ratings — high review counts are the core conversion signal for this archetype
+- Newsletter: `incentive: "Sign up and get 20% off your first order"` — strong first-purchase capture
+- `componentStyleChanges`: set `footer.backgroundColor: "#1b4332"` (dark forest green) and `categories.backgroundColor: "#f0ebe4"` (cream/warm tan)
+- `navStyle: bordered` — clean nav separation despite earthy warmth
+- Avoid `newsletter` without incentive — earthy/personal-care brands rely heavily on email discounts
+
 ### Bold Playful (Activewear / Wellness)
 
 - Hero: `centered`, large type, `badge` with an offer (free shipping threshold)
