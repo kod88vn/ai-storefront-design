@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Monitor, Tablet, Smartphone } from 'lucide-react'
+import { Monitor, Tablet, Smartphone, Undo2, Redo2 } from 'lucide-react'
 import { useStudioStore } from '@/lib/store'
 import { viewportWidths, type Viewport, type DesignerContainer, type ComponentItem } from '@/lib/types'
 import type { CartItem, StorefrontConfig, SectionType } from '@ai-storefront/types'
@@ -137,7 +137,7 @@ function ContainerCanvas({ config, containers, cartItems }: { config: Storefront
 }
 
 export function CenterCanvas() {
-  const { viewport, setViewport, config, pageContainers, currentPage, cartItems } = useStudioStore()
+  const { viewport, setViewport, config, pageContainers, currentPage, cartItems, undo, redo, canUndo, canRedo } = useStudioStore()
   const containers = pageContainers[currentPage] ?? []
   const width = viewportWidths[viewport]
   const previewShellRef = useRef<HTMLDivElement | null>(null)
@@ -182,19 +182,42 @@ export function CenterCanvas() {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-muted/30">
-      <div className="flex items-center justify-center gap-2 border-b border-border bg-background px-4 py-3">
-        {viewportButtons.map(({ viewport: vp, icon, label }) => (
+      <div className="flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3">
+        <div className="flex items-center gap-1">
           <button
-            key={vp}
-            onClick={() => setViewport(vp)}
-            data-testid={`viewport-${vp}`}
-            className={`flex h-8 items-center gap-2 rounded-md px-3 text-sm transition-colors ${viewport === vp ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'}`}
+            onClick={undo}
+            disabled={!canUndo}
+            data-testid="undo-button"
+            title="Undo (⌘Z)"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-muted"
           >
-            {icon}
-            <span className="hidden sm:inline">{label}</span>
-            <span className="text-xs text-muted-foreground">{viewportWidths[vp]}px</span>
+            <Undo2 className="h-4 w-4" />
           </button>
-        ))}
+          <button
+            onClick={redo}
+            disabled={!canRedo}
+            data-testid="redo-button"
+            title="Redo (⌘⇧Z)"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed hover:bg-muted"
+          >
+            <Redo2 className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          {viewportButtons.map(({ viewport: vp, icon, label }) => (
+            <button
+              key={vp}
+              onClick={() => setViewport(vp)}
+              data-testid={`viewport-${vp}`}
+              className={`flex h-8 items-center gap-2 rounded-md px-3 text-sm transition-colors ${viewport === vp ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'}`}
+            >
+              {icon}
+              <span className="hidden sm:inline">{label}</span>
+              <span className="text-xs text-muted-foreground">{viewportWidths[vp]}px</span>
+            </button>
+          ))}
+        </div>
+        <div className="w-16" />
       </div>
       <div className="flex flex-1 items-start justify-center overflow-auto p-6">
         <motion.div

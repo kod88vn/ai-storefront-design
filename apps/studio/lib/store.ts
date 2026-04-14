@@ -87,6 +87,40 @@ function syncSectionsFromContainers(
   return sections;
 }
 
+// ─── Config history (undo/redo) ───────────────────────────────────────────────
+
+const HISTORY_KEY = "studio:config-history";
+const HISTORY_INDEX_KEY = "studio:config-history-index";
+const MAX_HISTORY =
+  parseInt(process.env.NEXT_PUBLIC_UNDO_STEPS ?? "50", 10) || 50;
+
+function loadHistory(): StorefrontConfig[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? (JSON.parse(raw) as StorefrontConfig[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(history: StorefrontConfig[], index: number) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    localStorage.setItem(HISTORY_INDEX_KEY, String(index));
+  } catch {
+    /* quota exceeded — skip silently */
+  }
+}
+
+function loadHistoryIndex(): number {
+  try {
+    const raw = localStorage.getItem(HISTORY_INDEX_KEY);
+    return raw !== null ? parseInt(raw, 10) : -1;
+  } catch {
+    return -1;
+  }
+}
+
 function makeBlock(
   id: string,
   label: string,
@@ -233,6 +267,16 @@ interface StudioState {
   approvePlan: () => void;
   rejectPlan: (feedback: string) => void;
 
+  // Config history (undo/redo)
+  configHistory: StorefrontConfig[];
+  historyIndex: number;
+  canUndo: boolean;
+  canRedo: boolean;
+  /** Push current config onto the history stack (called automatically by pushingSet) */
+  _pushHistory: (prev: StorefrontConfig) => void;
+  undo: () => void;
+  redo: () => void;
+
   // Thinking stream
   thinkingText: string;
   appendThinkingText: (chunk: string) => void;
@@ -307,6 +351,10 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   viewport: "desktop",
   agentStep: "idle",
   agentPlan: null,
+  configHistory: [],
+  historyIndex: -1,
+  canUndo: false,
+  canRedo: false,
   thinkingText: "",
   auditLog: [],
   visionUrl: "",
@@ -703,6 +751,58 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   clearAuditLog: () => set({ auditLog: [] }),
 
+  // Config history (undo/redo)
+  _pushHistory: (prev) => {
+    set((state) => {
+      // Truncate any redo future when a new change is made
+      const base = state.configHistory.slice(0, state.historyIndex + 1);
+      const next = [...base, prev].slice(-MAX_HISTORY);
+      const idx = next.length - 1;
+      saveHistory(next, idx);
+      return {
+        configHistory: next,
+        historyIndex: idx,
+        canUndo: idx >= 0,
+        canRedo: false,
+      };
+    });
+  },
+
+  undo: () => {
+    set((state) => {
+      if (state.historyIndex < 0) return {};
+      const restoredConfig = state.configHistory[state.historyIndex];
+      const newIndex = state.historyIndex - 1;
+      saveHistory(state.configHistory, newIndex);
+      return {
+        config: restoredConfig,
+        historyIndex: newIndex,
+        canUndo: newIndex >= 0,
+        canRedo: true,
+      };
+    });
+  },
+
+  redo: () => {
+    set((state) => {
+      // Redo index is one past current (the "future" entry)
+      const redoIdx = state.historyIndex + 1;
+      if (redoIdx >= state.configHistory.length) return {};
+      // Push current config back first so undo after redo works
+      const updated = [...state.configHistory];
+      updated[redoIdx - 1] = state.config; // keep current as undo target
+      const restoredConfig = state.configHistory[redoIdx];
+      saveHistory(updated, redoIdx);
+      return {
+        configHistory: updated,
+        config: restoredConfig,
+        historyIndex: redoIdx,
+        canUndo: true,
+        canRedo: redoIdx + 1 < state.configHistory.length,
+      };
+    });
+  },
+
   // Vision
   setVisionUrl: (visionUrl) => set({ visionUrl }),
 
@@ -968,3 +1068,59 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     }));
   },
 }));
+
+// ─── Config change watcher (undo/redo history) ────────────────────────────────
+// Subscribe to config changes and push the previous value onto the history stack.
+// Debounced 1 s so rapid edits (e.g. typing in a text field) are collapsed into
+// one history entry rather than one per keystroke.
+// Undo/redo themselves also update `config` — those are skipped by checking
+// whether historyIndex changed in the same tick.
+{
+  let _prev: StorefrontConfig = useStudioStore.getState().config;
+  // `_debounceBase` is the config snapshot taken at the START of a burst —
+  // we push that as the undo point so undoing restores the pre-burst state.
+  let _debounceBase: StorefrontConfig = _prev;
+  let _timer: ReturnType<typeof setTimeout> | null = null;
+
+  // Restore history from localStorage on first load
+  const savedHistory = loadHistory();
+  const savedIndex = loadHistoryIndex();
+  if (savedHistory.length > 0) {
+    useStudioStore.setState({
+      configHistory: savedHistory,
+      historyIndex: savedIndex,
+      canUndo: savedIndex >= 0,
+      canRedo: savedIndex + 1 < savedHistory.length,
+    });
+  }
+
+  useStudioStore.subscribe((state, prevState) => {
+    if (state.config === prevState.config) return; // nothing changed
+    // undo/redo update config directly — skip (historyIndex changes in same tick)
+    if (state.historyIndex !== prevState.historyIndex) {
+      _prev = state.config;
+      _debounceBase = state.config;
+      if (_timer) {
+        clearTimeout(_timer);
+        _timer = null;
+      }
+      return;
+    }
+
+    _prev = state.config;
+
+    // Start (or restart) the debounce timer
+    if (!_timer) {
+      // First change in this burst — lock in the snapshot to push
+      _debounceBase = prevState.config;
+    } else {
+      clearTimeout(_timer);
+    }
+
+    _timer = setTimeout(() => {
+      _timer = null;
+      useStudioStore.getState()._pushHistory(_debounceBase);
+      _debounceBase = useStudioStore.getState().config;
+    }, 1000);
+  });
+}
