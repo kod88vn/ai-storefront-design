@@ -71,12 +71,20 @@ export function StorefrontHero({ config, theme }: HeroProps) {
     }
 
     if (layout === 'centered') {
+        const hasBg = !!config.backgroundImage
+        const textOnImage = hasBg && !overrideText
         return (
-            <section data-testid="storefront-hero" className="relative overflow-hidden bg-neutral-50 px-4 py-24 sm:px-6" style={{ ...styleOverride }}>
-                <div className="mx-auto max-w-4xl text-center">
+            <section data-testid="storefront-hero" className="relative overflow-hidden px-4 py-24 sm:px-6" style={{ backgroundColor: overrideBg ?? (hasBg ? '#000' : '#f5f5f5'), fontSize: overrideFontSize }}>
+                {hasBg && (
+                    <>
+                        <img src={config.backgroundImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-50" />
+                        <div className="absolute inset-0 bg-black/30" />
+                    </>
+                )}
+                <div className="relative mx-auto max-w-4xl text-center">
                     {badge && <Badge text={badge} />}
-                    <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl" style={{ color: overrideText ?? theme.primaryColor }}>{title}</h1>
-                    <p className="mx-auto mt-6 max-w-2xl text-lg text-neutral-600">{subtitle}</p>
+                    <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl" style={{ color: overrideText ?? (textOnImage ? '#fff' : theme.primaryColor) }}>{title}</h1>
+                    <p className="mx-auto mt-6 max-w-2xl text-lg" style={{ color: overrideText ?? (textOnImage ? 'rgba(255,255,255,0.85)' : '#525252') }}>{subtitle}</p>
                     <div className="mt-8 flex justify-center gap-4">
                         <button
                             className="px-8 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
@@ -86,8 +94,11 @@ export function StorefrontHero({ config, theme }: HeroProps) {
                         </button>
                         {ctaSecondaryText && (
                             <button
-                                className="border px-8 py-3 text-sm font-medium transition-colors hover:bg-neutral-100"
-                                style={{ borderColor: theme.primaryColor, color: theme.primaryColor, borderRadius: radius }}
+                                className="border px-8 py-3 text-sm font-medium transition-colors"
+                                style={textOnImage
+                                    ? { borderColor: 'rgba(255,255,255,0.6)', color: '#fff', borderRadius: radius }
+                                    : { borderColor: theme.primaryColor, color: theme.primaryColor, borderRadius: radius, backgroundColor: 'transparent' }
+                                }
                             >
                                 {ctaSecondaryText}
                             </button>

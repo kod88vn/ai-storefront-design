@@ -54,6 +54,7 @@ function ProductGridEditor() {
             </Field>
             <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
                 <input type="checkbox" checked={pg.showRatings ?? false} onChange={(e) => updateProductGrid({ showRatings: e.target.checked })} className="accent-primary h-3.5 w-3.5" />
+                Show Star Ratings
             </label>
         </div>
     )
