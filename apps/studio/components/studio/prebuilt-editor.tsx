@@ -45,6 +45,28 @@ function HeroEditor() {
             <Field label="CTA Button Text"><input className={inputCls} value={h.ctaText} onChange={(e) => updateHero({ ctaText: e.target.value })} /></Field>
             <Field label="Secondary CTA (optional)"><input className={inputCls} value={h.ctaSecondaryText ?? ''} onChange={(e) => updateHero({ ctaSecondaryText: e.target.value })} /></Field>
             <Field label="Background Image URL"><input className={inputCls} value={h.backgroundImage ?? ''} onChange={(e) => updateHero({ backgroundImage: e.target.value })} placeholder="https://..." /></Field>
+            <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="space-y-1">
+                    <span className={labelCls}>Background</span>
+                    <div className="flex items-center gap-1.5">
+                        <input type="color" value={h.backgroundColor || '#ffffff'} onChange={(e) => updateHero({ backgroundColor: e.target.value })} className="h-8 w-8 shrink-0 cursor-pointer rounded border border-border" />
+                        <input className={inputCls} value={h.backgroundColor ?? ''} onChange={(e) => updateHero({ backgroundColor: e.target.value || undefined })} placeholder="auto" />
+                    </div>
+                </div>
+                <div className="space-y-1">
+                    <span className={labelCls}>Text Color</span>
+                    <div className="flex items-center gap-1.5">
+                        <input type="color" value={h.textColor || '#000000'} onChange={(e) => updateHero({ textColor: e.target.value })} className="h-8 w-8 shrink-0 cursor-pointer rounded border border-border" />
+                        <input className={inputCls} value={h.textColor ?? ''} onChange={(e) => updateHero({ textColor: e.target.value || undefined })} placeholder="auto" />
+                    </div>
+                </div>
+            </div>
+            <Field label="Font Size">
+                <select value={h.fontSize ?? ''} onChange={(e) => updateHero({ fontSize: (e.target.value || undefined) as typeof FONT_SIZES[number] | undefined })} className={selectCls}>
+                    <option value="">Default</option>
+                    {FONT_SIZES.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+            </Field>
         </div>
     )
 }
@@ -64,6 +86,28 @@ function ProductGridEditor() {
                 <input type="checkbox" checked={pg.showRatings ?? false} onChange={(e) => updateProductGrid({ showRatings: e.target.checked })} className="accent-primary h-3.5 w-3.5" />
                 Show Star Ratings
             </label>
+            <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="space-y-1">
+                    <span className={labelCls}>Background</span>
+                    <div className="flex items-center gap-1.5">
+                        <input type="color" value={pg.backgroundColor || '#ffffff'} onChange={(e) => updateProductGrid({ backgroundColor: e.target.value })} className="h-8 w-8 shrink-0 cursor-pointer rounded border border-border" />
+                        <input className={inputCls} value={pg.backgroundColor ?? ''} onChange={(e) => updateProductGrid({ backgroundColor: e.target.value || undefined })} placeholder="auto" />
+                    </div>
+                </div>
+                <div className="space-y-1">
+                    <span className={labelCls}>Text Color</span>
+                    <div className="flex items-center gap-1.5">
+                        <input type="color" value={pg.textColor || '#000000'} onChange={(e) => updateProductGrid({ textColor: e.target.value })} className="h-8 w-8 shrink-0 cursor-pointer rounded border border-border" />
+                        <input className={inputCls} value={pg.textColor ?? ''} onChange={(e) => updateProductGrid({ textColor: e.target.value || undefined })} placeholder="auto" />
+                    </div>
+                </div>
+            </div>
+            <Field label="Font Size">
+                <select value={pg.fontSize ?? ''} onChange={(e) => updateProductGrid({ fontSize: (e.target.value || undefined) as typeof FONT_SIZES[number] | undefined })} className={selectCls}>
+                    <option value="">Default</option>
+                    {FONT_SIZES.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+            </Field>
         </div>
     )
 }

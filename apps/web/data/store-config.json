@@ -9,32 +9,32 @@
   },
   "sections": [
     {
+      "id": "announcement-bar",
+      "type": "announcement-bar",
+      "enabled": true,
+      "order": 0
+    },
+    {
       "id": "hero",
       "type": "hero",
       "enabled": true,
-      "order": 0
+      "order": 1
     },
     {
       "id": "benefits-bar",
       "type": "benefits-bar",
       "enabled": true,
-      "order": 1
-    },
-    {
-      "id": "product-grid",
-      "type": "product-grid",
-      "enabled": true,
       "order": 2
     },
     {
-      "id": "testimonials",
-      "type": "testimonials",
+      "id": "brand-strip",
+      "type": "brand-strip",
       "enabled": true,
       "order": 3
     },
     {
-      "id": "newsletter",
-      "type": "newsletter",
+      "id": "product-grid",
+      "type": "product-grid",
       "enabled": true,
       "order": 4
     },
@@ -45,114 +45,131 @@
       "order": 5
     },
     {
-      "id": "footer",
-      "type": "footer",
+      "id": "testimonials",
+      "type": "testimonials",
       "enabled": true,
       "order": 6
     },
     {
-      "id": "trust-badges",
-      "type": "trust-badges",
+      "id": "newsletter",
+      "type": "newsletter",
       "enabled": true,
       "order": 7
+    },
+    {
+      "id": "footer",
+      "type": "footer",
+      "enabled": true,
+      "order": 8
     }
   ],
   "hero": {
-    "layout": "split",
-    "title": "Natural Grooming Essentials",
-    "subtitle": "Crafted for the rugged and refined with 100% natural ingredients.",
-    "ctaText": "Shop Now",
-    "badge": "100% Natural",
+    "layout": "centered",
+    "title": "Curated Home Essentials",
+    "subtitle": "Discover timeless pieces for modern living",
+    "ctaText": "Shop Collection",
+    "badge": "Clean Ingredients",
     "textAlign": "left",
-    "ctaVariant": "solid",
-    "overlayOpacity": 0.3,
-    "ctaSecondaryText": "Discover More"
+    "ctaVariant": "outline",
+    "overlayOpacity": 0,
+    "backgroundImage": ""
   },
   "productGrid": {
     "columns": 3
   },
   "sectionData": {
+    "announcement-bar": {
+      "text": "Buy 3, Get 1 FREE – Stock Up on Soap!",
+      "backgroundColor": "#3d2b1f",
+      "textColor": "#ffffff",
+      "scrolling": true,
+      "emoji": null,
+      "link": null,
+      "dismissible": true
+    },
     "benefits-bar": {
       "items": [
         {
           "icon": "leaf",
           "label": "Natural Ingredients",
-          "detail": "100% plant-based"
-        },
-        {
-          "icon": "heart",
-          "label": "Handcrafted Care",
-          "detail": "Made with love"
+          "detail": "Only the best nature has to offer"
         },
         {
           "icon": "check",
-          "label": "Sustainable",
-          "detail": "Eco-friendly products"
+          "label": "No Harmful Chemicals",
+          "detail": "Clean for your skin"
+        },
+        {
+          "icon": "shield",
+          "label": "Quality Guarantee",
+          "detail": "Satisfaction guaranteed"
         },
         {
           "icon": "award",
-          "label": "Top Quality",
-          "detail": "Customer approved"
+          "label": "Man Approved",
+          "detail": "Trusted by real men"
         }
       ]
     },
-    "featured-collection": {
-      "heading": "Our Best Sellers",
-      "subheading": "Discover the products customers can't get enough of.",
-      "layout": "grid"
+    "brand-strip": {
+      "heading": "As seen in",
+      "brands": [
+        {
+          "name": "Forbes",
+          "logoText": "Forbes"
+        },
+        {
+          "name": "Men's Health",
+          "logoText": "Men's Health"
+        },
+        {
+          "name": "Fox News",
+          "logoText": "Fox News"
+        },
+        {
+          "name": "Barstool Sports",
+          "logoText": "Barstool Sports"
+        }
+      ]
     },
     "testimonials": {
-      "heading": "What Our Customers Say",
-      "layout": "list",
+      "heading": "SQUATCH NATION HAS SPOKEN",
+      "layout": "grid",
       "showRatings": true,
       "items": [
         {
-          "quote": "These products have transformed my grooming routine. Absolutely love the natural scents!",
+          "quote": "\"Smells like a real man should. Love it!\"",
+          "author": "Mike R.",
+          "location": "Colorado",
+          "rating": 5
+        },
+        {
+          "quote": "\"Finally a soap that doesn't smell like flowers.\"",
+          "author": "Dave S.",
+          "location": "Texas",
+          "rating": 5
+        },
+        {
+          "quote": "\"Best shower experience ever.\"",
+          "author": "Tom B.",
+          "location": "Florida",
+          "rating": 5
+        },
+        {
+          "quote": "\"My wife loves how I smell now.\"",
           "author": "Jake M.",
-          "location": "Denver, CO",
+          "location": "California",
           "rating": 5
-        },
-        {
-          "quote": "Finally, a brand that prioritizes natural ingredients without compromising on quality.",
-          "author": "Sam T.",
-          "location": "Austin, TX",
-          "rating": 5
-        },
-        {
-          "quote": "The soaps are amazing, and I feel good knowing they're eco-friendly.",
-          "author": "Chris R.",
-          "location": "Portland, OR",
-          "rating": 4
         }
       ]
     },
     "newsletter": {
-      "heading": "Join the Squatch Squad",
-      "subtext": "Stay updated with exclusive offers and grooming tips.",
+      "heading": "Do whatever we want",
+      "subtext": "Get exclusive deals and manly tips.",
       "placeholder": "Enter your email",
-      "buttonText": "Subscribe",
-      "backgroundColor": "#3d2b1f",
-      "incentive": "Get 10% off your first order"
-    },
-    "trust-badges": {
-      "items": [
-        {
-          "icon": "lock",
-          "label": "Secure Payment"
-        },
-        {
-          "icon": "truck",
-          "label": "Fast Delivery"
-        },
-        {
-          "icon": "refresh",
-          "label": "Easy Returns"
-        },
-        {
-          "icon": "award",
-          "label": "Quality Guarantee"
-        }
-      ]
+      "buttonText": "Join the Nation",
+      "backgroundColor": "#f0ebe4",
+      "incentive": "Sign up — get 20% off your first order"
     }
   },
   "nav": {
@@ -167,6 +184,79 @@
         "id": "nav-shop",
         "label": "Shop",
         "href": "/products"
+      },
+      {
+        "id": "nav-88f7ac3f",
+        "label": "Random",
+        "href": "/custom"
+      }
+    ],
+    "backgroundColor": "#345327",
+    "textColor": "#d8caca"
+  },
+  "categories": {
+    "backgroundColor": "#f0ebe4"
+  },
+  "footer": {
+    "backgroundColor": "#1e1208",
+    "textColor": "#ffffff"
+  },
+  "customPages": [
+    {
+      "id": "custom-bf06f0ab",
+      "name": "custom",
+      "slug": "/custom",
+      "sections": [
+        {
+          "id": "announcement-bar",
+          "type": "announcement-bar",
+          "enabled": true,
+          "order": 0
+        }
+      ]
+    }
+  ],
+  "pagesSections": {
+    "products": [
+      {
+        "id": "products-listing",
+        "type": "products-listing",
+        "enabled": true,
+        "order": 0
+      },
+      {
+        "id": "footer",
+        "type": "footer",
+        "enabled": true,
+        "order": 1
+      }
+    ],
+    "product-detail": [
+      {
+        "id": "product-detail-content",
+        "type": "product-detail-content",
+        "enabled": true,
+        "order": 0
+      },
+      {
+        "id": "footer",
+        "type": "footer",
+        "enabled": true,
+        "order": 1
+      }
+    ],
+    "cart": [
+      {
+        "id": "cart-content",
+        "type": "cart-content",
+        "enabled": true,
+        "order": 0
+      },
+      {
+        "id": "footer",
+        "type": "footer",
+        "enabled": true,
+        "order": 1
       }
     ]
   }

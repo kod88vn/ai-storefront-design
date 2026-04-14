@@ -73,7 +73,7 @@ export function LeftSidebar() {
       imageData: droppedImage,
       currentConfig: config,
       planFeedback: null,
-      page: useStudioStore.getState().currentPage,
+      page: useStudioStore.getState().currentPage as import('@ai-storefront/types').PageType,
     })
   }
 

@@ -13,6 +13,7 @@ interface ProductDetailPageProps {
     pagesConfig?: Partial<ProductDetailPageConfig>
     cartItems?: CartItem[]
     onAddToCart?: (productId: string, qty: number) => void
+    showNav?: boolean
 }
 
 function Stars({ rating }: { rating: number }) {
@@ -25,7 +26,7 @@ function Stars({ rating }: { rating: number }) {
     )
 }
 
-export function ProductDetailPage({ theme, navConfig, productId, pagesConfig, cartItems = [], onAddToCart }: ProductDetailPageProps) {
+export function ProductDetailPage({ theme, navConfig, productId, pagesConfig, cartItems = [], onAddToCart, showNav = true }: ProductDetailPageProps) {
     const [qty, setQty] = useState(1)
     const [activeImg, setActiveImg] = useState(0)
     const [added, setAdded] = useState(false)
@@ -69,7 +70,7 @@ export function ProductDetailPage({ theme, navConfig, productId, pagesConfig, ca
             className={`min-h-screen ${theme.navStyle === 'transparent' ? 'relative' : ''}`}
             style={{ backgroundColor: bg, color: text, fontFamily, ['--storefront-radius' as string]: radius }}
         >
-            <StorefrontNavbar theme={theme} navConfig={navConfig} cartCount={cartCount} onCartClick={() => window.location.href = '/cart'} />
+            {showNav && <StorefrontNavbar theme={theme} navConfig={navConfig} cartCount={cartCount} onCartClick={() => window.location.href = '/cart'} />}
 
             <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
                 <a href="/products" className="mb-6 inline-flex items-center gap-1.5 text-sm" style={{ color: mutedText }}>

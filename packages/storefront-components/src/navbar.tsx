@@ -84,11 +84,12 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
                 <div className={`flex items-center gap-3 ${iconCls}`} style={overrideText ? { color: overrideText } : {}}>
                     <button data-testid="navbar-search" aria-label="Search" className={iconCls}><Search className="h-4 w-4" /></button>
                     <button data-testid="navbar-user" aria-label="Account" className={iconCls}><User className="h-4 w-4" /></button>
-                    <button
+                    <a
+                        href="/cart"
                         data-testid="navbar-cart"
                         aria-label="Cart"
                         className={`relative ${iconCls}`}
-                        onClick={onCartClick}
+                        onClick={onCartClick ? (e) => { e.preventDefault(); onCartClick() } : undefined}
                     >
                         <ShoppingBag className="h-4 w-4" />
                         {cartCount > 0 && (
@@ -96,7 +97,7 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
                                 {cartCount > 9 ? '9+' : cartCount}
                             </span>
                         )}
-                    </button>
+                    </a>
                     <button
                         data-testid="navbar-menu-toggle"
                         aria-label="Menu"

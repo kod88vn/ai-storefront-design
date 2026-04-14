@@ -12,6 +12,7 @@ interface ProductsPageProps {
     pagesConfig?: Partial<ProductsPageConfig>
     cartItems?: CartItem[]
     onAddToCart?: (productId: string) => void
+    showNav?: boolean
 }
 
 function ProductStars({ rating }: { rating: number }) {
@@ -24,7 +25,7 @@ function ProductStars({ rating }: { rating: number }) {
     )
 }
 
-export function ProductsPage({ theme, navConfig, pagesConfig, cartItems = [], onAddToCart }: ProductsPageProps) {
+export function ProductsPage({ theme, navConfig, pagesConfig, cartItems = [], onAddToCart, showNav = true }: ProductsPageProps) {
     const [activeCategory, setActiveCategory] = useState<string | null>(null)
     const cfg: ProductsPageConfig = {
         heading: 'All Products',
@@ -67,7 +68,7 @@ export function ProductsPage({ theme, navConfig, pagesConfig, cartItems = [], on
             className={`min-h-screen ${theme.navStyle === 'transparent' ? 'relative' : ''}`}
             style={{ backgroundColor: bg, color: text, fontFamily, ['--storefront-radius' as string]: radius }}
         >
-            <StorefrontNavbar theme={theme} navConfig={navConfig} cartCount={cartCount} onCartClick={() => window.location.href = '/cart'} />
+            {showNav && <StorefrontNavbar theme={theme} navConfig={navConfig} cartCount={cartCount} onCartClick={() => window.location.href = '/cart'} />}
 
             <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
                 <h1 className="text-3xl font-semibold" style={{ color: theme.primaryColor }}>{cfg.heading}</h1>

@@ -125,16 +125,25 @@ const defaultPageContainers: Record<string, DesignerContainer[]> = {
     makeBlock("cart-body", "Cart", "cart-content"),
     makeBlock("cart-footer", "Footer", "footer"),
   ],
-  custom: [],
+  // custom pages are added dynamically via addCustomPage
 };
 
 interface StudioState {
   // Storefront Configuration
   config: StorefrontConfig;
 
-  // Current page being edited
-  currentPage: PageType;
-  setCurrentPage: (page: PageType) => void;
+  // Current page being edited (string so custom page IDs like "custom-abc" work)
+  currentPage: string;
+  setCurrentPage: (page: string) => void;
+
+  // Custom pages
+  customPages: Array<{ id: string; name: string; slug: string }>;
+  addCustomPage: () => void;
+  removeCustomPage: (id: string) => void;
+  updateCustomPage: (
+    id: string,
+    patch: { name?: string; slug?: string },
+  ) => void;
 
   // Nav config
   updateNavBrandName: (name: string) => void;
@@ -303,10 +312,41 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   pageContainers: defaultPageContainers,
   selectedComponent: null,
   currentPage: "home",
+  customPages: [],
   cartItems: [],
 
   // Current page
   setCurrentPage: (currentPage) => set({ currentPage }),
+
+  // Custom pages
+  addCustomPage: () => {
+    const id = `custom-${crypto.randomUUID().slice(0, 8)}`;
+    const n = get().customPages.length + 1;
+    const name = `Page ${n}`;
+    const slug = `/page-${n}`;
+    set((state) => ({
+      customPages: [...state.customPages, { id, name, slug }],
+      pageContainers: { ...state.pageContainers, [id]: [] },
+      currentPage: id,
+    }));
+  },
+  removeCustomPage: (id) => {
+    set((state) => {
+      const { [id]: _removed, ...rest } = state.pageContainers;
+      return {
+        customPages: state.customPages.filter((p) => p.id !== id),
+        pageContainers: rest,
+        currentPage: state.currentPage === id ? "home" : state.currentPage,
+      };
+    });
+  },
+  updateCustomPage: (id, patch) => {
+    set((state) => ({
+      customPages: state.customPages.map((p) =>
+        p.id === id ? { ...p, ...patch } : p,
+      ),
+    }));
+  },
 
   // Nav config
   updateNavBrandName: (brandName) => {

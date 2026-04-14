@@ -223,6 +223,16 @@ export interface StorefrontConfig {
   pages?: Partial<PagesConfig>;
   categories?: CategoriesConfig;
   footer?: FooterConfig;
+  customPages?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    sections?: LayoutSection[];
+  }>;
+  /** Sections for each core page, saved from the studio's designer containers */
+  pagesSections?: Partial<
+    Record<"products" | "product-detail" | "cart", LayoutSection[]>
+  >;
 }
 
 // ─── Product / category ───────────────────────────────────────────────────────

@@ -9,16 +9,38 @@ import { ThemePanel } from './theme-panel'
 import { NavPanel } from './nav-panel'
 import { PageSelector } from './page-selector'
 import { PageSettingsPanel } from './page-settings-panel'
-import { ComponentStylesPanel } from './component-styles-panel'
 
 export function RightSidebar() {
-  const { config, selectedComponent } = useStudioStore()
+  const { config, customPages, pageContainers, selectedComponent } = useStudioStore()
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
 
   async function handleSave() {
     setSaveState('saving')
     try {
-      await fetch('/api/store-config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ config }) })
+      // Convert each custom page's containers into LayoutSection[] for the web renderer
+      const customPagesWithSections = customPages.map((p) => {
+        const containers = pageContainers[p.id] ?? []
+        let order = 0
+        const sections = containers.flatMap((container) =>
+          container.components
+            .filter((c) => c.kind === 'prebuilt')
+            .map((c) => ({ id: c.sectionType, type: c.sectionType, enabled: true, order: order++ }))
+        )
+        return { ...p, sections }
+      })
+      // Convert core page containers into LayoutSection[] for the web renderer
+      const corePageIds = ['products', 'product-detail', 'cart'] as const
+      const pagesSections: Partial<Record<(typeof corePageIds)[number], { id: string; type: string; enabled: boolean; order: number }[]>> = {}
+      for (const pid of corePageIds) {
+        let order = 0
+        pagesSections[pid] = (pageContainers[pid] ?? []).flatMap((container) =>
+          container.components
+            .filter((c) => c.kind === 'prebuilt')
+            .map((c) => ({ id: c.sectionType, type: c.sectionType, enabled: true, order: order++ }))
+        )
+      }
+      const payload = { ...config, customPages: customPagesWithSections, pagesSections }
+      await fetch('/api/store-config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ config: payload }) })
       setSaveState('saved')
       setTimeout(() => setSaveState('idle'), 2000)
     } catch { setSaveState('idle') }
@@ -34,7 +56,6 @@ export function RightSidebar() {
         <div data-testid="right-sidebar-content" className="h-full overflow-y-auto">
           <NavPanel />
           <ThemePanel />
-          <ComponentStylesPanel />
           <PageSettingsPanel />
         </div>
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background to-transparent" />

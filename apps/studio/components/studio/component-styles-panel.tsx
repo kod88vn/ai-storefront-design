@@ -54,18 +54,6 @@ function SectionStyleBlock({ label, testId, children }: { label: string; testId:
     )
 }
 
-function NavbarStyleSection() {
-    const { config, updateNavStyle } = useStudioStore()
-    const nav = config.nav ?? { brandName: '', links: [] }
-    return (
-        <SectionStyleBlock label="Navbar" testId="section-style-navbar">
-            <ColorRow label="Background Color" value={nav.backgroundColor ?? ''} onChange={(v) => updateNavStyle({ backgroundColor: v || undefined, textColor: nav.textColor, fontSize: nav.fontSize })} testId="navbar-bg" />
-            <ColorRow label="Text Color" value={nav.textColor ?? ''} onChange={(v) => updateNavStyle({ backgroundColor: nav.backgroundColor, textColor: v || undefined, fontSize: nav.fontSize })} testId="navbar-text" />
-            <FontSizeRow value={nav.fontSize} onChange={(v) => updateNavStyle({ backgroundColor: nav.backgroundColor, textColor: nav.textColor, fontSize: v })} testId="navbar-font-size" />
-        </SectionStyleBlock>
-    )
-}
-
 function HeroStyleSection() {
     const { config, updateHero } = useStudioStore()
     const hero = config.hero
@@ -125,7 +113,6 @@ export function ComponentStylesPanel() {
             </button>
             {open && (
                 <div data-testid="component-styles-body">
-                    <NavbarStyleSection />
                     <HeroStyleSection />
                     <ProductGridStyleSection />
                     <CategoriesStyleSection />

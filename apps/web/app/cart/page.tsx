@@ -1,8 +1,14 @@
 'use client'
 
-import { CartPage } from '@ai-storefront/storefront-components'
+import { StorefrontPreview } from '@ai-storefront/storefront-components'
+import type { LayoutSection } from '@ai-storefront/types'
 import { useCart } from '../../lib/cart-context'
 import { useConfig } from '../../lib/use-config'
+
+const DEFAULT_SECTIONS: LayoutSection[] = [
+    { id: 'cart-content', type: 'cart-content', enabled: true, order: 0 },
+    { id: 'footer', type: 'footer', enabled: true, order: 1 },
+]
 
 export default function CartPageRoute() {
     const config = useConfig()
@@ -10,12 +16,13 @@ export default function CartPageRoute() {
 
     if (!config) return null
 
+    const pageConfig = { ...config, sections: config.pagesSections?.cart ?? DEFAULT_SECTIONS }
+
     return (
-        <CartPage
-            theme={config.theme}
-            navConfig={config.nav}
+        <StorefrontPreview
+            config={pageConfig}
             cartItems={items}
-            pagesConfig={config.pages?.cart}
+            cartCount={items.reduce((n, i) => n + i.qty, 0)}
             onUpdateQty={updateQty}
             onRemove={removeFromCart}
         />

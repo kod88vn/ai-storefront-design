@@ -1,17 +1,25 @@
-import type { LayoutSection, StorefrontConfig } from '@ai-storefront/types'
+import type { CartItem, LayoutSection, StorefrontConfig } from '@ai-storefront/types'
 import { StorefrontNavbar } from './navbar'
 import { StorefrontHero } from './hero'
 import { StorefrontProductGrid } from './product-grid'
 import { StorefrontCategories } from './categories'
 import { StorefrontFooter } from './footer'
 import { ExtraSections } from './extra-sections'
+import { ProductsPage } from './pages/products-page'
+import { ProductDetailPage } from './pages/product-detail-page'
+import { CartPage } from './pages/cart-page'
 
 interface StorefrontPreviewProps {
     config: StorefrontConfig
     cartCount?: number
+    cartItems?: CartItem[]
+    onAddToCart?: (productId: string) => void
+    onUpdateQty?: (productId: string, qty: number) => void
+    onRemove?: (productId: string) => void
+    productId?: string
 }
 
-export function StorefrontPreview({ config, cartCount = 0 }: StorefrontPreviewProps) {
+export function StorefrontPreview({ config, cartCount = 0, cartItems = [], onAddToCart, onUpdateQty, onRemove, productId }: StorefrontPreviewProps) {
     const sortedSections = [...config.sections].sort((a, b) => a.order - b.order)
 
     function renderSection(section: LayoutSection) {
@@ -25,6 +33,12 @@ export function StorefrontPreview({ config, cartCount = 0 }: StorefrontPreviewPr
                 return <StorefrontCategories key={section.id} theme={config.theme} categoriesConfig={config.categories} />
             case 'footer':
                 return <StorefrontFooter key={section.id} theme={config.theme} footerConfig={config.footer} />
+            case 'products-listing':
+                return <ProductsPage key={section.id} theme={config.theme} navConfig={config.nav} pagesConfig={config.pages?.products} cartItems={cartItems} onAddToCart={onAddToCart} showNav={false} />
+            case 'cart-content':
+                return <CartPage key={section.id} theme={config.theme} navConfig={config.nav} cartItems={cartItems} pagesConfig={config.pages?.cart} onUpdateQty={onUpdateQty} onRemove={onRemove} showNav={false} />
+            case 'product-detail-content':
+                return <ProductDetailPage key={section.id} theme={config.theme} navConfig={config.nav} productId={productId} pagesConfig={config.pages?.productDetail} cartItems={cartItems} onAddToCart={onAddToCart ? (pid, qty = 1) => { for (let i = 0; i < qty; i++) onAddToCart(pid) } : undefined} showNav={false} />
             default:
                 return <ExtraSections key={section.id} section={section} config={config} />
         }

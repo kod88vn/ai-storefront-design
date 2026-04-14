@@ -11,9 +11,10 @@ interface CartPageProps {
     pagesConfig?: Partial<CartPageConfig>
     onUpdateQty?: (productId: string, qty: number) => void
     onRemove?: (productId: string) => void
+    showNav?: boolean
 }
 
-export function CartPage({ theme, navConfig, cartItems = [], pagesConfig, onUpdateQty, onRemove }: CartPageProps) {
+export function CartPage({ theme, navConfig, cartItems = [], pagesConfig, onUpdateQty, onRemove, showNav = true }: CartPageProps) {
     const cfg: CartPageConfig = {
         emptyMessage: 'Your cart is empty. Start shopping!',
         checkoutButtonText: 'Proceed to Checkout',
@@ -48,7 +49,7 @@ export function CartPage({ theme, navConfig, cartItems = [], pagesConfig, onUpda
             className={`min-h-screen ${theme.navStyle === 'transparent' ? 'relative' : ''}`}
             style={{ backgroundColor: bg, color: text, fontFamily, ['--storefront-radius' as string]: radius }}
         >
-            <StorefrontNavbar theme={theme} navConfig={navConfig} cartCount={cartCount} />
+            {showNav && <StorefrontNavbar theme={theme} navConfig={navConfig} cartCount={cartCount} />}
 
             <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
                 <h1 className="text-3xl font-semibold" style={{ color: theme.primaryColor }}>Your Cart</h1>
