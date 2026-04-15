@@ -16,15 +16,13 @@
 import { generateText, streamText, tool } from "ai";
 import { xai } from "@ai-sdk/xai";
 import { z } from "zod";
-import fs from "fs/promises";
-import path from "path";
 
-import type {
-  OrchestratorContext,
-  OrchestratorEvent,
-  AgentStep,
-} from "@/lib/types";
-import { SKILL_TEMPLATE_VARS } from "@ai-storefront/types";
+import type { OrchestratorContext, OrchestratorEvent } from "@/lib/types";
+import { buildSystemPrompt } from "@/lib/design-studio/build-system-prompt";
+import { audit, progress } from "@/lib/design-studio/events";
+import { jsonSchemaToZod } from "@/lib/design-studio/json-schema-to-zod";
+import { mcpListTools, mcpToolCall } from "@/lib/design-studio/mcp-client";
+import { filterSkills, loadSkills } from "@/lib/design-studio/skill-loader";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -33,131 +31,6 @@ const MAX_STEPS = 15;
 const AI_MODEL = process.env.AI_MODEL ?? "grok-3-fast";
 // Vision-capable model — same model supports vision on the Responses API
 const VISION_MODEL = process.env.VISION_MODEL ?? "grok-3-fast";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getBaseUrl(): string {
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? 3000}`;
-}
-
-function progress(message: string, agentStep?: AgentStep): OrchestratorEvent {
-  return { type: "progress", message, agentStep };
-}
-
-function audit(
-  method: string,
-  params: Record<string, unknown>,
-  result?: unknown,
-): OrchestratorEvent {
-  return { type: "audit", entry: { method, params, result } };
-}
-
-// ─── Skill loader (reads from lib/skills/**/SKILL.md) ─────────────────────────
-
-interface LoadedSkill {
-  name: string;
-  content: string;
-}
-
-async function loadSkills(): Promise<LoadedSkill[]> {
-  const skillsDir = path.join(process.cwd(), "lib/skills");
-  try {
-    const folders = await fs.readdir(skillsDir);
-    const results = await Promise.all(
-      folders.map(async (folder) => {
-        try {
-          const raw = await fs.readFile(
-            path.join(skillsDir, folder, "SKILL.md"),
-            "utf-8",
-          );
-          // Interpolate {{VAR}} placeholders with values from schema.ts
-          const content = raw.replace(
-            /\{\{(\w+)\}\}/g,
-            (_, key) => SKILL_TEMPLATE_VARS[key] ?? `{{${key}}}`,
-          );
-          return { name: folder, content } satisfies LoadedSkill;
-        } catch {
-          // SKILL.md missing for this folder — skip
-          return null;
-        }
-      }),
-    );
-    return results.filter((s): s is LoadedSkill => s !== null);
-  } catch {
-    // lib/skills directory doesn't exist — safe to continue with empty skills
-    return [];
-  }
-}
-
-function parseTags(content: string): string[] {
-  const m = content.match(/##\s+Tags\s*\n+([^\n#]+)/m);
-  if (!m) return [];
-  return m[1]
-    .split(/[,\s]+/)
-    .map((t) => t.trim())
-    .filter(Boolean);
-}
-
-function getActiveTags(
-  goal: string,
-  context: OrchestratorContext,
-): Set<string> {
-  const tags = new Set<string>(["always"]);
-  if (context.imageData || context.visionUrl) tags.add("vision");
-  if (/\b(copy|content|messag|voice|description)\b/i.test(goal))
-    tags.add("content");
-  if (/\b(convert|conversion|sale|checkout|cta|funnel)\b/i.test(goal))
-    tags.add("conversion");
-  return tags;
-}
-
-// ─── MCP client ───────────────────────────────────────────────────────────────
-
-async function mcpCall(
-  method: string,
-  params: Record<string, unknown>,
-): Promise<unknown> {
-  const res = await fetch(`${getBaseUrl()}/api/mcp`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    // Use a UUID per call — avoids sharing a mutable counter across concurrent requests
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: crypto.randomUUID(),
-      method,
-      params,
-    }),
-  });
-  const json = await res.json();
-  if (json.error) throw new Error(json.error.message);
-  return json.result;
-}
-
-async function mcpListTools(): Promise<
-  Array<{ name: string; description: string; inputSchema: unknown }>
-> {
-  const result = (await mcpCall("tools/list", {})) as {
-    tools: Array<{ name: string; description: string; inputSchema: unknown }>;
-  };
-  return result.tools ?? [];
-}
-
-async function mcpToolCall(
-  toolName: string,
-  args: Record<string, unknown>,
-): Promise<unknown> {
-  const result = (await mcpCall("tools/call", {
-    name: toolName,
-    arguments: args,
-  })) as { content: Array<{ type: string; text: string }> };
-  const text = result.content?.[0]?.text;
-  try {
-    return text ? JSON.parse(text) : result;
-  } catch {
-    return text ?? result;
-  }
-}
 
 // ─── Orchestrator generator ───────────────────────────────────────────────────
 
@@ -169,12 +42,7 @@ export async function* runOrchestrator(
   yield progress("Loading AI skills...", "thinking");
 
   const allSkills = await loadSkills();
-  const activeTags = getActiveTags(goal, context);
-  const skills = allSkills.filter((s) => {
-    const tags = parseTags(s.content);
-    // Skills with no tags always load (backwards-compat)
-    return tags.length === 0 || tags.some((t) => activeTags.has(t));
-  });
+  const skills = filterSkills(allSkills, goal, context);
   yield audit("skills/load", {
     loaded: skills.map((s) => s.name),
     skipped: allSkills.filter((s) => !skills.includes(s)).map((s) => s.name),
@@ -213,7 +81,45 @@ export async function* runOrchestrator(
   let preComputedTokens = "";
   let visionFailed = false;
 
-  if (context.imageData) {
+  if (
+    context.uploadedImageTokens &&
+    Object.values(context.uploadedImageTokens).some((value) => Boolean(value))
+  ) {
+    const tokens = context.uploadedImageTokens;
+    preComputedTokens = [
+      `siteCategory: other`,
+      `businessModel: single-brand-dtc`,
+      `primaryColor: ${tokens.primaryColor ?? "#111111"}`,
+      `secondaryColor: ${tokens.secondaryColor ?? "#6366f1"}`,
+      `backgroundColor: ${tokens.backgroundColor ?? tokens.primaryColor ?? "#ffffff"}`,
+      `sectionBackgroundColor: ${tokens.sectionBackgroundColor ?? tokens.backgroundColor ?? "#f5f5f5"}`,
+      `colorScheme: ${tokens.colorScheme ?? "light"}`,
+      `dominantStyle: ${tokens.dominantStyle ?? "clean"}`,
+      `fontStyle: ${tokens.fontStyle ?? "modern-sans"}`,
+      `navStyle: ${tokens.navStyle ?? "bordered"}`,
+      `borderRadius: ${tokens.borderRadius ?? "md"}`,
+      `heroLayout: ${tokens.heroLayout ?? "split"}`,
+      `productGridColumns: ${tokens.productGridColumns ?? 3}`,
+      `visualDensity: balanced`,
+      `ctaStyle: brand-first`,
+      `imageryStyle: mixed`,
+      `headlineTone: editorial`,
+      `navigationDensity: medium`,
+      `sectionOrder: []`,
+      `mood: ${tokens.mood ?? ""}`,
+      `brandSignals: []`,
+      `observations: ${tokens.observations ?? "Locally extracted from the uploaded screenshot."}`,
+    ].join("\n");
+
+    yield audit("vision/local-tokens", {
+      source: "client-canvas",
+      tokens,
+    });
+    yield progress(
+      "Image analyzed from the uploaded screenshot...",
+      "thinking",
+    );
+  } else if (context.imageData) {
     yield progress("Analyzing uploaded image...", "thinking");
     try {
       const visionResult = await generateText({
@@ -230,8 +136,8 @@ export async function* runOrchestrator(
 {
   "siteCategory": "<food-delivery|fashion|footwear|beauty|electronics|home|marketplace|grocery|wellness|other>",
   "businessModel": "<marketplace|single-brand-dtc|multi-brand-retail|editorial-commerce|service-led-commerce>",
-  "primaryColor": "<exact hex of dominant brand color — navbar, buttons, or headings>",
-  "secondaryColor": "<exact hex of accent or CTA button color>",
+  "primaryColor": "<exact hex of the dominant structural brand color used across the experience — usually headings, wordmark, or repeated UI framing; ignore a small navbar strip if it is only a minor accent>",
+  "secondaryColor": "<exact hex of the accent or CTA color used more sparingly>",
   "backgroundColor": "<exact hex of the main page/canvas background color>",
   "sectionBackgroundColor": "<exact hex of secondary surface color — announcement bars, benefit strips, newsletter panels>",
   "colorScheme": "<light|dark>",
@@ -342,164 +248,19 @@ Rules:
 
   // ── 4. Build system prompt ──────────────────────────────────────────────────
 
-  const { planFeedback } = context;
-
-  let resumeInstruction = "";
-  if (planFeedback?.approved === true) {
-    const prev = planFeedback.previousPlan;
-    const prevDetail = prev
-      ? [
-          `"${prev.description}"`,
-          `Layout: ${prev.layoutProposal}`,
-          `Color: ${prev.colorProposal}`,
-          prev.navStyleProposal ? `NavStyle: ${prev.navStyleProposal}` : "",
-          prev.colorSchemeProposal
-            ? `ColorScheme: ${prev.colorSchemeProposal}`
-            : "",
-        ]
-          .filter(Boolean)
-          .join(", ")
-      : "";
-    resumeInstruction = [
-      "\n\n---",
-      "**The user has APPROVED your plan.** Proceed with Phase 3 of the Planner Skill.",
-      prevDetail ? `Previously proposed: ${prevDetail}.` : "",
-      "Call apply_config_update now with all computed values. Do NOT call plan_feedback again.",
-    ]
-      .filter(Boolean)
-      .join("\n");
-  } else if (planFeedback?.approved === false) {
-    resumeInstruction = [
-      "\n\n---",
-      `**The user rejected the plan.** Feedback: "${planFeedback.modifications ?? "no details given"}".`,
-      "Revise your proposal and call plan_feedback again. Do NOT call apply_config_update yet.",
-    ].join("\n");
-  }
-
-  const configSummary = [
-    `hero: ${context.currentConfig.hero.layout} layout, title="${context.currentConfig.hero.title}"`,
-    `theme: primary=${context.currentConfig.theme.primaryColor}, secondary=${context.currentConfig.theme.secondaryColor}, radius=${context.currentConfig.theme.borderRadius}, font=${context.currentConfig.theme.fontStyle ?? "modern-sans"}, nav=${context.currentConfig.theme.navStyle ?? "bordered"}, scheme=${context.currentConfig.theme.colorScheme ?? "light"}`,
-    `grid: ${context.currentConfig.productGrid.columns} columns`,
-  ].join(" | ");
-
-  // planner skill is always embedded in full as the workflow definition.
-  // All other loaded skills are embedded in full under ## Skill References
-  // so the AI has exact input/output schemas, presets, and rules to follow.
-  const plannerSkill = skills.find((s) => s.name === "planner");
-  const supportingSkills = skills.filter((s) => s.name !== "planner");
-
-  const supportingSkillsSection =
-    supportingSkills.length > 0
-      ? `## Skill References\n\n${supportingSkills.map((s) => `---\n\n${s.content}`).join("\n\n")}`
-      : "";
-
-  const mcpToolDescriptions = mcpTools
-    .map(
-      (t) =>
-        `**${t.name}**: ${t.description}\n  Input schema: ${JSON.stringify(t.inputSchema)}`,
-    )
-    .join("\n\n");
-
-  // When an image was uploaded and pre-analyzed, inject the tokens into the
-  // system prompt and tell the AI to skip the MCP vision/theme calls for Phase 1.
-  const preComputedSection = preComputedTokens
-    ? `## Pre-Computed Design Tokens (from uploaded image)
-
-**Image already analyzed — do NOT call \`analyze_vision_input\` or \`generate_theme\` MCP tools for Phase 1.**
-Use these extracted values directly when calling \`plan_feedback\` and \`apply_config_update\`. These are exact pixel samples from the uploaded screenshot — use them verbatim.
-
-${preComputedTokens}
-
-Skip Phase 1 entirely and proceed to Phase 2 (plan_feedback) using the tokens above.
-
-`
-    : visionFailed
-      ? `## Vision Analysis Failed
-
-The uploaded image could not be analyzed (model error or invalid response). Treat this as a **text-only request** — infer design direction from the user's goal text alone. DO NOT reference any pre-computed color tokens.
-
-`
-      : "";
-
-  const systemPrompt = `You are an AI storefront design agent. Redesign the storefront based on the user's goal.
-
-When writing plan_feedback descriptions, explain the *why* — e.g. "dark palette matches the luxury feel in the uploaded image" or "editorial serif suits the fashion category". Users need reasoning, not just a list of changes.
-
-${preComputedSection}## Workflow
-
-${plannerSkill ? plannerSkill.content : "1. Call plan_feedback first. 2. After approval, call apply_config_update."}
-
-${supportingSkillsSection}
-
-## MCP Tools
-
-${mcpToolDescriptions}
-
-## Current Config
-
-${configSummary}${resumeInstruction}`;
+  const systemPrompt = buildSystemPrompt({
+    context,
+    skills,
+    mcpTools,
+    preComputedTokens,
+    visionFailed,
+  });
 
   // ── 5. Compose tools for the AI ─────────────────────────────────────────────
   //
   // Internal tools (plan_feedback, apply_config_update) are handled by the
   // orchestrator directly — NOT forwarded to MCP.
   // External tools wrap MCP calls.
-
-  // Converts a MCP JSON Schema to a Zod schema so the AI model sees named
-  // fields rather than a generic z.record. Nested objects are handled
-  // recursively; the full JSON Schema string in the description covers
-  // fine-grained constraints the model should respect at generation time.
-  function jsonSchemaToZod(schema: unknown): z.ZodTypeAny {
-    if (!schema || typeof schema !== "object") return z.unknown();
-    const s = schema as Record<string, unknown>;
-
-    // String or numeric enum → z.enum / z.union of literals
-    if (Array.isArray(s.enum) && s.enum.length > 0) {
-      const vals = s.enum as (string | number)[];
-      if (typeof vals[0] === "string") {
-        return z.enum(vals as [string, ...string[]]);
-      }
-      const lits = vals.map((v) => z.literal(v as number));
-      return z.union(
-        lits as unknown as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]],
-      );
-    }
-
-    switch (s.type as string) {
-      case "string":
-        return z.string();
-      case "number":
-      case "integer": {
-        let n = z.number();
-        if (typeof s.minimum === "number") n = n.min(s.minimum as number);
-        if (typeof s.maximum === "number") n = n.max(s.maximum as number);
-        return n;
-      }
-      case "boolean":
-        return z.boolean();
-      case "array":
-        return z.array(s.items ? jsonSchemaToZod(s.items) : z.unknown());
-      case "object": {
-        if (!s.properties || typeof s.properties !== "object") {
-          return z.record(z.string(), z.unknown());
-        }
-        const required = new Set<string>(
-          Array.isArray(s.required) ? (s.required as string[]) : [],
-        );
-        const shape = Object.fromEntries(
-          Object.entries(s.properties as Record<string, unknown>).map(
-            ([k, v]) => {
-              const fieldZod = jsonSchemaToZod(v);
-              return [k, required.has(k) ? fieldZod : fieldZod.optional()];
-            },
-          ),
-        );
-        return z.object(shape);
-      }
-      default:
-        return z.unknown();
-    }
-  }
 
   // MCP tools are registered dynamically — no orchestrator edits needed when tools are added.
   // jsonSchemaToZod converts each tool's inputSchema so the AI sees named fields.

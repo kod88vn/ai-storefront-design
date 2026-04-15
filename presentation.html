@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Storefront Design Studio</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --indigo: #6366f1;
+        --indigo-dark: #4f46e5;
+        --amber: #f59e0b;
+        --emerald: #10b981;
+        --zinc-950: #09090b;
+        --zinc-900: #18181b;
+        --zinc-800: #27272a;
+        --zinc-700: #3f3f46;
+        --zinc-400: #a1a1aa;
+        --zinc-300: #d4d4d8;
+        --white: #ffffff;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: var(--zinc-950);
+        color: var(--white);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        overflow: hidden;
+      }
+
+      /* ── Slide container ───────────────────────────────────────────── */
+      .deck {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+      }
+
+      .slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 4rem 6rem;
+        opacity: 0;
+        transform: translateX(60px);
+        pointer-events: none;
+        transition:
+          opacity 0.45s ease,
+          transform 0.45s ease;
+      }
+      .slide.active {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: all;
+      }
+      .slide.exit {
+        opacity: 0;
+        transform: translateX(-60px);
+      }
+
+      /* ── Nav dots ──────────────────────────────────────────────────── */
+      .dots {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.5rem;
+        z-index: 100;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--zinc-700);
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .dot.active {
+        background: var(--indigo);
+      }
+
+      /* ── Arrow nav ─────────────────────────────────────────────────── */
+      .arrow {
+        position: fixed;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: 1px solid var(--zinc-700);
+        color: var(--zinc-400);
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+        z-index: 100;
+      }
+      .arrow:hover {
+        border-color: var(--indigo);
+        color: var(--white);
+      }
+      .arrow.prev {
+        left: 1.5rem;
+      }
+      .arrow.next {
+        right: 1.5rem;
+      }
+
+      /* ── Slide counter ─────────────────────────────────────────────── */
+      .counter {
+        position: fixed;
+        top: 1.5rem;
+        right: 2rem;
+        font-size: 0.75rem;
+        color: var(--zinc-400);
+        letter-spacing: 0.05em;
+        z-index: 100;
+      }
+
+      /* ── Typography ────────────────────────────────────────────────── */
+      .eyebrow {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--indigo);
+        margin-bottom: 1rem;
+      }
+      h1 {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        text-align: center;
+      }
+      h2 {
+        font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        margin-bottom: 2.5rem;
+      }
+      .subtitle {
+        font-size: clamp(1rem, 2vw, 1.3rem);
+        color: var(--zinc-400);
+        text-align: center;
+        max-width: 640px;
+        line-height: 1.6;
+        margin-top: 1.25rem;
+      }
+      .grad {
+        background: linear-gradient(135deg, var(--indigo) 0%, #a855f7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .grad-amber {
+        background: linear-gradient(135deg, var(--amber) 0%, #f97316 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* ── Cards ─────────────────────────────────────────────────────── */
+      .card-row {
+        display: flex;
+        gap: 1.5rem;
+        width: 100%;
+        max-width: 900px;
+      }
+      .card {
+        flex: 1;
+        background: var(--zinc-900);
+        border: 1px solid var(--zinc-800);
+        border-radius: 16px;
+        padding: 2rem 1.75rem;
+      }
+      .card .icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+      }
+      .card h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+      .card p {
+        font-size: 0.9rem;
+        color: var(--zinc-400);
+        line-height: 1.6;
+      }
+
+      /* ── Flow diagram (custom SVG-style HTML) ──────────────────────── */
+      .flow {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        width: 100%;
+        max-width: 880px;
+        margin-top: 1rem;
+      }
+      .flow-node {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 1.5rem 1rem;
+        border-radius: 14px;
+        position: relative;
+      }
+      .flow-node .icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+      }
+      .flow-node .label {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+      }
+      .flow-node .desc {
+        font-size: 0.78rem;
+        color: var(--zinc-400);
+        line-height: 1.5;
+      }
+      .flow-arrow {
+        width: 60px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .flow-arrow .line {
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--zinc-700), var(--zinc-600));
+        position: relative;
+      }
+      .flow-arrow .arrowhead {
+        color: var(--zinc-500);
+        font-size: 1.2rem;
+        line-height: 1;
+        margin-top: -14px;
+        align-self: flex-end;
+      }
+      .flow-arrow .tag {
+        font-size: 0.65rem;
+        color: var(--zinc-500);
+        letter-spacing: 0.05em;
+        margin-top: 4px;
+      }
+      .node-user {
+        background: rgba(99, 102, 241, 0.12);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+      }
+      .node-ai {
+        background: rgba(168, 85, 247, 0.1);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+      }
+      .node-hitl {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+      }
+      .node-live {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      /* ── Capability list ───────────────────────────────────────────── */
+      .cap-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+        max-width: 760px;
+      }
+      .cap-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        background: var(--zinc-900);
+        border: 1px solid var(--zinc-800);
+        border-radius: 12px;
+        padding: 1.1rem 1.5rem;
+      }
+      .cap-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .cap-item h4 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+      }
+      .cap-item p {
+        font-size: 0.82rem;
+        color: var(--zinc-400);
+        line-height: 1.5;
+      }
+
+      /* ── Metrics ───────────────────────────────────────────────────── */
+      .metrics {
+        display: flex;
+        gap: 2rem;
+        max-width: 700px;
+        width: 100%;
+        justify-content: center;
+        margin-top: 1rem;
+      }
+      .metric {
+        flex: 1;
+        background: var(--zinc-900);
+        border: 1px solid var(--zinc-800);
+        border-radius: 14px;
+        padding: 1.75rem;
+        text-align: center;
+      }
+      .metric .num {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+      }
+      .metric .unit {
+        font-size: 0.8rem;
+        color: var(--zinc-400);
+        margin-top: 0.4rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      /* ── Title slide ───────────────────────────────────────────────── */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0.9rem;
+        border-radius: 999px;
+        border: 1px solid rgba(99, 102, 241, 0.4);
+        background: rgba(99, 102, 241, 0.08);
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #a5b4fc;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 1.75rem;
+      }
+
+      /* ── Closing slide ─────────────────────────────────────────────── */
+      .tagline {
+        font-size: clamp(1.1rem, 2vw, 1.4rem);
+        color: var(--zinc-400);
+        text-align: center;
+        max-width: 560px;
+        line-height: 1.7;
+        margin-top: 1rem;
+      }
+      .contact {
+        margin-top: 3rem;
+        padding: 1.25rem 2rem;
+        background: var(--zinc-900);
+        border: 1px solid var(--zinc-800);
+        border-radius: 12px;
+        font-size: 0.85rem;
+        color: var(--zinc-400);
+        text-align: center;
+      }
+
+      /* ── Tech stack slide ──────────────────────────────────────────── */
+      .stack-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        max-width: 840px;
+        width: 100%;
+      }
+      .stack-item {
+        background: var(--zinc-900);
+        border: 1px solid var(--zinc-800);
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+      }
+      .stack-item .s-icon {
+        font-size: 1.4rem;
+        flex-shrink: 0;
+      }
+      .stack-item .s-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .stack-item .s-detail {
+        font-size: 0.72rem;
+        color: var(--zinc-500);
+      }
+
+      /* ── Two-column layout ─────────────────────────────────────────── */
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        max-width: 900px;
+        width: 100%;
+      }
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .col h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--zinc-300);
+        margin-bottom: 0.5rem;
+      }
+      .item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        font-size: 0.85rem;
+        color: var(--zinc-400);
+        line-height: 1.5;
+      }
+      .item .dot2 {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 6px;
+      }
+      .indigo-dot {
+        background: var(--indigo);
+      }
+      .amber-dot {
+        background: var(--amber);
+      }
+      .emerald-dot {
+        background: var(--emerald);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="deck" id="deck">
+      <!-- ── Slide 1: Title ─────────────────────────────────────────── -->
+      <div class="slide active" id="s0">
+        <div class="badge">✦ Proof of Concept · April 2026</div>
+        <h1><span class="grad">AI Storefront</span><br />Design Studio</h1>
+        <p class="subtitle">
+          A new way to design e-commerce storefronts — describe your brand,
+          watch the AI propose a complete design, approve it in one click.
+        </p>
+      </div>
+
+      <!-- ── Slide 2: The Problem ───────────────────────────────────── -->
+      <div class="slide" id="s1">
+        <div class="eyebrow">The problem</div>
+        <h2>
+          Great storefront design<br />is
+          <span class="grad-amber">slow, expensive, and fragile</span>
+        </h2>
+        <div class="card-row">
+          <div class="card">
+            <div class="icon">🗓️</div>
+            <h3>Weeks, not hours</h3>
+            <p>
+              A full redesign requires briefing a designer, waiting for mockups,
+              rounds of revisions, and a developer to build it — often 4–8 weeks
+              end-to-end.
+            </p>
+          </div>
+          <div class="card">
+            <div class="icon">🧩</div>
+            <h3>Multi-team dependency</h3>
+            <p>
+              Brand manager, UX designer, front-end developer, and QA — any one
+              of them becoming a bottleneck stalls the whole project.
+            </p>
+          </div>
+          <div class="card">
+            <div class="icon">🔁</div>
+            <h3>Hard to experiment</h3>
+            <p>
+              Testing a new layout, color palette, or seasonal theme means going
+              back to the start. Iteration is expensive, so teams don't do
+              enough of it.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Slide 3: The Solution ──────────────────────────────────── -->
+      <div class="slide" id="s2">
+        <div class="eyebrow">The solution</div>
+        <h2>
+          Describe your brand.<br />AI does the
+          <span class="grad">design work</span>.
+        </h2>
+        <div class="flow">
+          <div class="flow-node node-user">
+            <div class="icon">🧑‍💼</div>
+            <div class="label">You</div>
+            <div class="desc">
+              Paste a competitor URL or describe your brand in plain English
+            </div>
+          </div>
+          <div class="flow-arrow">
+            <div class="line"></div>
+            <div class="arrowhead">▶</div>
+            <div class="tag">goal</div>
+          </div>
+          <div class="flow-node node-ai">
+            <div class="icon">🤖</div>
+            <div class="label">AI Agent</div>
+            <div class="desc">
+              Reads brand signals, generates theme, layout &amp; copy — live as
+              you watch
+            </div>
+          </div>
+          <div class="flow-arrow">
+            <div class="line"></div>
+            <div class="arrowhead">▶</div>
+            <div class="tag">proposal</div>
+          </div>
+          <div class="flow-node node-hitl">
+            <div class="icon">👀</div>
+            <div class="label">You Review</div>
+            <div class="desc">
+              Approve the plan, add feedback, or reject — the AI revises until
+              you're satisfied
+            </div>
+          </div>
+          <div class="flow-arrow">
+            <div class="line"></div>
+            <div class="arrowhead">▶</div>
+            <div class="tag">approved</div>
+          </div>
+          <div class="flow-node node-live">
+            <div class="icon">🛍️</div>
+            <div class="label">Live Store</div>
+            <div class="desc">
+              Changes publish instantly — no code, no deploy pipeline, no
+              waiting
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Slide 4: Key Capabilities ─────────────────────────────── -->
+      <div class="slide" id="s3">
+        <div class="eyebrow">Capabilities</div>
+        <h2>What the AI can do <span class="grad">today</span></h2>
+        <div class="cap-list">
+          <div class="cap-item">
+            <div class="cap-icon">🎨</div>
+            <div>
+              <h4>Full visual theme generation</h4>
+              <p>
+                Colors, fonts, border radius, nav style, color scheme — derived
+                from your reference or brief. 10 brand archetypes built in
+                (luxury, organic, editorial, tech, playful&hellip;).
+              </p>
+            </div>
+          </div>
+          <div class="cap-item">
+            <div class="cap-icon">📐</div>
+            <div>
+              <h4>Layout & section intelligence</h4>
+              <p>
+                Chooses the right hero layout, product grid density, and section
+                ordering for your category and style. Knows that a luxury brand
+                needs a full-width editorial hero, not a carousel.
+              </p>
+            </div>
+          </div>
+          <div class="cap-item">
+            <div class="cap-icon">✍️</div>
+            <div>
+              <h4>Copy &amp; content population</h4>
+              <p>
+                Writes hero headlines, benefit bullets, testimonial stubs,
+                newsletter hooks, and CTAs — all tuned to your brand voice and
+                archetype.
+              </p>
+            </div>
+          </div>
+          <div class="cap-item">
+            <div class="cap-icon">↩️</div>
+            <div>
+              <h4>Undo / redo &amp; manual override</h4>
+              <p>
+                Every change is tracked. Editors can override any AI decision —
+                colors, text, layout — and walk back 50 steps of history. AI and
+                human co-author the final design.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Slide 5: Human in the Loop ────────────────────────────── -->
+      <div class="slide" id="s4">
+        <div class="eyebrow">Design philosophy</div>
+        <h2>AI proposes. <span class="grad">Humans decide.</span></h2>
+        <div class="two-col">
+          <div class="col">
+            <h3>What the AI handles autonomously</h3>
+            <div class="item">
+              <div class="dot2 indigo-dot"></div>
+              <span
+                >Reading and interpreting brand reference URLs or images</span
+              >
+            </div>
+            <div class="item">
+              <div class="dot2 indigo-dot"></div>
+              <span>Selecting colors, typography, and layout combinations</span>
+            </div>
+            <div class="item">
+              <div class="dot2 indigo-dot"></div>
+              <span>Writing and structuring storefront copy</span>
+            </div>
+            <div class="item">
+              <div class="dot2 indigo-dot"></div>
+              <span>Proposing which sections to show and in what order</span>
+            </div>
+            <div class="item">
+              <div class="dot2 indigo-dot"></div>
+              <span>Applying all changes to the live preview in one step</span>
+            </div>
+          </div>
+          <div class="col">
+            <h3>What stays in human hands</h3>
+            <div class="item">
+              <div class="dot2 amber-dot"></div>
+              <span>Final approval before anything goes live</span>
+            </div>
+            <div class="item">
+              <div class="dot2 amber-dot"></div>
+              <span>Overriding any individual AI decision</span>
+            </div>
+            <div class="item">
+              <div class="dot2 amber-dot"></div>
+              <span>Adding feedback to steer the AI's revision</span>
+            </div>
+            <div class="item">
+              <div class="dot2 amber-dot"></div>
+              <span>Saving and publishing to the live storefront</span>
+            </div>
+            <div class="item">
+              <div class="dot2 emerald-dot"></div>
+              <span style="color: #6ee7b7"
+                >Every decision is logged in a full audit trail — nothing is a
+                black box</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Slide 6: Tech foundation ──────────────────────────────── -->
+      <div class="slide" id="s5">
+        <div class="eyebrow">Under the hood</div>
+        <h2>Built on <span class="grad">proven foundations</span></h2>
+        <div class="stack-grid">
+          <div class="stack-item">
+            <div class="s-icon">⚡</div>
+            <div>
+              <div class="s-label">Next.js + Turbopack</div>
+              <div class="s-detail">Industry-standard web framework</div>
+            </div>
+          </div>
+          <div class="stack-item">
+            <div class="s-icon">🤖</div>
+            <div>
+              <div class="s-label">Reason capable LLM</div>
+              <div class="s-detail">Primary design intelligence model</div>
+            </div>
+          </div>
+          <div class="stack-item">
+            <div class="s-icon">👁️</div>
+            <div>
+              <div class="s-label">Vision capable LLM</div>
+              <div class="s-detail">Extracts design tokens from images</div>
+            </div>
+          </div>
+          <div class="stack-item">
+            <div class="s-icon">🔌</div>
+            <div>
+              <div class="s-label">MCP Protocol</div>
+              <div class="s-detail">
+                Swappable AI tools &amp; multi-agent ready
+              </div>
+            </div>
+          </div>
+          <div class="stack-item">
+            <div class="s-icon">🔴</div>
+            <div>
+              <div class="s-label">Server-Sent Events</div>
+              <div class="s-detail">Real-time streaming — no polling</div>
+            </div>
+          </div>
+          <div class="stack-item">
+            <div class="s-icon">📦</div>
+            <div>
+              <div class="s-label">Shared component engine</div>
+              <div class="s-detail">Studio preview = live storefront</div>
+            </div>
+          </div>
+        </div>
+        <p
+          style="
+            font-size: 0.8rem;
+            color: var(--zinc-500);
+            margin-top: 1.5rem;
+            text-align: center;
+          "
+        >
+          Model-agnostic by design — swap xAI for any provider without changing
+          UI or workflow logic
+        </p>
+      </div>
+
+      <!-- ── Slide 7: What's next ───────────────────────────────────── -->
+      <div class="slide" id="s6">
+        <div class="eyebrow">Next steps</div>
+        <h2>From POC to <span class="grad">production</span></h2>
+        <div class="card-row">
+          <div class="card">
+            <div class="icon">🧪</div>
+            <h3>Validate with real brands</h3>
+            <p>
+              Run the studio with 3–5 pilot brand managers. Measure
+              time-to-first-design vs. the current process. Collect revision
+              feedback data.
+            </p>
+          </div>
+          <div class="card">
+            <div class="icon">🔗</div>
+            <h3>Platform integration</h3>
+            <p>
+              Connect to your existing product catalog, CMS, and CDN. Replace
+              mock data with live inventory and imagery.
+            </p>
+          </div>
+          <div class="card">
+            <div class="icon">🚀</div>
+            <h3>Multi-brand &amp; permissions</h3>
+            <p>
+              User authentication, brand workspaces, role-based approval flows,
+              and version history for enterprise rollout.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Slide 8: Closing ───────────────────────────────────────── -->
+      <div class="slide" id="s7">
+        <h1 style="font-size: clamp(2rem, 4vw, 3.2rem)">
+          Design a storefront in<br /><span class="grad"
+            >minutes, not weeks.</span
+          >
+        </h1>
+        <p class="tagline">
+          The AI Storefront Design Studio gives brand teams the creative
+          leverage of a full design agency — without the agency.
+        </p>
+        <div class="contact">
+          Built as a working proof of concept · All feedback welcome
+        </div>
+      </div>
+    </div>
+    <!-- /deck -->
+
+    <!-- Controls -->
+    <button class="arrow prev" id="prev" onclick="move(-1)">&#8592;</button>
+    <button class="arrow next" id="next" onclick="move(1)">&#8594;</button>
+    <div class="dots" id="dots"></div>
+    <div class="counter" id="counter"></div>
+
+    <script>
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const total = slides.length;
+      let cur = 0;
+
+      const dotsEl = document.getElementById("dots");
+      const counterEl = document.getElementById("counter");
+
+      // Build dots
+      slides.forEach((_, i) => {
+        const d = document.createElement("div");
+        d.className = "dot" + (i === 0 ? " active" : "");
+        d.onclick = () => goTo(i);
+        dotsEl.appendChild(d);
+      });
+
+      function goTo(n) {
+        const prev = slides[cur];
+        prev.classList.remove("active");
+        prev.classList.add("exit");
+        setTimeout(() => prev.classList.remove("exit"), 450);
+
+        cur = (n + total) % total;
+        slides[cur].classList.add("active");
+
+        document
+          .querySelectorAll(".dot")
+          .forEach((d, i) => d.classList.toggle("active", i === cur));
+        counterEl.textContent = `${cur + 1} / ${total}`;
+        document.getElementById("prev").style.opacity = cur === 0 ? "0.2" : "1";
+        document.getElementById("next").style.opacity =
+          cur === total - 1 ? "0.2" : "1";
+      }
+
+      function move(dir) {
+        goTo(cur + dir);
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === " ") move(1);
+        if (e.key === "ArrowLeft") move(-1);
+      });
+
+      // Init counter
+      goTo(0);
+    </script>
+  </body>
+</html>

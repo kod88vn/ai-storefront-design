@@ -19,6 +19,9 @@ Every section component has hardcoded placeholder content (generic copy, lorem-s
 **Rule 3 — Concrete brand signals outrank generic aesthetics.**
 If vision tokens include `siteCategory`, `businessModel`, `ctaStyle`, `imageryStyle`, `headlineTone`, `visualDensity`, `navigationDensity`, `sectionOrder`, or `brandSignals`, use those as the primary design driver. Do not let two very different experiences collapse into the same plan just because they both look "clean" or "light".
 
+**Rule 4 — Accessibility is mandatory.**
+Treat color contrast as a first-class design requirement. Whenever you propose or apply custom backgrounds, ensure the text color remains readable at WCAG AA contrast levels. If needed, adjust the component text color to preserve readability without changing the overall brand feel.
+
 ## Phase 1 — Understand
 
 **If a `visionUrl` or image source is provided:**

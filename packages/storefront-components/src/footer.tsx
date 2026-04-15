@@ -1,4 +1,5 @@
 import type { FooterConfig, ThemeConfig } from '@ai-storefront/types'
+import { pickAccessibleTextColor } from './accessibility'
 
 interface FooterProps {
     theme: ThemeConfig
@@ -11,8 +12,9 @@ export function StorefrontFooter({ theme, footerConfig }: FooterProps) {
     const isDark = (theme.colorScheme ?? 'light') === 'dark'
     const effectiveBg = footerConfig?.backgroundColor ?? (isDark ? '#0d0d0d' : '#ffffff')
     const borderColor = isDark ? '#2a2a2a' : '#e5e5e5'
-    const headingColor = footerConfig?.textColor ?? (isDark ? '#f5f5f5' : '#171717')
-    const mutedColor = footerConfig?.textColor ?? '#737373'
+    const headingColor = pickAccessibleTextColor(effectiveBg, footerConfig?.textColor ?? (isDark ? '#f5f5f5' : '#171717'))
+    const mutedColor = pickAccessibleTextColor(effectiveBg, footerConfig?.textColor ?? '#737373')
+    const brandColor = pickAccessibleTextColor(effectiveBg, theme.primaryColor)
     // Always set a base font-size so children that don't have explicit Tailwind text classes will scale.
     // Default 'sm' keeps the footer compact; changing fontSize in the editor will now have a visible effect.
     const effectiveFontSize = FONT_SIZE_MAP[footerConfig?.fontSize ?? 'sm']
@@ -21,7 +23,7 @@ export function StorefrontFooter({ theme, footerConfig }: FooterProps) {
             <div className="mx-auto max-w-7xl">
                 <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
                     <div className="col-span-2 md:col-span-1">
-                        <h3 className="text-lg font-semibold" style={{ color: theme.primaryColor }}>STUDIO</h3>
+                        <h3 className="text-lg font-semibold" style={{ color: brandColor }}>STUDIO</h3>
                         <p className="mt-3" style={{ color: mutedColor }}>{footerConfig?.tagline ?? 'Curated pieces for modern living.'}</p>
                     </div>
                     <div>

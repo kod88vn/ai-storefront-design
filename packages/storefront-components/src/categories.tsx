@@ -1,4 +1,5 @@
 import type { CategoriesConfig, ThemeConfig } from '@ai-storefront/types'
+import { pickAccessibleTextColor } from './accessibility'
 import { sampleCategories } from './data'
 
 interface CategoriesProps {
@@ -12,8 +13,8 @@ export function StorefrontCategories({ theme, categoriesConfig }: CategoriesProp
     const isDark = (theme.colorScheme ?? 'light') === 'dark'
     const effectiveBg = categoriesConfig?.backgroundColor ?? (isDark ? '#1a1a1a' : '#f5f5f5')
     const cardBg = isDark ? '#2a2a2a' : '#ffffff'
-    const effectiveText = categoriesConfig?.textColor ?? (isDark ? '#e5e5e5' : '#525252')
-    const headingColor = categoriesConfig?.textColor ?? theme.primaryColor
+    const effectiveText = pickAccessibleTextColor(cardBg, categoriesConfig?.textColor ?? (isDark ? '#e5e5e5' : '#525252'))
+    const headingColor = pickAccessibleTextColor(effectiveBg, categoriesConfig?.textColor ?? theme.primaryColor)
     // Default to 'sm' so the wrapper always has a base font-size. Category cards then inherit it instead
     // of being fixed at 0.875rem via the Tailwind text-sm class.
     const effectiveFontSize = FONT_SIZE_MAP[categoriesConfig?.fontSize ?? 'sm']

@@ -111,6 +111,10 @@ Use these as complete starting points when mimicking a known style archetype:
 
 - `primaryColor` drives all text headings and the logo wordmark — needs strong contrast on both light and dark backgrounds
 - `secondaryColor` drives CTA buttons, badge pills, icon accents, cart count badge — must pass WCAG AA on white AND on `primaryColor`
+- Respect the reference color proportions: dominant neutrals and structural tones should cover most of the UI, while vivid accents should stay in a restrained 5–15% role.
+- Do not let a navbar-only color become the site-wide primary unless that same tone is repeated across headings, cards, and CTAs throughout the reference.
+- All AI-selected foreground/background combinations must meet WCAG AA contrast, targeting at least 4.5:1 for normal text. If a custom section background is dark, use white or near-white text; if the background is light, use near-black text.
+- Whenever you set `backgroundColor` for `navbar`, `hero`, `productGrid`, `categories`, or `footer`, also set a readable `textColor` unless the inherited theme color already clearly passes contrast.
 - `navStyle: "transparent"` must be paired with an editorial hero that has a dark overlay
 - `navStyle: "filled"` works best with `colorScheme: "light"` so the colored navbar provides contrast
 - `borderRadius: "none"` signals premium/architectural brands; `"full"` signals approachable/wellness brands

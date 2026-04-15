@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Search, ShoppingBag, User, Menu, X } from 'lucide-react'
 import type { NavConfig, ThemeConfig } from '@ai-storefront/types'
+import { pickAccessibleTextColor } from './accessibility'
 import { defaultNavConfig } from './data'
 
 interface NavbarProps {
@@ -32,27 +33,28 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
     const overrideText = nav.textColor
     const overrideFontSize = nav.fontSize ? FONT_SIZE_MAP[nav.fontSize] : undefined
 
+    const navBackground = overrideBg
+        ?? (navStyle === 'filled'
+            ? theme.primaryColor
+            : navStyle === 'transparent'
+                ? '#0a0a0a'
+                : '#ffffff')
+
     const containerStyle = {
-        ...(overrideBg
-            ? { backgroundColor: overrideBg }
+        backgroundColor: overrideBg
+            ? overrideBg
             : navStyle === 'filled'
-                ? { backgroundColor: theme.primaryColor }
+                ? theme.primaryColor
                 : navStyle === 'transparent'
-                    ? { backgroundColor: 'transparent' }
-                    : { backgroundColor: '#ffffff' }),
+                    ? 'transparent'
+                    : '#ffffff',
         ...(overrideFontSize ? { fontSize: overrideFontSize } : {}),
     }
 
-    const textColor = overrideText ?? (navStyle === 'transparent' || navStyle === 'filled' ? '#ffffff' : theme.primaryColor)
-
-    const linkCls =
-        overrideText
-            ? ''
-            : navStyle === 'transparent' || navStyle === 'filled'
-                ? 'text-white/80 hover:text-white'
-                : 'text-neutral-600 hover:text-neutral-900'
-
+    const textColor = pickAccessibleTextColor(navBackground, overrideText ?? (navStyle === 'transparent' || navStyle === 'filled' ? '#ffffff' : theme.primaryColor))
+    const linkCls = 'transition-opacity hover:opacity-80'
     const iconCls = linkCls
+    const badgeTextColor = pickAccessibleTextColor(theme.secondaryColor, '#ffffff')
 
     const mobileBorderCls =
         navStyle === 'transparent' || navStyle === 'filled'
@@ -75,13 +77,13 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
                 </a>
 
                 {/* Desktop nav links */}
-                <div className={`hidden items-center gap-6 text-sm md:flex ${linkCls}`} style={overrideText ? { color: overrideText } : {}}>
+                <div className={`hidden items-center gap-6 text-sm md:flex ${linkCls}`} style={{ color: textColor }}>
                     {nav.links.map((link) => (
-                        <a key={link.id} href={link.href} className={linkCls} style={overrideText ? { color: overrideText } : {}}>{link.label}</a>
+                        <a key={link.id} href={link.href} className={linkCls} style={{ color: textColor }}>{link.label}</a>
                     ))}
                 </div>
 
-                <div className={`flex items-center gap-3 ${iconCls}`} style={overrideText ? { color: overrideText } : {}}>
+                <div className={`flex items-center gap-3 ${iconCls}`} style={{ color: textColor }}>
                     <button data-testid="navbar-search" aria-label="Search" className={iconCls}><Search className="h-4 w-4" /></button>
                     <button data-testid="navbar-user" aria-label="Account" className={iconCls}><User className="h-4 w-4" /></button>
                     <a
@@ -93,7 +95,7 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
                     >
                         <ShoppingBag className="h-4 w-4" />
                         {cartCount > 0 && (
-                            <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full text-[10px] text-white" style={{ backgroundColor: theme.secondaryColor }}>
+                            <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full text-[10px]" style={{ backgroundColor: theme.secondaryColor, color: badgeTextColor }}>
                                 {cartCount > 9 ? '9+' : cartCount}
                             </span>
                         )}
@@ -112,9 +114,9 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
             {/* Mobile menu */}
             {menuOpen && (
                 <div data-testid="navbar-mobile-menu" className={`md:hidden ${mobileBorderCls}`} style={mobileContainerStyle}>
-                    <div className={`flex flex-col gap-4 px-4 py-4 text-sm ${linkCls}`} style={overrideText ? { color: overrideText } : {}}>
+                    <div className={`flex flex-col gap-4 px-4 py-4 text-sm ${linkCls}`} style={{ color: textColor }}>
                         {nav.links.map((link) => (
-                            <a key={link.id} href={link.href} className={linkCls} onClick={() => setMenuOpen(false)}>{link.label}</a>
+                            <a key={link.id} href={link.href} className={linkCls} style={{ color: textColor }} onClick={() => setMenuOpen(false)}>{link.label}</a>
                         ))}
                     </div>
                 </div>

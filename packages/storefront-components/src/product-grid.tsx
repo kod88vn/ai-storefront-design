@@ -1,5 +1,6 @@
 import type { ProductGridConfig, ThemeConfig } from '@ai-storefront/types'
 import { Star } from 'lucide-react'
+import { pickAccessibleTextColor } from './accessibility'
 import { sampleProducts } from './data'
 
 interface ProductGridProps {
@@ -23,8 +24,14 @@ export function StorefrontProductGrid({ config, theme }: ProductGridProps) {
     const gridClass = config.columns === 2 ? 'sm:grid-cols-2' : config.columns === 4 ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3'
     const isDark = (theme.colorScheme ?? 'light') === 'dark'
     const effectiveBg = config.backgroundColor ?? (isDark ? '#111111' : '#ffffff')
-    const effectiveText = config.textColor ?? (isDark ? '#f5f5f5' : theme.primaryColor)
+    const cardBg = isDark ? '#2a2a2a' : '#ffffff'
+    const effectiveText = pickAccessibleTextColor(effectiveBg, config.textColor ?? (isDark ? '#f5f5f5' : theme.primaryColor))
+    const cardText = pickAccessibleTextColor(cardBg, isDark ? '#f5f5f5' : '#171717')
+    const metaText = pickAccessibleTextColor(cardBg, isDark ? '#d4d4d4' : '#525252')
+    const priceText = pickAccessibleTextColor(cardBg, theme.primaryColor)
+    const badgeText = pickAccessibleTextColor(theme.secondaryColor, '#ffffff')
     const effectiveFontSize = config.fontSize ? FONT_SIZE_MAP[config.fontSize] : undefined
+
     return (
         <section data-testid="storefront-product-grid" className="px-4 py-12 sm:px-6" style={{ backgroundColor: effectiveBg, fontSize: effectiveFontSize }}>
             <div className="mx-auto max-w-7xl">
@@ -40,8 +47,8 @@ export function StorefrontProductGrid({ config, theme }: ProductGridProps) {
                                 />
                                 {product.badge && config.showBadges !== false && (
                                     <span
-                                        className="absolute left-2 top-2 px-2 py-0.5 text-xs font-semibold text-white"
-                                        style={{ backgroundColor: theme.secondaryColor, borderRadius: 'var(--storefront-radius)' }}
+                                        className="absolute left-2 top-2 px-2 py-0.5 text-xs font-semibold"
+                                        style={{ backgroundColor: theme.secondaryColor, borderRadius: 'var(--storefront-radius)', color: badgeText }}
                                     >
                                         {product.badge}
                                     </span>
@@ -52,12 +59,12 @@ export function StorefrontProductGrid({ config, theme }: ProductGridProps) {
                                     <div className="flex items-center gap-1.5">
                                         <ProductStars rating={product.rating} />
                                         {product.reviewCount !== undefined && (
-                                            <span className="text-xs text-neutral-500">({product.reviewCount})</span>
+                                            <span className="text-xs" style={{ color: metaText }}>({product.reviewCount})</span>
                                         )}
                                     </div>
                                 )}
-                                <h3 className="text-sm font-medium text-neutral-900">{product.title}</h3>
-                                <p className="text-sm font-semibold" style={{ color: theme.primaryColor }}>${product.price.toFixed(2)}</p>
+                                <h3 className="text-sm font-medium" style={{ color: cardText }}>{product.title}</h3>
+                                <p className="text-sm font-semibold" style={{ color: priceText }}>${product.price.toFixed(2)}</p>
                             </div>
                         </article>
                     ))}

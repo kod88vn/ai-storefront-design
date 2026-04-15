@@ -1,10 +1,10 @@
 {
   "theme": {
-    "primaryColor": "#3d2b1f",
-    "secondaryColor": "#a16207",
+    "primaryColor": "#1a110c",
+    "secondaryColor": "#c1571a",
     "borderRadius": "md",
     "navStyle": "bordered",
-    "colorScheme": "light",
+    "colorScheme": "dark",
     "fontStyle": "modern-sans"
   },
   "sections": [
@@ -27,20 +27,20 @@
       "order": 2
     },
     {
-      "id": "brand-strip",
-      "type": "brand-strip",
+      "id": "product-grid",
+      "type": "product-grid",
       "enabled": true,
       "order": 3
     },
     {
-      "id": "product-grid",
-      "type": "product-grid",
+      "id": "categories",
+      "type": "categories",
       "enabled": true,
       "order": 4
     },
     {
-      "id": "categories",
-      "type": "categories",
+      "id": "brand-strip",
+      "type": "brand-strip",
       "enabled": true,
       "order": 5
     },
@@ -64,112 +64,110 @@
     }
   ],
   "hero": {
-    "layout": "centered",
-    "title": "Curated Home Essentials",
-    "subtitle": "Discover timeless pieces for modern living",
-    "ctaText": "Shop Collection",
-    "badge": "Clean Ingredients",
+    "layout": "editorial",
+    "title": "Discover Earthy Elegance",
+    "subtitle": "Natural products for the modern rugged individual",
+    "ctaText": "Shop Now",
+    "badge": "100% Natural Ingredients",
     "textAlign": "left",
-    "ctaVariant": "outline",
-    "overlayOpacity": 0,
-    "backgroundImage": ""
+    "ctaVariant": "solid",
+    "overlayOpacity": 0.65,
+    "ctaSecondaryText": "Learn More",
+    "backgroundColor": "#ffa848",
+    "textColor": "#ffffff"
   },
   "productGrid": {
-    "columns": 3
+    "columns": 3,
+    "backgroundColor": "#ffa848",
+    "textColor": "#ffffff"
   },
   "sectionData": {
     "announcement-bar": {
-      "text": "Buy 3, Get 1 FREE – Stock Up on Soap!",
-      "backgroundColor": "#3d2b1f",
+      "text": "Free Shipping on Orders Over $50!",
+      "backgroundColor": "#1a110c",
       "textColor": "#ffffff",
       "scrolling": true,
       "emoji": null,
-      "link": null,
-      "dismissible": true
+      "link": "/shop",
+      "dismissible": false
     },
     "benefits-bar": {
       "items": [
         {
           "icon": "leaf",
           "label": "Natural Ingredients",
-          "detail": "Only the best nature has to offer"
+          "detail": "100% plant-based"
         },
         {
           "icon": "check",
           "label": "No Harmful Chemicals",
-          "detail": "Clean for your skin"
+          "detail": "Safe for daily use"
         },
         {
           "icon": "shield",
           "label": "Quality Guarantee",
-          "detail": "Satisfaction guaranteed"
+          "detail": "Satisfaction assured"
         },
         {
           "icon": "award",
-          "label": "Man Approved",
-          "detail": "Trusted by real men"
+          "label": "Award-Winning Formulas",
+          "detail": "Trusted by thousands"
         }
       ]
     },
     "brand-strip": {
-      "heading": "As seen in",
+      "heading": "As Seen In",
       "brands": [
-        {
-          "name": "Forbes",
-          "logoText": "Forbes"
-        },
         {
           "name": "Men's Health",
           "logoText": "Men's Health"
         },
         {
-          "name": "Fox News",
-          "logoText": "Fox News"
+          "name": "GQ",
+          "logoText": "GQ"
         },
         {
-          "name": "Barstool Sports",
-          "logoText": "Barstool Sports"
+          "name": "Esquire",
+          "logoText": "Esquire"
+        },
+        {
+          "name": "Maxim",
+          "logoText": "Maxim"
         }
       ]
     },
     "testimonials": {
-      "heading": "SQUATCH NATION HAS SPOKEN",
+      "heading": "What Our Customers Are Saying",
       "layout": "grid",
       "showRatings": true,
       "items": [
         {
-          "quote": "\"Smells like a real man should. Love it!\"",
-          "author": "Mike R.",
-          "location": "Colorado",
-          "rating": 5
-        },
-        {
-          "quote": "\"Finally a soap that doesn't smell like flowers.\"",
-          "author": "Dave S.",
-          "location": "Texas",
-          "rating": 5
-        },
-        {
-          "quote": "\"Best shower experience ever.\"",
-          "author": "Tom B.",
-          "location": "Florida",
-          "rating": 5
-        },
-        {
-          "quote": "\"My wife loves how I smell now.\"",
+          "quote": "These products have changed my routine. Absolutely love the natural feel!",
           "author": "Jake M.",
-          "location": "California",
+          "location": "Austin, TX",
+          "rating": 5
+        },
+        {
+          "quote": "Best soap I've ever used. The scent is rugged and refreshing.",
+          "author": "Mike R.",
+          "location": "Denver, CO",
+          "rating": 5
+        },
+        {
+          "quote": "I’m hooked! High-quality and truly natural ingredients.",
+          "author": "Sam T.",
+          "location": "Portland, OR",
           "rating": 5
         }
       ]
     },
     "newsletter": {
-      "heading": "Do whatever we want",
-      "subtext": "Get exclusive deals and manly tips.",
+      "heading": "Join the Rugged Revolution",
+      "subtext": "Sign up for exclusive offers and updates.",
       "placeholder": "Enter your email",
-      "buttonText": "Join the Nation",
+      "buttonText": "Subscribe",
       "backgroundColor": "#f0ebe4",
-      "incentive": "Sign up — get 20% off your first order"
+      "incentive": "Sign up and get 20% off your first order"
     }
   },
   "nav": {
@@ -186,36 +184,28 @@
         "href": "/products"
       },
       {
-        "id": "nav-88f7ac3f",
-        "label": "Random",
-        "href": "/custom"
+        "id": "nav-collections",
+        "label": "Collections",
+        "href": "/products"
+      },
+      {
+        "id": "nav-journal",
+        "label": "Journal",
+        "href": "#"
       }
     ],
-    "backgroundColor": "#345327",
-    "textColor": "#d8caca"
-  },
-  "categories": {
-    "backgroundColor": "#f0ebe4"
-  },
-  "footer": {
-    "backgroundColor": "#1e1208",
+    "backgroundColor": "#1a110c",
     "textColor": "#ffffff"
   },
-  "customPages": [
-    {
-      "id": "custom-bf06f0ab",
-      "name": "custom",
-      "slug": "/custom",
-      "sections": [
-        {
-          "id": "announcement-bar",
-          "type": "announcement-bar",
-          "enabled": true,
-          "order": 0
-        }
-      ]
-    }
-  ],
+  "categories": {
+    "backgroundColor": "#ffa848",
+    "textColor": "#ffffff"
+  },
+  "footer": {
+    "backgroundColor": "#1b4332",
+    "textColor": "#ffffff"
+  },
+  "customPages": [],
   "pagesSections": {
     "products": [
       {

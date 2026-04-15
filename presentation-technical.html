@@ -1,0 +1,1571 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Storefront Design Studio – Technical Architecture</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --indigo: #6366f1;
+        --indigo-l: rgba(99, 102, 241, 0.15);
+        --indigo-b: rgba(99, 102, 241, 0.35);
+        --amber: #f59e0b;
+        --amber-l: rgba(245, 158, 11, 0.12);
+        --amber-b: rgba(245, 158, 11, 0.35);
+        --emerald: #10b981;
+        --emerald-l: rgba(16, 185, 129, 0.12);
+        --emerald-b: rgba(16, 185, 129, 0.35);
+        --sky: #38bdf8;
+        --sky-l: rgba(56, 189, 248, 0.12);
+        --sky-b: rgba(56, 189, 248, 0.35);
+        --violet: #a855f7;
+        --z950: #09090b;
+        --z900: #18181b;
+        --z800: #27272a;
+        --z700: #3f3f46;
+        --z600: #52525b;
+        --z400: #a1a1aa;
+        --z300: #d4d4d8;
+      }
+      html,
+      body {
+        height: 100%;
+        background: var(--z950);
+        color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        overflow: hidden;
+      }
+      .deck {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+      }
+      .slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 2.5rem 5rem;
+        opacity: 0;
+        transform: translateX(60px);
+        pointer-events: none;
+        transition:
+          opacity 0.4s ease,
+          transform 0.4s ease;
+      }
+      .slide.active {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: all;
+      }
+      .slide.exit {
+        opacity: 0;
+        transform: translateX(-60px);
+      }
+      .arrow {
+        position: fixed;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: 1px solid var(--z700);
+        color: var(--z400);
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+        z-index: 100;
+      }
+      .arrow:hover {
+        border-color: var(--indigo);
+        color: #fff;
+      }
+      .arrow.prev {
+        left: 1.25rem;
+      }
+      .arrow.next {
+        right: 1.25rem;
+      }
+      .dots {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.45rem;
+        z-index: 100;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--z700);
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .dot.active {
+        background: var(--indigo);
+      }
+      .counter {
+        position: fixed;
+        top: 1.25rem;
+        right: 1.75rem;
+        font-size: 0.72rem;
+        color: var(--z600);
+        letter-spacing: 0.06em;
+        z-index: 100;
+      }
+
+      /* TYPOGRAPHY */
+      .eyebrow {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--indigo);
+        margin-bottom: 0.85rem;
+      }
+      h1 {
+        font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -0.025em;
+        text-align: center;
+      }
+      h2 {
+        font-size: clamp(1.4rem, 2.6vw, 2.1rem);
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        margin-bottom: 1.4rem;
+      }
+      .subtitle {
+        font-size: clamp(0.88rem, 1.5vw, 1.1rem);
+        color: var(--z400);
+        text-align: center;
+        max-width: 640px;
+        line-height: 1.65;
+        margin-top: 1rem;
+      }
+      .grad {
+        background: linear-gradient(135deg, var(--indigo), var(--violet));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .grad-amber {
+        background: linear-gradient(135deg, var(--amber), #f97316);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .grad-sky {
+        background: linear-gradient(135deg, var(--sky), var(--emerald));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.3rem 0.85rem;
+        border-radius: 999px;
+        border: 1px solid rgba(99, 102, 241, 0.4);
+        background: rgba(99, 102, 241, 0.08);
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #a5b4fc;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+      }
+      code {
+        font-family: monospace;
+        font-size: 0.85em;
+      }
+
+      /* CARDS */
+      .card-row {
+        display: flex;
+        gap: 1.2rem;
+        width: 100%;
+        max-width: 900px;
+      }
+      .card {
+        flex: 1;
+        border-radius: 14px;
+        padding: 1.4rem;
+        border: 1px solid var(--z800);
+        background: var(--z900);
+      }
+      .card .icon {
+        font-size: 1.6rem;
+        margin-bottom: 0.6rem;
+      }
+      .card h3 {
+        font-size: 0.88rem;
+        font-weight: 700;
+        margin-bottom: 0.35rem;
+      }
+      .card p {
+        font-size: 0.75rem;
+        color: var(--z400);
+        line-height: 1.6;
+      }
+
+      /* ARCHITECTURE DIAGRAM */
+      .arch {
+        width: 100%;
+        max-width: 960px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+      }
+      .arch-top {
+        display: grid;
+        grid-template-columns: 175px 1fr 175px;
+        align-items: end;
+      }
+      .anode {
+        border-radius: 13px;
+        padding: 0.85rem 1rem;
+      }
+      .anode .ant {
+        font-weight: 700;
+        font-size: 0.92rem;
+        margin-bottom: 0.26rem;
+      }
+      .anode .and {
+        font-size: 0.76rem;
+        color: var(--z300);
+        line-height: 1.5;
+      }
+      .node-user {
+        background: var(--indigo-l);
+        border: 1px solid var(--indigo-b);
+      }
+      .node-user .ant {
+        color: #a5b4fc;
+      }
+      .node-llm {
+        background: var(--sky-l);
+        border: 1px solid var(--sky-b);
+        text-align: right;
+      }
+      .node-llm .ant {
+        color: #7dd3fc;
+      }
+      .arch-hconn {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0 0.5rem 0.55rem;
+      }
+      .hline {
+        flex: 1;
+        height: 1.5px;
+        background: var(--z700);
+        opacity: 0.75;
+      }
+      .harr {
+        display: none;
+      }
+      .hlabel {
+        font-size: 0.68rem;
+        color: var(--z300);
+        white-space: nowrap;
+        letter-spacing: 0.03em;
+        font-weight: 600;
+      }
+      .orch-box {
+        border: 1.5px solid var(--indigo-b);
+        background: rgba(99, 102, 241, 0.06);
+        border-radius: 14px;
+        padding: 0.85rem 1rem;
+        position: relative;
+      }
+      .orch-lbl {
+        position: absolute;
+        top: -0.62rem;
+        left: 1rem;
+        background: var(--z950);
+        padding: 0 0.4rem;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--indigo);
+      }
+      .orch-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.72rem;
+      }
+      .ochip {
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.22);
+        border-radius: 10px;
+        padding: 0.7rem 0.8rem;
+      }
+      .ochip .ct {
+        font-weight: 700;
+        font-size: 0.8rem;
+        margin-bottom: 0.22rem;
+        color: #c7d2fe;
+      }
+      .ochip .cd {
+        color: var(--z300);
+        font-size: 0.69rem;
+        line-height: 1.45;
+      }
+      .arch-bot {
+        display: grid;
+        grid-template-columns: 1fr 42px 280px;
+        align-items: start;
+      }
+      .mcp-box {
+        background: var(--emerald-l);
+        border: 1px solid var(--emerald-b);
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+      }
+      .mcp-box .mt {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #6ee7b7;
+        margin-bottom: 0.5rem;
+      }
+      .mcp-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.32rem;
+      }
+      .mtag {
+        background: rgba(16, 185, 129, 0.14);
+        border: 1px solid rgba(16, 185, 129, 0.28);
+        border-radius: 6px;
+        padding: 0.18rem 0.44rem;
+        font-size: 0.66rem;
+        color: #6ee7b7;
+        font-family: monospace;
+      }
+      .arch-vmid {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.12rem;
+        padding: 0 0.5rem 0.2rem;
+      }
+      .vline {
+        width: 1.5px;
+        background: var(--z700);
+      }
+      .varr {
+        font-size: 0.8rem;
+        color: var(--z600);
+        line-height: 1;
+      }
+      .vlbl {
+        font-size: 0.62rem;
+        color: var(--z500);
+        letter-spacing: 0.08em;
+      }
+      .rstack {
+        display: flex;
+        flex-direction: column;
+        gap: 0.72rem;
+      }
+      .hitl-box {
+        background: rgba(245, 158, 11, 0.14);
+        border: 1px solid rgba(245, 158, 11, 0.5);
+        border-radius: 12px;
+        padding: 0.95rem 1rem;
+        box-shadow:
+          0 0 0 1px rgba(245, 158, 11, 0.08),
+          0 0 24px rgba(245, 158, 11, 0.1);
+      }
+      .hitl-box .ht {
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #fcd34d;
+        margin-bottom: 0.28rem;
+      }
+      .hitl-box .hd {
+        font-size: 0.7rem;
+        color: #fde68a;
+        line-height: 1.5;
+      }
+      .store-box {
+        background: var(--emerald-l);
+        border: 1px solid var(--emerald-b);
+        border-radius: 12px;
+        padding: 0.85rem 0.95rem;
+      }
+      .store-box .st {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #6ee7b7;
+        margin-bottom: 0.25rem;
+      }
+      .store-box .sd {
+        font-size: 0.69rem;
+        color: var(--z300);
+        line-height: 1.5;
+      }
+      .mini-vc {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* ORCHESTRATOR */
+      .od-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem;
+        max-width: 860px;
+        width: 100%;
+      }
+      .od {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.7rem;
+        background: var(--z900);
+        border: 1px solid var(--z800);
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+      }
+      .od-ic {
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .od h4 {
+        font-size: 0.79rem;
+        font-weight: 700;
+        margin-bottom: 0.15rem;
+      }
+      .od p {
+        font-size: 0.69rem;
+        color: var(--z400);
+        line-height: 1.5;
+      }
+
+      /* MCP */
+      .mcp-split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        max-width: 860px;
+        width: 100%;
+      }
+      .mcp-col h3 {
+        font-size: 0.76rem;
+        font-weight: 700;
+        color: var(--z300);
+        margin-bottom: 0.65rem;
+      }
+      .mi {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+      }
+      .mi-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 7px;
+      }
+      .mi-name {
+        font-family: monospace;
+        font-size: 0.66rem;
+        color: #6ee7b7;
+        background: rgba(16, 185, 129, 0.12);
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        white-space: nowrap;
+        margin-right: 0.3rem;
+      }
+      .mi-desc {
+        font-size: 0.74rem;
+        color: var(--z400);
+      }
+
+      /* SKILLS */
+      .sk-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.8rem;
+        width: 100%;
+        max-width: 840px;
+      }
+      .sk-card {
+        background: var(--z900);
+        border: 1px solid var(--z800);
+        border-radius: 11px;
+        padding: 0.85rem 1.1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.7rem;
+      }
+      .sk-ic {
+        font-size: 1.15rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .sk-card h4 {
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin-bottom: 0.18rem;
+      }
+      .sk-tag {
+        display: inline-block;
+        font-size: 0.55rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.1rem 0.38rem;
+        border-radius: 4px;
+        margin-bottom: 0.25rem;
+        font-family: monospace;
+      }
+      .t-always {
+        background: rgba(99, 102, 241, 0.2);
+        color: #a5b4fc;
+      }
+      .t-vision {
+        background: rgba(56, 189, 248, 0.2);
+        color: #7dd3fc;
+      }
+      .t-content {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fcd34d;
+      }
+      .t-conv {
+        background: rgba(16, 185, 129, 0.2);
+        color: #6ee7b7;
+      }
+      .sk-card p {
+        font-size: 0.7rem;
+        color: var(--z400);
+        line-height: 1.5;
+      }
+
+      /* HITL */
+      .hf {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        width: 100%;
+        max-width: 860px;
+      }
+      .hf-node {
+        flex: 1;
+        border-radius: 12px;
+        padding: 1rem 0.85rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      .hf-icon {
+        font-size: 1.5rem;
+      }
+      .hf-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .hf-desc {
+        font-size: 0.67rem;
+        color: var(--z400);
+        line-height: 1.5;
+      }
+      .hf-arr {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.12rem;
+        padding: 0 0.22rem;
+        min-width: 32px;
+      }
+      .hf-vl {
+        width: 1.5px;
+        flex: 1;
+        background: var(--z700);
+      }
+      .hf-ah {
+        font-size: 0.82rem;
+        color: var(--z600);
+        transform: rotate(90deg);
+        line-height: 1;
+      }
+      .hf-at {
+        font-size: 0.55rem;
+        color: var(--z600);
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+      }
+      .hitl-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.7rem;
+        background: rgba(245, 158, 11, 0.07);
+        border: 1px solid rgba(245, 158, 11, 0.22);
+        border-radius: 10px;
+        padding: 0.75rem 1.1rem;
+        margin-top: 0.9rem;
+        max-width: 860px;
+        width: 100%;
+      }
+      .hitl-note p {
+        font-size: 0.72rem;
+        color: #fcd34d;
+        line-height: 1.55;
+      }
+
+      /* SEQUENCE */
+      .seq {
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.42rem;
+      }
+      .ss {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        background: var(--z900);
+        border: 1px solid var(--z800);
+        border-radius: 9px;
+        padding: 0.6rem 0.95rem;
+      }
+      .sn {
+        width: 21px;
+        height: 21px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.63rem;
+        font-weight: 800;
+      }
+      .ss h4 {
+        font-size: 0.78rem;
+        font-weight: 700;
+        margin-bottom: 0.1rem;
+      }
+      .ss p {
+        font-size: 0.68rem;
+        color: var(--z400);
+        line-height: 1.45;
+      }
+      .n-i {
+        background: var(--indigo);
+        color: #fff;
+      }
+      .n-s {
+        background: #0ea5e9;
+        color: #fff;
+      }
+      .n-a {
+        background: var(--amber);
+        color: #1c1917;
+      }
+      .n-e {
+        background: var(--emerald);
+        color: #fff;
+      }
+      .n-v {
+        background: var(--violet);
+        color: #fff;
+      }
+
+      .title-lead {
+        font-size: clamp(1.02rem, 1.9vw, 1.3rem);
+        font-weight: 700;
+        color: #eef2ff;
+        max-width: 760px;
+        text-align: center;
+        line-height: 1.45;
+        margin-top: 0.95rem;
+      }
+      .mini-proof {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+      .mini-proof span {
+        padding: 0.32rem 0.7rem;
+        border-radius: 999px;
+        border: 1px solid var(--z700);
+        background: var(--z900);
+        font-size: 0.68rem;
+        color: var(--z300);
+      }
+      .top-downs {
+        display: grid;
+        grid-template-columns: 175px 1fr 175px;
+        align-items: start;
+        margin: 0.15rem 0 0.38rem;
+      }
+      .down-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.12rem;
+      }
+      .down-mid {
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--z300);
+        text-align: center;
+        padding-top: 0.12rem;
+        font-weight: 600;
+      }
+      .schema-callout {
+        margin-top: 0.8rem;
+        max-width: 840px;
+        width: 100%;
+        border: 1px solid rgba(99, 102, 241, 0.28);
+        background: rgba(99, 102, 241, 0.08);
+        border-radius: 11px;
+        padding: 0.75rem 1rem;
+      }
+      .schema-callout strong {
+        color: #c7d2fe;
+      }
+      .schema-callout p {
+        font-size: 0.71rem;
+        color: var(--z300);
+        line-height: 1.6;
+      }
+      .loop-strip {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        max-width: 860px;
+        width: 100%;
+        margin-top: 0.75rem;
+        padding: 0.7rem 1rem;
+        border-radius: 10px;
+        border: 1px solid rgba(245, 158, 11, 0.32);
+        background: rgba(245, 158, 11, 0.08);
+      }
+      .loop-strip strong {
+        color: #fde68a;
+        font-size: 0.73rem;
+        white-space: nowrap;
+      }
+      .loop-strip span {
+        font-size: 0.71rem;
+        color: var(--z300);
+        line-height: 1.55;
+      }
+      .ss.hitl-step {
+        border-color: rgba(245, 158, 11, 0.34);
+        box-shadow: inset 4px 0 0 var(--amber);
+        background: linear-gradient(
+          90deg,
+          rgba(245, 158, 11, 0.08) 0%,
+          rgba(24, 24, 27, 1) 24%
+        );
+      }
+      .roadmap {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.45rem;
+        margin-top: 1.1rem;
+        max-width: 900px;
+        width: 100%;
+      }
+      .rm-item {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.65rem 0.8rem;
+        border-radius: 10px;
+        background: var(--z900);
+        border: 1px solid var(--z800);
+      }
+      .rm-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #22c55e;
+        flex-shrink: 0;
+      }
+      .rm-planned .rm-dot {
+        background: #71717a;
+      }
+      .rm-item span {
+        font-size: 0.72rem;
+        color: var(--z300);
+      }
+      .hint {
+        position: fixed;
+        bottom: 3.2rem;
+        right: 1.2rem;
+        padding: 0.42rem 0.72rem;
+        border-radius: 999px;
+        border: 1px solid var(--z700);
+        background: rgba(24, 24, 27, 0.92);
+        font-size: 0.65rem;
+        color: var(--z300);
+        z-index: 100;
+        animation: fadeHint 7s ease forwards;
+      }
+      @keyframes fadeHint {
+        0%,
+        70% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.2;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="deck">
+      <!-- SLIDE 1: TITLE -->
+      <div class="slide active">
+        <div class="badge-pill">Technical Architecture &middot; April 2026</div>
+        <h1><span class="grad">AI Storefront</span><br />Design Studio</h1>
+        <p class="title-lead">
+          From a brand idea to a live storefront in one approval loop.
+        </p>
+        <p class="subtitle">
+          An LLM drives the workflow through MCP-standard tools and skill-based
+          domain guidance, while the Orchestrator and human approval gate keep
+          every change observable, controllable, and safe.
+        </p>
+        <div class="mini-proof">
+          <span>LLM-guided</span>
+          <span>MCP-based</span>
+          <span>Human-approved</span>
+          <span>Live preview</span>
+        </div>
+      </div>
+
+      <!-- SLIDE 2: ARCHITECTURE DIAGRAM -->
+      <div class="slide">
+        <div class="eyebrow">System Architecture</div>
+        <h2>
+          All intelligence flows through the
+          <span class="grad">Orchestrator</span>
+        </h2>
+        <div class="arch">
+          <div class="arch-top">
+            <div class="anode node-user">
+              <div class="ant">&#x1F9D1;&#x200D;&#x1F4BC; User</div>
+              <div class="and">Vision URL or<br />free-text design goal</div>
+            </div>
+            <div class="arch-hconn">
+              <div class="hline"></div>
+              <div class="hlabel">via the Orchestrator</div>
+              <div class="hline"></div>
+            </div>
+            <div class="anode node-llm">
+              <div class="ant">&#x1F9E0; LLM</div>
+              <div class="and">
+                Any tool-calling model<br />(provider-agnostic)
+              </div>
+            </div>
+          </div>
+          <div class="top-downs">
+            <div class="down-col">
+              <div class="vline" style="height: 10px"></div>
+              <div class="varr">&#9660;</div>
+            </div>
+            <div class="down-mid">single backend control plane</div>
+            <div class="down-col">
+              <div class="vline" style="height: 10px"></div>
+              <div class="varr">&#9660;</div>
+            </div>
+          </div>
+
+          <div class="orch-box">
+            <div class="orch-lbl">
+              Orchestrator &mdash; /lib/design-studio/orchestrator.ts
+            </div>
+            <div class="orch-grid">
+              <div class="ochip">
+                <div class="ct">&#x1F4DA; Skill Loader</div>
+                <div class="cd">
+                  Loads tagged guidance and schema-driven variables.
+                </div>
+              </div>
+              <div class="ochip">
+                <div class="ct">&#x1F9F1; Prompt Builder</div>
+                <div class="cd">
+                  Combines planner, active skills, vision tokens, and tool
+                  schemas.
+                </div>
+              </div>
+              <div class="ochip">
+                <div class="ct">&#x1F504; streamText Loop</div>
+                <div class="cd">
+                  Streams reasoning and tool calls back to the studio in real
+                  time.
+                </div>
+              </div>
+              <div class="ochip">
+                <div class="ct">&#x1F6E1;&#xFE0F; Tool Interceptor</div>
+                <div class="cd">
+                  Pauses for approval and controls every live config update.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="arch-bot">
+            <div class="mcp-box">
+              <div class="mt">
+                &#x2699;&#xFE0F; MCP Server &mdash; /api/mcp &nbsp;(JSON-RPC
+                2.0, runtime-discovered)
+              </div>
+              <div class="mcp-tags">
+                <span class="mtag">analyze_vision_input</span>
+                <span class="mtag">generate_theme</span>
+                <span class="mtag">plan_layout</span>
+                <span class="mtag">get_storefront_config</span>
+                <span class="mtag">apply_config_update</span>
+              </div>
+            </div>
+            <div class="arch-vmid">
+              <div class="vline" style="height: 14px"></div>
+              <div class="varr">&#9650;&#9660;</div>
+              <div class="vline" style="height: 6px"></div>
+              <div class="vlbl">JSON-RPC</div>
+              <div class="vline" style="height: 10px"></div>
+              <div class="varr">&#9660;</div>
+              <div class="vline" style="height: 10px"></div>
+            </div>
+            <div class="rstack">
+              <div class="hitl-box">
+                <div class="ht">&#x1F6A6; HITL Gate</div>
+                <div class="hd">
+                  Explicit human approval before any design patch reaches the
+                  storefront.
+                </div>
+              </div>
+              <div class="mini-vc" style="padding: 0.15rem 0">
+                <div class="vline" style="height: 10px"></div>
+                <div class="varr">&#9660;</div>
+              </div>
+              <div class="store-box">
+                <div class="st">&#x1F6CD;&#xFE0F; Live Storefront</div>
+                <div class="sd">
+                  Approved changes render instantly in the preview and can then
+                  be saved.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 3: ORCHESTRATOR RUNTIME -->
+      <div class="slide">
+        <div class="eyebrow">Runtime Layer</div>
+        <h2>How the <span class="grad">Orchestrator boots and runs</span></h2>
+        <div class="od-grid">
+          <div class="od">
+            <div class="od-ic">&#x1F4DA;</div>
+            <div>
+              <h4>Skill loading at startup</h4>
+              <p>
+                Reads all <code>SKILL.md</code> files, applies tag filtering
+                (<code>always / vision / content / conversion</code>), and
+                interpolates <code>{{VAR}}</code> from <code>schema.ts</code>.
+                Workflow logic stays in markdown, not buried in code.
+              </p>
+            </div>
+          </div>
+          <div class="od">
+            <div class="od-ic">&#x1F50C;</div>
+            <div>
+              <h4>Dynamic MCP tool registration</h4>
+              <p>
+                Calls <code>tools/list</code> at runtime and converts JSON
+                Schemas to typed Zod validators via
+                <code>jsonSchemaToZod</code>. New tools become available without
+                reworking the orchestrator prompt.
+              </p>
+            </div>
+          </div>
+          <div class="od">
+            <div class="od-ic">&#x1F504;</div>
+            <div>
+              <h4>streamText loop + live reasoning</h4>
+              <p>
+                The model runs inside a streaming loop. Text, reasoning, and
+                tool-call chunks emit live <code>thinking</code> SSE events so
+                the UI shows progress rather than a black box.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 4: ORCHESTRATOR CONTROL -->
+      <div class="slide">
+        <div class="eyebrow">Control Layer</div>
+        <h2>Why the Orchestrator is the <span class="grad">guardrail</span></h2>
+        <div class="od-grid">
+          <div class="od">
+            <div class="od-ic">&#x1F6E1;&#xFE0F;</div>
+            <div>
+              <h4>Tool interception</h4>
+              <p>
+                <code>plan_feedback</code> is intercepted before returning to
+                the model, which pauses the stream and triggers human review.
+                <code>apply_config_update</code> is also mediated before
+                anything reaches the live storefront.
+              </p>
+            </div>
+          </div>
+          <div class="od">
+            <div class="od-ic">&#x1F441;&#xFE0F;</div>
+            <div>
+              <h4>Two-model vision pipeline</h4>
+              <p>
+                A separate vision-capable LLM extracts precise color and layout
+                tokens first. The primary orchestrator model then plans from
+                structured facts instead of repeatedly re-interpreting raw
+                pixels.
+              </p>
+            </div>
+          </div>
+          <div class="od">
+            <div class="od-ic">&#x1F4E1;</div>
+            <div>
+              <h4>Stateless + resumable</h4>
+              <p>
+                Every HITL resume request carries the full context back into the
+                system. No sticky server session is required, which keeps the
+                backend horizontally scalable and resilient through revision
+                loops.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 4: MCP -->
+      <div class="slide">
+        <div class="eyebrow">Tool Protocol</div>
+        <h2>MCP makes the system <span class="grad-sky">LLM-agnostic</span></h2>
+        <div class="mcp-split">
+          <div class="mcp-col">
+            <h3>Why MCP (Model Context Protocol)</h3>
+            <div class="mi">
+              <div class="mi-dot" style="background: var(--sky)"></div>
+              <div class="mi-desc">
+                <strong style="color: var(--z300)"
+                  >Single schema, any caller.</strong
+                >
+                Tool definitions live in one place. Any LLM with tool-calling
+                support speaks the same JSON-RPC contract &mdash; swap providers
+                without touching the tool layer.
+              </div>
+            </div>
+            <div class="mi">
+              <div class="mi-dot" style="background: var(--sky)"></div>
+              <div class="mi-desc">
+                <strong style="color: var(--z300)">Runtime discovery.</strong>
+                The Orchestrator calls <code>tools/list</code> at startup
+                &mdash; no hardcoded schemas. Add a tool server-side and the
+                Orchestrator picks it up at the next request with zero code
+                changes.
+              </div>
+            </div>
+            <div class="mi">
+              <div class="mi-dot" style="background: var(--sky)"></div>
+              <div class="mi-desc">
+                <strong style="color: var(--z300)"
+                  >Swappable orchestrator.</strong
+                >
+                Any MCP-compatible client (LangGraph, AutoGen, CI pipeline,
+                another AI agent) can call the same tool server unchanged
+                &mdash; the contract is standard.
+              </div>
+            </div>
+            <div class="mi">
+              <div class="mi-dot" style="background: var(--sky)"></div>
+              <div class="mi-desc">
+                <strong style="color: var(--z300)">Validated inputs.</strong>
+                JSON Schema &rarr; Zod conversion enforces types on every tool
+                call. Malformed LLM arguments are rejected before they reach
+                business logic.
+              </div>
+            </div>
+          </div>
+          <div class="mcp-col">
+            <h3>The 5 MCP Tools</h3>
+            <div class="mi">
+              <span class="mi-name">analyze_vision_input</span
+              ><span class="mi-desc"
+                >Extract dominant style, color scheme, layout type from URL or
+                description</span
+              >
+            </div>
+            <div class="mi">
+              <span class="mi-name">generate_theme</span
+              ><span class="mi-desc"
+                >Map dominantStyle + aesthetic to full ThemeConfig (colors,
+                font, radius, nav style)</span
+              >
+            </div>
+            <div class="mi">
+              <span class="mi-name">plan_layout</span
+              ><span class="mi-desc"
+                >Select hero layout, section order, grid density, and hero
+                micro-parameters</span
+              >
+            </div>
+            <div class="mi">
+              <span class="mi-name">get_storefront_config</span
+              ><span class="mi-desc"
+                >Read live config before proposing &mdash; the LLM inspects
+                current state before acting</span
+              >
+            </div>
+            <div class="mi">
+              <span class="mi-name">apply_config_update</span
+              ><span class="mi-desc"
+                >Submit design patch &mdash; intercepted by Orchestrator into
+                HITL-gated config_update event</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: SKILLS -->
+      <div class="slide">
+        <div class="eyebrow">Knowledge Layer</div>
+        <h2>
+          Skills are <span class="grad">domain wrappers</span> over MCP tools
+        </h2>
+        <div class="sk-grid">
+          <div class="sk-card">
+            <div class="sk-ic">&#x1F5FA;&#xFE0F;</div>
+            <div>
+              <div><span class="sk-tag t-always">always</span></div>
+              <h4>planner</h4>
+              <p>
+                Defines the 3-phase workflow (Understand &rarr; Propose &rarr;
+                Execute). Maps 10 brand archetypes to config combinations. The
+                orchestrator playbook &mdash; loaded first, used every run.
+              </p>
+            </div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-ic">&#x1F3A8;</div>
+            <div>
+              <div><span class="sk-tag t-always">always</span></div>
+              <h4>theme_generator</h4>
+              <p>
+                Opinionated rules for
+                <code style="color: #a5b4fc">generate_theme</code>. 10 style
+                presets with precise argument guidance. Wraps the MCP tool with
+                domain expertise so the LLM makes consistent, correct calls.
+              </p>
+            </div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-ic">&#x1F4D0;</div>
+            <div>
+              <div><span class="sk-tag t-always">always</span></div>
+              <h4>layout_planner</h4>
+              <p>
+                15-row decision matrix: category &times; style &rarr; hero
+                layout + badge + CTA variant + section order. Wraps
+                <code style="color: #a5b4fc">plan_layout</code> with categorical
+                rules the LLM must follow.
+              </p>
+            </div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-ic">&#x270D;&#xFE0F;</div>
+            <div>
+              <div><span class="sk-tag t-always">always</span></div>
+              <h4>section_composer</h4>
+              <p>
+                5 archetype-specific content guides for filling section data in
+                <code style="color: #a5b4fc">apply_config_update</code>. Knows a
+                luxury brand writes differently than a bold-playful one.
+              </p>
+            </div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-ic">&#x1F441;&#xFE0F;</div>
+            <div>
+              <div><span class="sk-tag t-vision">vision</span></div>
+              <h4>ui_extractor &amp; vision_context</h4>
+              <p>
+                Loaded only when a URL or image is present. Guides token
+                extraction and instructs the LLM to trust pre-computed vision
+                tokens rather than re-analyzing the image from scratch.
+              </p>
+            </div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-ic">&#x1F4C8;</div>
+            <div>
+              <div>
+                <span class="sk-tag t-content">content</span>
+                <span class="sk-tag t-conv" style="margin-left: 0.3rem"
+                  >conversion</span
+                >
+              </div>
+              <h4>content_analyzer &amp; conversion_optimizer</h4>
+              <p>
+                Loaded only on relevant goals. Conversion playbooks by
+                archetype: sections, testimonial layouts, and CTAs that maximize
+                purchase intent for each brand type.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="schema-callout">
+          <p>
+            <strong>One schema, zero drift.</strong> The same enum source drives
+            TypeScript types, MCP tool constraints, studio dropdowns, and
+            SKILL.md prompt templates. Update the schema once and the entire
+            system stays aligned.
+          </p>
+        </div>
+      </div>
+
+      <!-- SLIDE 6: HITL -->
+      <div class="slide">
+        <div class="eyebrow">Design Principle</div>
+        <h2>
+          The LLM <span class="grad-amber">never publishes</span> without
+          explicit human approval
+        </h2>
+        <div class="hf">
+          <div
+            class="hf-node"
+            style="
+              background: rgba(99, 102, 241, 0.1);
+              border: 1px solid rgba(99, 102, 241, 0.28);
+            "
+          >
+            <div class="hf-icon">&#x1F916;</div>
+            <div class="hf-label">LLM runs workflow</div>
+            <div class="hf-desc">
+              Calls analyze &rarr; generate_theme &rarr; plan_layout via MCP.
+              Reasoning streamed live to UI as thinking events.
+            </div>
+          </div>
+          <div class="hf-arr">
+            <div class="hf-vl"></div>
+            <div class="hf-ah">&#9660;</div>
+            <div class="hf-vl"></div>
+            <div class="hf-at">plan_feedback</div>
+          </div>
+          <div
+            class="hf-node"
+            style="
+              background: rgba(245, 158, 11, 0.1);
+              border: 1px solid rgba(245, 158, 11, 0.28);
+            "
+          >
+            <div class="hf-icon">&#x1F6A6;</div>
+            <div class="hf-label">Orchestrator intercepts</div>
+            <div class="hf-desc">
+              <code style="font-size: 0.62rem">plan_feedback</code> caught
+              before result returned. Stream pauses.
+              <code style="font-size: 0.62rem">plan_description</code> SSE fires
+              to UI.
+            </div>
+          </div>
+          <div class="hf-arr">
+            <div class="hf-vl"></div>
+            <div class="hf-ah">&#9660;</div>
+            <div class="hf-vl"></div>
+            <div class="hf-at">approve / reject</div>
+          </div>
+          <div
+            class="hf-node"
+            style="
+              background: rgba(245, 158, 11, 0.1);
+              border: 1px solid rgba(245, 158, 11, 0.28);
+            "
+          >
+            <div class="hf-icon">&#x1F440;</div>
+            <div class="hf-label">Human reviews</div>
+            <div class="hf-desc">
+              Sees planned changes by category. Can approve all, reject items,
+              or add free-text feedback to steer the revision.
+            </div>
+          </div>
+          <div class="hf-arr">
+            <div class="hf-vl"></div>
+            <div class="hf-ah">&#9660;</div>
+            <div class="hf-vl"></div>
+            <div class="hf-at">approved</div>
+          </div>
+          <div
+            class="hf-node"
+            style="
+              background: rgba(16, 185, 129, 0.1);
+              border: 1px solid rgba(16, 185, 129, 0.28);
+            "
+          >
+            <div class="hf-icon">&#x1F6CD;&#xFE0F;</div>
+            <div class="hf-label">Config applied</div>
+            <div class="hf-desc">
+              Orchestrator resumes. LLM calls
+              <code style="font-size: 0.62rem">apply_config_update</code>.
+              <code style="font-size: 0.62rem">config_update</code> SSE &rarr;
+              Zustand &rarr; live preview.
+            </div>
+          </div>
+        </div>
+        <div class="loop-strip">
+          <strong>&#x21BA; Rejection loop</strong>
+          <span
+            >Rejecting sends the previous plan plus human feedback back through
+            the Orchestrator for Phase 2 revision. The loop is explicit,
+            auditable, and repeatable until the human approves.</span
+          >
+        </div>
+        <div class="hitl-note">
+          <span style="font-size: 0.95rem; flex-shrink: 0; margin-top: 1px"
+            >&#x1F504;</span
+          >
+          <p>
+            <strong>Why it matters:</strong> The Orchestrator stays stateless
+            while preserving full context on every retry. Every approval,
+            rejection, and revision is written into the audit trail in JSON-RPC
+            form.
+          </p>
+        </div>
+      </div>
+
+      <!-- SLIDE 7: END-TO-END SEQUENCE -->
+      <div class="slide">
+        <div class="eyebrow">End-to-End</div>
+        <h2>One run, <span class="grad">step by step</span></h2>
+        <div class="seq">
+          <div class="ss">
+            <div class="sn n-i">1</div>
+            <div>
+              <h4>User submits goal</h4>
+              <p>
+                Vision URL + optional image &rarr; POST
+                <code>/api/orchestrate</code>. SSE stream opens. UI clears
+                previous thinking log.
+              </p>
+            </div>
+          </div>
+          <div class="ss">
+            <div class="sn n-i">2</div>
+            <div>
+              <h4>Orchestrator boots</h4>
+              <p>
+                Loads tag-filtered SKILL.md files &middot; calls
+                <code>tools/list</code> on MCP server &middot; runs vision
+                pre-analysis if image present &middot; builds full system
+                prompt.
+              </p>
+            </div>
+          </div>
+          <div class="ss">
+            <div class="sn n-s">3</div>
+            <div>
+              <h4>LLM executes Phase 1 &mdash; Understand</h4>
+              <p>
+                Calls <code>analyze_vision_input</code> &rarr;
+                <code>generate_theme</code> &rarr; <code>plan_layout</code> via
+                MCP JSON-RPC. Thinking events stream to UI throughout.
+              </p>
+            </div>
+          </div>
+          <div class="ss hitl-step">
+            <div class="sn n-a">4</div>
+            <div>
+              <h4>HITL gate fires</h4>
+              <p>
+                LLM calls <code>plan_feedback</code> &rarr; Orchestrator catches
+                it &rarr; emits <code>plan_description</code> SSE &rarr; stream
+                stops. UI renders plan approval card.
+              </p>
+            </div>
+          </div>
+          <div class="ss hitl-step">
+            <div class="sn n-a">5</div>
+            <div>
+              <h4>Human approves or revises</h4>
+              <p>
+                Approve &rarr; <code>resumeWithFeedback({approved:true})</code>.
+                Reject &rarr; feedback + previous plan re-submitted &rarr;
+                Orchestrator runs Phase 2 (Revise). Loop repeats until approved.
+              </p>
+            </div>
+          </div>
+          <div class="ss">
+            <div class="sn n-e">6</div>
+            <div>
+              <h4>LLM executes Phase 3 &mdash; Apply</h4>
+              <p>
+                Calls <code>apply_config_update</code> via MCP. Orchestrator
+                intercepts result &rarr; emits <code>config_update</code> SSE
+                &rarr; Zustand updates &rarr; canvas re-renders live.
+              </p>
+            </div>
+          </div>
+          <div class="ss">
+            <div class="sn n-v">7</div>
+            <div>
+              <h4>Human saves (explicit action)</h4>
+              <p>
+                All changes in-memory with 50-step undo/redo. Click Save &rarr;
+                PUT <code>/api/store-config</code> &rarr; writes
+                <code>store-config.json</code> &rarr; web app reflects changes.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 8: EXTENSIBILITY -->
+      <div class="slide">
+        <div class="eyebrow">Extensibility &amp; Next Steps</div>
+        <h2>Designed to <span class="grad">grow without rewrites</span></h2>
+        <div class="card-row">
+          <div class="card">
+            <div class="icon">&#x1F501;</div>
+            <h3>Swap the LLM</h3>
+            <p>
+              One env var (<code>AI_MODEL</code>) changes the model provider.
+              MCP tools and skills are provider-independent. No UI, workflow, or
+              tool code changes needed.
+            </p>
+          </div>
+          <div class="card">
+            <div class="icon">&#x2699;&#xFE0F;</div>
+            <h3>Add MCP tools</h3>
+            <p>
+              Add a function to <code>/api/mcp/route.ts</code>. The Orchestrator
+              discovers it at the next request. Ideas: SEO analyzer, A/B variant
+              generator, accessibility checker.
+            </p>
+          </div>
+          <div class="card">
+            <div class="icon">&#x1F4DD;</div>
+            <h3>New skills, no code</h3>
+            <p>
+              Add a <code>SKILL.md</code> with a <code>## Tags</code> section.
+              Loaded and injected automatically. Localization, brand voice,
+              guided copy &mdash; all in markdown.
+            </p>
+          </div>
+        </div>
+        <div class="roadmap">
+          <div class="rm-item rm-planned">
+            <div class="rm-dot"></div>
+            <span>Authentication and brand workspaces</span>
+          </div>
+          <div class="rm-item rm-planned">
+            <div class="rm-dot"></div>
+            <span>Real catalog and inventory integrations</span>
+          </div>
+          <div class="rm-item rm-planned">
+            <div class="rm-dot"></div>
+            <span>Multi-model evaluation harness</span>
+          </div>
+          <div class="rm-item rm-planned">
+            <div class="rm-dot"></div>
+            <span>Multi-user approval workflows</span>
+          </div>
+          <div class="rm-item rm-planned">
+            <div class="rm-dot"></div>
+            <span>External MCP clients and automation agents</span>
+          </div>
+          <div class="rm-item rm-planned">
+            <div class="rm-dot"></div>
+            <span>Persistent configuration database</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /deck -->
+
+    <div class="hint">Press &#8594; or Space to advance</div>
+    <button class="arrow prev" onclick="move(-1)">&#8592;</button>
+    <button class="arrow next" onclick="move(1)">&#8594;</button>
+    <div class="dots" id="dots"></div>
+    <div class="counter" id="counter"></div>
+
+    <script>
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const total = slides.length;
+      let cur = 0;
+      const dotsEl = document.getElementById("dots");
+      const counterEl = document.getElementById("counter");
+      const prevBtn = document.querySelector(".arrow.prev");
+      const nextBtn = document.querySelector(".arrow.next");
+
+      slides.forEach((_, i) => {
+        const d = document.createElement("div");
+        d.className = "dot" + (i === 0 ? " active" : "");
+        d.onclick = () => goTo(i);
+        dotsEl.appendChild(d);
+      });
+
+      function goTo(n) {
+        const old = slides[cur];
+        old.classList.remove("active");
+        old.classList.add("exit");
+        setTimeout(() => old.classList.remove("exit"), 420);
+        cur = (n + total) % total;
+        slides[cur].classList.add("active");
+        document
+          .querySelectorAll(".dot")
+          .forEach((d, i) => d.classList.toggle("active", i === cur));
+        counterEl.textContent = cur + 1 + " / " + total;
+        prevBtn.style.opacity = cur === 0 ? ".25" : "1";
+        nextBtn.style.opacity = cur === total - 1 ? ".25" : "1";
+      }
+      function move(dir) {
+        goTo(cur + dir);
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === " ") move(1);
+        if (e.key === "ArrowLeft") move(-1);
+      });
+      goTo(0);
+    </script>
+  </body>
+</html>

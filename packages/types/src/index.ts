@@ -387,9 +387,26 @@ export interface PlanFeedback {
   };
 }
 
+export interface UploadedImageTokens {
+  primaryColor?: string;
+  secondaryColor?: string;
+  backgroundColor?: string;
+  sectionBackgroundColor?: string;
+  colorScheme?: ColorScheme;
+  dominantStyle?: DominantStyle;
+  fontStyle?: FontStyle;
+  navStyle?: NavStyle;
+  borderRadius?: BorderRadius;
+  heroLayout?: HeroLayout;
+  productGridColumns?: 2 | 3 | 4;
+  mood?: string;
+  observations?: string;
+}
+
 export interface OrchestratorContext {
   visionUrl?: string;
   imageData?: string | null;
+  uploadedImageTokens?: UploadedImageTokens | null;
   currentConfig: StorefrontConfig;
   planFeedback?: PlanFeedback | null;
   /** The page being edited — drives per-page orchestrator selection */

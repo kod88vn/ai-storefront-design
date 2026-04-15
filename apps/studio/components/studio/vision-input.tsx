@@ -3,10 +3,12 @@
 import { useRef, useState } from 'react'
 import { Link, ImagePlus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { extractImageTokensFromDataUrl } from '@/lib/design-studio/client-image-tokens'
+import type { UploadedImageTokens } from '@/lib/types'
 import { useStudioStore } from '@/lib/store'
 
 interface VisionInputProps {
-    onImageReady: (dataUrl: string | null) => void
+    onImageReady: (dataUrl: string | null, tokens?: UploadedImageTokens | null) => void
     droppedImage: string | null
 }
 
@@ -41,8 +43,9 @@ export function VisionInput({ onImageReady, droppedImage }: VisionInputProps) {
         reader.onload = async (ev) => {
             const raw = ev.target?.result as string
             const dataUrl = await compressImage(raw)
-            onImageReady(dataUrl)
-            addAuditEntry({ method: 'vision/imageAdded', params: { filename: file.name, size: file.size } })
+            const tokens = await extractImageTokensFromDataUrl(dataUrl)
+            onImageReady(dataUrl, tokens)
+            addAuditEntry({ method: 'vision/imageAdded', params: { filename: file.name, size: file.size, tokens } })
         }
         reader.readAsDataURL(file)
     }
@@ -86,7 +89,7 @@ export function VisionInput({ onImageReady, droppedImage }: VisionInputProps) {
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={droppedImage} alt="Dropped design" className="h-full w-full object-cover" />
                         <button
-                            onClick={(e) => { e.stopPropagation(); onImageReady(null) }}
+                            onClick={(e) => { e.stopPropagation(); onImageReady(null, null) }}
                             data-testid="image-clear-button"
                             className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
                         >

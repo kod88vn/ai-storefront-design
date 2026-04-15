@@ -18,10 +18,11 @@ const PAGE_CONTEXT: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest) {
-  const { goal, context } = (await request.json()) as {
-    goal: string;
-    context: OrchestratorContext;
-  };
+  const { goal, context = {} as OrchestratorContext } =
+    (await request.json()) as {
+      goal: string;
+      context?: OrchestratorContext;
+    };
 
   if (!goal || typeof goal !== "string") {
     return new Response(JSON.stringify({ error: "goal is required" }), {

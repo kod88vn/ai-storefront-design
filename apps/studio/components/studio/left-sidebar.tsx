@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Brain, Loader2, RotateCcw, MessageSquare, Wand2 } from 'lucide-react'
+import type { UploadedImageTokens } from '@/lib/types'
 import { useStudioStore } from '@/lib/store'
 import { useOrchestrator } from '@/hooks/use-orchestrator'
 import { InlinePlanApproval } from './plan-approval'
@@ -28,6 +29,7 @@ export function LeftSidebar() {
 
   const { startOrchestrator } = useOrchestrator()
   const [droppedImage, setDroppedImage] = useState<string | null>(null)
+  const [imageTokens, setImageTokens] = useState<UploadedImageTokens | null>(null)
   const [goalText, setGoalText] = useState('')
   const [inputMode, setInputMode] = useState<'describe' | 'wizard'>('describe')
 
@@ -62,15 +64,19 @@ export function LeftSidebar() {
         ? `${textGoal}. Use this storefront as visual reference: ${effectiveVisionUrl}`
         : `Analyze this storefront URL and redesign it to match its visual aesthetic: ${effectiveVisionUrl}`
     } else if (droppedImage) {
+      const tokenHint = imageTokens
+        ? ` Extracted screenshot tokens: primary ${imageTokens.primaryColor ?? 'n/a'}, secondary ${imageTokens.secondaryColor ?? 'n/a'}, background ${imageTokens.backgroundColor ?? 'n/a'}, color scheme ${imageTokens.colorScheme ?? 'light'}, dominant style ${imageTokens.dominantStyle ?? 'clean'}.`
+        : ''
       goal = textGoal
-        ? `${textGoal}. Use the attached screenshot as visual reference.`
-        : 'Analyze the provided storefront screenshot and redesign to match its visual aesthetic'
+        ? `${textGoal}. Use the attached screenshot as visual reference.${tokenHint}`
+        : `Analyze the provided storefront screenshot and redesign to match its visual aesthetic.${tokenHint}`
     } else {
       goal = textGoal
     }
     startOrchestrator(goal, {
       visionUrl: effectiveVisionUrl,
       imageData: droppedImage,
+      uploadedImageTokens: imageTokens,
       currentConfig: config,
       planFeedback: null,
       page: useStudioStore.getState().currentPage as import('@ai-storefront/types').PageType,
@@ -149,7 +155,13 @@ export function LeftSidebar() {
                     <p className="text-[10px] text-muted-foreground">⌘ + Enter to run &nbsp;·&nbsp; URL and image below are optional</p>
                   </div>
 
-                  <VisionInput droppedImage={droppedImage} onImageReady={setDroppedImage} />
+                  <VisionInput
+                    droppedImage={droppedImage}
+                    onImageReady={(dataUrl, tokens) => {
+                      setDroppedImage(dataUrl)
+                      setImageTokens(tokens ?? null)
+                    }}
+                  />
                 </>
               )}
 
