@@ -11,8 +11,10 @@ import { PageSelector } from './page-selector'
 import { PageSettingsPanel } from './page-settings-panel'
 
 export function RightSidebar() {
-  const { config, customPages, pageContainers, selectedComponent } = useStudioStore()
+  const { config, customPages, pageContainers, selectedComponent, agentStep } = useStudioStore()
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
+
+  const isRunning = agentStep !== 'idle' && agentStep !== 'complete' && agentStep !== 'awaiting-approval'
 
   async function handleSave() {
     setSaveState('saving')
@@ -47,7 +49,7 @@ export function RightSidebar() {
   }
 
   return (
-    <div data-testid="right-sidebar" className="flex h-full w-80 shrink-0 flex-col border-l border-border bg-background">
+    <div data-testid="right-sidebar" className={`flex h-full w-80 shrink-0 flex-col border-l border-border bg-background ${isRunning ? 'pointer-events-none opacity-50' : ''}`}>
       <div data-testid="right-sidebar-header" className="shrink-0 border-b border-border px-4 py-3">
         <h2 className="text-sm font-semibold">Designer</h2>
       </div>

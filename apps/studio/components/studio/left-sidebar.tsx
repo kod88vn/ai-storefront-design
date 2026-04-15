@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Brain, Loader2, RotateCcw, MessageSquare, Wand2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { UploadedImageTokens } from '@/lib/types'
 import { useStudioStore } from '@/lib/store'
 import { useOrchestrator } from '@/hooks/use-orchestrator'
@@ -108,7 +109,7 @@ export function LeftSidebar() {
       </div>
 
       <div data-testid="left-sidebar-content" className="min-h-0 flex-1 overflow-y-auto">
-        <div className="space-y-6 p-4">
+        <div className={`p-4 ${isRunning ? 'flex h-full flex-col' : 'space-y-6'}`}>
           {isComplete && appliedSummary ? (
             <AppliedSummaryPanel summary={appliedSummary} />
           ) : isAwaitingApproval && agentPlan ? (
@@ -118,52 +119,64 @@ export function LeftSidebar() {
             </>
           ) : (
             <>
-              <div className="flex overflow-hidden rounded-md border border-border text-xs" data-testid="input-mode-toggle">
-                {(['describe', 'wizard'] as const).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setInputMode(m)}
-                    data-testid={`input-mode-${m}`}
-                    className={`flex flex-1 items-center justify-center gap-1.5 py-1.5 font-medium transition-colors ${inputMode === m ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
-                      }`}
+              <AnimatePresence>
+                {!isRunning && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className="space-y-6 overflow-hidden"
                   >
-                    {m === 'describe'
-                      ? <><MessageSquare className="h-3 w-3" />Describe</>
-                      : <><Wand2 className="h-3 w-3" />Guide Me</>}
-                  </button>
-                ))}
-              </div>
+                    <div className="flex overflow-hidden rounded-md border border-border text-xs" data-testid="input-mode-toggle">
+                      {(['describe', 'wizard'] as const).map((m) => (
+                        <button
+                          key={m}
+                          onClick={() => setInputMode(m)}
+                          data-testid={`input-mode-${m}`}
+                          className={`flex flex-1 items-center justify-center gap-1.5 py-1.5 font-medium transition-colors ${inputMode === m ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
+                            }`}
+                        >
+                          {m === 'describe'
+                            ? <><MessageSquare className="h-3 w-3" />Describe</>
+                            : <><Wand2 className="h-3 w-3" />Guide Me</>}
+                        </button>
+                      ))}
+                    </div>
 
-              {inputMode === 'wizard' ? (
-                <DesignWizard onComplete={handleWizardComplete} />
-              ) : (
-                <>
-                  <div data-testid="goal-input-section" className="space-y-2">
-                    <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      <MessageSquare className="h-3.5 w-3.5" />
-                      Design Goal
-                    </h3>
-                    <textarea
-                      data-testid="goal-text-input"
-                      placeholder="Describe what you want, e.g. 'Make it feel more premium and dark'..."
-                      value={goalText}
-                      onChange={(e) => setGoalText(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSimulate() }}
-                      rows={3}
-                      className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                    <p className="text-[10px] text-muted-foreground">⌘ + Enter to run &nbsp;·&nbsp; URL and image below are optional</p>
-                  </div>
+                    {inputMode === 'wizard' ? (
+                      <DesignWizard onComplete={handleWizardComplete} />
+                    ) : (
+                      <>
+                        <div data-testid="goal-input-section" className="space-y-2">
+                          <h3 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            <MessageSquare className="h-3.5 w-3.5" />
+                            Design Goal
+                          </h3>
+                          <textarea
+                            data-testid="goal-text-input"
+                            placeholder="Describe what you want, e.g. 'Make it feel more premium and dark'..."
+                            value={goalText}
+                            onChange={(e) => setGoalText(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSimulate() }}
+                            rows={3}
+                            className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                          />
+                          <p className="text-[10px] text-muted-foreground">⌘ + Enter to run &nbsp;·&nbsp; URL and image below are optional</p>
+                        </div>
 
-                  <VisionInput
-                    droppedImage={droppedImage}
-                    onImageReady={(dataUrl, tokens) => {
-                      setDroppedImage(dataUrl)
-                      setImageTokens(tokens ?? null)
-                    }}
-                  />
-                </>
-              )}
+                        <VisionInput
+                          droppedImage={droppedImage}
+                          onImageReady={(dataUrl, tokens) => {
+                            setDroppedImage(dataUrl)
+                            setImageTokens(tokens ?? null)
+                          }}
+                        />
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {agentStep !== 'idle' && <ExecutionTrace agentStep={agentStep} />}
             </>
