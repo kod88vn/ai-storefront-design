@@ -64,8 +64,8 @@ Analyze storefront copy, messaging, and brand voice from a URL, screenshot OCR, 
   - `"100% Natural Ingredients"` — organic brands
   - `"As seen on GQ"` — media/social proof
   - `"Handmade in the USA"` — artisan/heritage
-- `heroCta`: imperative verb + noun. "Shop Now", "Explore the Collection", "Get Started"
-- `heroCtaSecondary`: softer alternative for centered/split layouts. "Learn More", "See How It Works"
+- `heroCta`: imperative verb + noun. "Shop Now", "Explore the Collection", "Get Started". **Never leave blank** — if no CTA is extracted from the source, use "Shop Now" as the default.
+- `heroCtaSecondary`: softer alternative for centered/split layouts. "Learn More", "See How It Works". If not applicable, omit (set to null).
 
 ## Implementation Notes
 

@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+/**
+ * @jest-environment node
+ */
 
 import { executeTool } from "@/lib/mcp/execute-tool";
 import {

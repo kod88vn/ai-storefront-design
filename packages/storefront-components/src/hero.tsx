@@ -43,12 +43,14 @@ export function StorefrontHero({ config, theme }: HeroProps) {
                     <div className="mt-8 flex flex-col items-start gap-6 sm:flex-row sm:items-end sm:justify-between">
                         <p className="max-w-md text-base sm:text-lg" style={{ color: fg, opacity: 0.85 }}>{subtitle}</p>
                         <div className="flex shrink-0 gap-3">
-                            <button
-                                style={{ backgroundColor: theme.secondaryColor, borderRadius: radius, color: buttonTextColor }}
-                                className="px-8 py-3 text-sm font-medium transition-opacity hover:opacity-90"
-                            >
-                                {ctaText}
-                            </button>
+                            {ctaText && (
+                                <button
+                                    style={{ backgroundColor: theme.secondaryColor, borderRadius: radius, color: buttonTextColor }}
+                                    className="px-8 py-3 text-sm font-medium transition-opacity hover:opacity-90"
+                                >
+                                    {ctaText}
+                                </button>
+                            )}
                             {ctaSecondaryText && (
                                 <button
                                     className="border-2 px-8 py-3 text-sm font-medium"
@@ -84,12 +86,14 @@ export function StorefrontHero({ config, theme }: HeroProps) {
                     <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl" style={{ color: headingColor }}>{title}</h1>
                     <p className="mx-auto mt-6 max-w-2xl text-lg" style={{ color: bodyColor }}>{subtitle}</p>
                     <div className="mt-8 flex justify-center gap-4">
-                        <button
-                            className={ctaClass(ctaVariant, radius)}
-                            style={{ backgroundColor: theme.secondaryColor, color: buttonTextColor, borderRadius: radius }}
-                        >
-                            {ctaText}
-                        </button>
+                        {ctaText && (
+                            <button
+                                className={ctaClass(ctaVariant, radius)}
+                                style={{ backgroundColor: theme.secondaryColor, color: buttonTextColor, borderRadius: radius }}
+                            >
+                                {ctaText}
+                            </button>
+                        )}
                         {ctaSecondaryText && (
                             <button
                                 className="border px-8 py-3 text-sm font-medium transition-colors"
@@ -118,12 +122,14 @@ export function StorefrontHero({ config, theme }: HeroProps) {
                     <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl" style={{ color: titleColor }}>{title}</h1>
                     <p className="mt-6 text-lg" style={{ color: bodyColor }}>{subtitle}</p>
                     <div className={`mt-8 flex gap-3 ${isLeft ? '' : 'justify-center'}`}>
-                        <button
-                            className={ctaClass(ctaVariant, radius)}
-                            style={{ backgroundColor: theme.secondaryColor, color: buttonTextColor, borderRadius: radius }}
-                        >
-                            {ctaText}
-                        </button>
+                        {ctaText && (
+                            <button
+                                className={ctaClass(ctaVariant, radius)}
+                                style={{ backgroundColor: theme.secondaryColor, color: buttonTextColor, borderRadius: radius }}
+                            >
+                                {ctaText}
+                            </button>
+                        )}
                         {ctaSecondaryText && (
                             <button
                                 className="border px-8 py-3 text-sm font-medium transition-colors hover:bg-neutral-100"
