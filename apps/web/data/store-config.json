@@ -1,7 +1,7 @@
 {
   "theme": {
-    "primaryColor": "#1a110c",
-    "secondaryColor": "#c1571a",
+    "primaryColor": "#c1571a",
+    "secondaryColor": "#1f3521",
     "borderRadius": "md",
     "navStyle": "bordered",
     "colorScheme": "dark",
@@ -33,58 +33,56 @@
       "order": 3
     },
     {
-      "id": "categories",
-      "type": "categories",
-      "enabled": true,
-      "order": 4
-    },
-    {
       "id": "brand-strip",
       "type": "brand-strip",
       "enabled": true,
-      "order": 5
+      "order": 4
     },
     {
       "id": "testimonials",
       "type": "testimonials",
       "enabled": true,
-      "order": 6
+      "order": 5
     },
     {
       "id": "newsletter",
       "type": "newsletter",
       "enabled": true,
-      "order": 7
+      "order": 6
     },
     {
       "id": "footer",
       "type": "footer",
       "enabled": true,
+      "order": 7
+    },
+    {
+      "id": "categories",
+      "type": "categories",
+      "enabled": true,
       "order": 8
     }
   ],
   "hero": {
-    "layout": "editorial",
+    "layout": "split",
     "title": "Discover Earthy Elegance",
-    "subtitle": "Natural products for the modern rugged individual",
+    "subtitle": "Experience nature-inspired personal care",
     "ctaText": "Shop Now",
     "badge": "100% Natural Ingredients",
     "textAlign": "left",
     "ctaVariant": "solid",
     "overlayOpacity": 0.65,
     "ctaSecondaryText": "Learn More",
-    "backgroundColor": "#ffa848",
+    "backgroundColor": "#e9e8e7",
     "textColor": "#ffffff"
   },
   "productGrid": {
-    "columns": 3,
-    "backgroundColor": "#ffa848",
-    "textColor": "#ffffff"
+    "columns": 3
   },
   "sectionData": {
     "announcement-bar": {
       "text": "Free Shipping on Orders Over $50!",
-      "backgroundColor": "#1a110c",
+      "backgroundColor": "#c1571a",
       "textColor": "#ffffff",
       "scrolling": true,
       "emoji": null,
@@ -101,7 +99,7 @@
         {
           "icon": "check",
           "label": "No Harmful Chemicals",
-          "detail": "Safe for daily use"
+          "detail": "Safe for all skin types"
         },
         {
           "icon": "shield",
@@ -116,7 +114,7 @@
       ]
     },
     "brand-strip": {
-      "heading": "As Seen In",
+      "heading": "As seen in",
       "brands": [
         {
           "name": "Men's Health",
@@ -131,42 +129,42 @@
           "logoText": "Esquire"
         },
         {
-          "name": "Maxim",
-          "logoText": "Maxim"
+          "name": "Forbes",
+          "logoText": "Forbes"
         }
       ]
     },
     "testimonials": {
-      "heading": "What Our Customers Are Saying",
+      "heading": "What Customers Are Saying",
       "layout": "grid",
       "showRatings": true,
       "items": [
         {
-          "quote": "These products have changed my routine. Absolutely love the natural feel!",
+          "quote": "These products changed my routine completely. Amazing quality!",
           "author": "Jake M.",
           "location": "Austin, TX",
           "rating": 5
         },
         {
-          "quote": "Best soap I've ever used. The scent is rugged and refreshing.",
-          "author": "Mike R.",
+          "quote": "Love the natural ingredients. Feels great on my skin.",
+          "author": "Sam R.",
           "location": "Denver, CO",
           "rating": 5
         },
         {
-          "quote": "I’m hooked! High-quality and truly natural ingredients.",
-          "author": "Sam T.",
-          "location": "Portland, OR",
+          "quote": "Best soap I've ever used. Worth every penny.",
+          "author": "Mike T.",
+          "location": "Seattle, WA",
           "rating": 5
         }
       ]
     },
     "newsletter": {
-      "heading": "Join the Rugged Revolution",
-      "subtext": "Sign up for exclusive offers and updates.",
+      "heading": "Join Our Community",
+      "subtext": "Sign up and get 20% off your first order",
       "placeholder": "Enter your email",
       "buttonText": "Subscribe",
-      "backgroundColor": "#f0ebe4",
+      "backgroundColor": "#1f3521",
       "incentive": "Sign up and get 20% off your first order"
     }
   },
@@ -184,17 +182,12 @@
         "href": "/products"
       },
       {
-        "id": "nav-collections",
-        "label": "Collections",
-        "href": "/products"
-      },
-      {
-        "id": "nav-journal",
-        "label": "Journal",
-        "href": "#"
+        "id": "nav-ccd3dfb2",
+        "label": "Cool Announcement",
+        "href": "/cool-announcement"
       }
     ],
-    "backgroundColor": "#1a110c",
+    "backgroundColor": "#c1571a",
     "textColor": "#ffffff"
   },
   "categories": {
@@ -205,7 +198,21 @@
     "backgroundColor": "#1b4332",
     "textColor": "#ffffff"
   },
-  "customPages": [],
+  "customPages": [
+    {
+      "id": "custom-6dfcabd1",
+      "name": "Cool Announcement",
+      "slug": "/cool-announcement",
+      "sections": [
+        {
+          "id": "announcement-bar",
+          "type": "announcement-bar",
+          "enabled": true,
+          "order": 0
+        }
+      ]
+    }
+  ],
   "pagesSections": {
     "products": [
       {

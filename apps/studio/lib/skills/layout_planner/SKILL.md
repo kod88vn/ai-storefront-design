@@ -73,7 +73,7 @@ Decide the hero variant, section ordering, product grid columns, and hero micro-
 - `testimonials` in the lower half of the page (post-product, pre-newsletter)
 - `trust-badges` just above or just below the fold — a second trust signal near the CTA
 - `newsletter` second-to-last — captures intent after browse
-- `footer` always last
+- **`footer` ALWAYS LAST** — regardless of vision extraction or input sectionOrder, footer must be the final section
 
 ## Business Model / Density Overrides
 
@@ -83,6 +83,7 @@ Decide the hero variant, section ordering, product grid columns, and hero micro-
 - If `visualDensity = dense`, avoid overly sparse minimalist adaptations.
 - If `ctaStyle = utility-first`, keep hierarchy tighter and conversion-first rather than narrative-first.
 - If `sectionOrder` is present from the extractor, treat it as a strong prior and only change it when it clearly conflicts with storefront constraints.
+- **ALWAYS ensure `footer` is the last item in `sectionOrder`** — if footer appears elsewhere in the input sectionOrder, move it to the end. Footer must never appear in the middle of the page.
 
 ## Hero micro-parameters
 

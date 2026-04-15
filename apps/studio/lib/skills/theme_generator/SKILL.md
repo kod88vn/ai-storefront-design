@@ -78,6 +78,8 @@ When calling `apply_config_update`, you output `themeChanges` (the global theme)
 ### Per-section style rules
 
 - Only populate `componentStyleChanges` fields you actually change — omit the rest (they inherit from the theme).
+- **Background Color Alternation**: When applying extracted background colors, use them proportionally across sections. Background colors must alternate between 2 adjacent components to create visual rhythm — avoid applying the same background color to consecutive sections. For example: hero (neutral) → productGrid (tint) → categories (neutral) → footer (dark).
+- **Conservative Dark Color Application**: Avoid applying black or very dark backgrounds extensively unless the reference site clearly uses dark colors throughout. If the reference has mostly light backgrounds, do not create a "false impression" of heaviness by over-applying dark colors. Dark backgrounds should only be used for specific sections (like footer) when the reference site actually uses them, not as a default assumption. **Never apply black backgrounds to organic, earthy, or natural sites** — these should maintain light, clean aesthetics even if the reference has some dark accents.
 - `navbar.backgroundColor` takes precedence over `navStyle`-derived colors. **Always set it** in these cases:
   - When `navStyle = bordered` and the extracted `backgroundColor` is not pure white (`#ffffff`) — the nav should match the page background (e.g. a cream `#faf5f0` page needs `navbar.backgroundColor: #faf5f0`).
   - When `navStyle = filled` and the nav uses a specific brand color that differs from `primaryColor`.
