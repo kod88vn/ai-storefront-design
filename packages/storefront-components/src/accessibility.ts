@@ -91,7 +91,8 @@ export function ensureDistinctSurfaceColor(
   if (!bg) return undefined;
   if (!adjacent || bg !== adjacent) return bg;
 
-  const isLightSurface = contrastRatio("#111111", bg) >= contrastRatio("#ffffff", bg);
+  const isLightSurface =
+    contrastRatio("#111111", bg) >= contrastRatio("#ffffff", bg);
 
   if (isLightSurface) {
     return bg === "#ffffff" ? "#f5f5f5" : "#ffffff";

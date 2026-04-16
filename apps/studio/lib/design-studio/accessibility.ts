@@ -120,7 +120,8 @@ function ensureDistinctSurfaceColor(
   if (!bg) return undefined;
   if (!adjacent || bg !== adjacent) return bg;
 
-  const isLightSurface = contrastRatio("#111111", bg) >= contrastRatio("#ffffff", bg);
+  const isLightSurface =
+    contrastRatio("#111111", bg) >= contrastRatio("#ffffff", bg);
 
   if (isLightSurface) {
     return bg === "#ffffff" ? "#f5f5f5" : "#ffffff";
@@ -197,13 +198,14 @@ export function sanitizeConfigUpdateForAccessibility<
     const navBackground =
       normalizeHex(componentStyleChanges.navbar?.backgroundColor) ??
       normalizeHex(next.navChanges?.backgroundColor) ??
-      normalizeHex(navStyle === "filled" ? filledNavBackground : baseBackground);
+      normalizeHex(
+        navStyle === "filled" ? filledNavBackground : baseBackground,
+      );
 
     if (heroBackground && navBackground && heroBackground === navBackground) {
-      const adjustedNavBackground = ensureDistinctSurfaceColor(
-        navBackground,
-        heroBackground,
-      ) ?? navBackground;
+      const adjustedNavBackground =
+        ensureDistinctSurfaceColor(navBackground, heroBackground) ??
+        navBackground;
       const adjustedNavText = pickAccessibleTextColor(
         adjustedNavBackground,
         componentStyleChanges.navbar?.textColor ?? next.navChanges?.textColor,

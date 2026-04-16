@@ -71,9 +71,9 @@ describe("apply_config_update accessibility", () => {
 
     const payload = parseToolPayload(result);
 
-    expect(payload.applied.componentStyleChanges.navbar.backgroundColor).not.toBe(
-      payload.applied.componentStyleChanges.hero.backgroundColor,
-    );
+    expect(
+      payload.applied.componentStyleChanges.navbar.backgroundColor,
+    ).not.toBe(payload.applied.componentStyleChanges.hero.backgroundColor);
   });
 
   it("prevents a filled navbar from matching the current hero background", () => {
