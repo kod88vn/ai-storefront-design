@@ -27,10 +27,21 @@ import { filterSkills, loadSkills } from "@/lib/design-studio/skill-loader";
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const MAX_STEPS = 15;
-// Use the xAI Responses API model names (chat/completions is not available on this account)
-const AI_MODEL = process.env.AI_MODEL ?? "grok-3-fast";
-// Vision-capable model — same model supports vision on the Responses API
-const VISION_MODEL = process.env.VISION_MODEL ?? "grok-3-fast";
+const USE_AI_GATEWAY = Boolean(process.env.AI_GATEWAY_API_KEY);
+const DEFAULT_XAI_MODEL = "grok-3-fast";
+const DEFAULT_GATEWAY_MODEL = "openai/gpt-4.1-mini";
+
+// With AI Gateway enabled, use provider/model IDs such as
+// "openai/gpt-4.1-mini", "anthropic/claude-sonnet-4-5", or "xai/grok-4.1-mini".
+// Otherwise use native xAI Responses API model IDs.
+const AI_MODEL =
+  process.env.AI_MODEL ??
+  (USE_AI_GATEWAY ? DEFAULT_GATEWAY_MODEL : DEFAULT_XAI_MODEL);
+const VISION_MODEL = process.env.VISION_MODEL ?? AI_MODEL;
+
+function resolveModel(modelId: string) {
+  return USE_AI_GATEWAY ? modelId : xai.responses(modelId);
+}
 
 // ─── Orchestrator generator ───────────────────────────────────────────────────
 
@@ -123,7 +134,7 @@ export async function* runOrchestrator(
     yield progress("Analyzing uploaded image...", "thinking");
     try {
       const visionResult = await generateText({
-        model: xai.responses(VISION_MODEL),
+        model: resolveModel(VISION_MODEL),
         messages: [
           {
             role: "user",
@@ -359,8 +370,8 @@ Rules:
 
     try {
       const streamResult = streamText({
-        // xai.responses() uses the /v1/responses endpoint instead of /v1/chat/completions
-        model: xai.responses(AI_MODEL),
+        // Use AI Gateway when configured; otherwise fall back to direct xAI.
+        model: resolveModel(AI_MODEL),
         system: systemPrompt,
         messages,
         tools,
@@ -370,6 +381,11 @@ Rules:
       // Reasoning models often skip text entirely and go straight to tool calls —
       // emitting the tool name ensures there's always something visible.
       for await (const chunk of streamResult.fullStream) {
+        const typedChunk = chunk as unknown as {
+          type: string;
+          toolName?: string;
+          error?: unknown;
+        };
         if (chunk.type === "text-delta") {
           // AI SDK v6: text-delta has `.text` not `.textDelta`
           const text = (chunk as unknown as { text: string }).text ?? "";
@@ -380,16 +396,22 @@ Rules:
           const delta =
             (chunk as unknown as { textDelta: string }).textDelta ?? "";
           if (delta) yield { type: "thinking", thinking: delta };
-        } else if (chunk.type === "tool-call") {
+        } else if (
+          typedChunk.type === "tool-call" ||
+          typedChunk.type === "tool-input-start"
+        ) {
           // Emit the tool name so the user sees which tool is being invoked
+          const toolName = typedChunk.toolName ?? "tool";
           yield {
             type: "thinking",
-            thinking: `→ ${chunk.toolName}\n`,
+            thinking: `→ ${toolName}\n`,
           };
-          // tool-call from fullStream uses `.input` in AI SDK v6 (same as generateText)
-          collectedToolCalls.push(chunk);
-        } else if (chunk.type === "error") {
-          throw (chunk as unknown as { error: unknown }).error;
+          if (typedChunk.type === "tool-call") {
+            // tool-call from fullStream uses `.input` in AI SDK v6 (same as generateText)
+            collectedToolCalls.push(chunk);
+          }
+        } else if (typedChunk.type === "error") {
+          throw typedChunk.error;
         }
       }
     } catch (err) {

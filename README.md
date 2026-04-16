@@ -27,10 +27,22 @@ packages/
 
 ## Environment variables
 
-Create `apps/studio/.env.local` with your xAI key:
+Create `apps/studio/.env.local` with either a direct xAI key or a Vercel AI Gateway key.
 
 ```bash
-XAI_API_KEY=your_key_here
+# Option A: direct xAI access
+XAI_API_KEY=your_xai_key_here
+AI_MODEL=grok-4-1-fast-reasoning
+
+# Option B: Vercel AI Gateway for testing different providers/models
+AI_GATEWAY_API_KEY=your_gateway_key_here
+AI_MODEL=openai/gpt-4.1-mini
+# Example alternatives:
+# AI_MODEL=anthropic/claude-sonnet-4-5
+# AI_MODEL=xai/grok-4.1-mini
+
+# Optional vision override (defaults to AI_MODEL)
+# VISION_MODEL=openai/gpt-4.1-mini
 ```
 
 ---

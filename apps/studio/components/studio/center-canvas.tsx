@@ -117,6 +117,12 @@ function ContainerCanvas({ config, containers, cartItems }: { config: Storefront
   const baseBg = theme.colorScheme === 'dark' ? '#0a0a0a' : '#ffffff'
   const baseText = theme.colorScheme === 'dark' ? '#f5f5f5' : '#0a0a0a'
   const isTransparentNav = theme.navStyle === 'transparent'
+  const heroBackground = config.hero.backgroundColor
+    ?? (config.hero.layout === 'editorial'
+      ? theme.colorScheme === 'dark' ? '#0a0a0a' : theme.primaryColor
+      : config.hero.layout === 'centered'
+        ? config.hero.backgroundImage ? '#0a0a0a' : '#f5f5f5'
+        : '#ffffff')
   // Full-page sections (products-listing, cart-content, etc.) render their own navbar
   const showNav = !hasFullPageSection(containers)
 
@@ -126,7 +132,7 @@ function ContainerCanvas({ config, containers, cartItems }: { config: Storefront
       className={`min-h-screen ${isTransparentNav ? 'relative' : ''}`}
       style={{ ['--storefront-radius' as string]: radiusVal, fontFamily: fontFamilyVal, backgroundColor: baseBg, color: baseText }}
     >
-      {showNav && <StorefrontNavbar theme={theme} navConfig={config.nav} />}
+      {showNav && <StorefrontNavbar theme={theme} navConfig={config.nav} heroBackground={heroBackground} />}
       {containers.map((c) => (
         <div key={c.id} className={containerClass(c)}>
           {c.components.map((comp) => renderComponent(comp, config, cartItems))}

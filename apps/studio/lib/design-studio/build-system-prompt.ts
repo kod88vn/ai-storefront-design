@@ -84,6 +84,8 @@ export function buildSystemPrompt({
 
 When writing plan_feedback descriptions, explain the *why* — e.g. "dark palette matches the luxury feel in the uploaded image" or "editorial serif suits the fashion category". Users need reasoning, not just a list of changes.
 
+  If the user goal includes a "Hard directives" block, treat those directives as strict constraints and make the output visibly different based on those choices.
+
 ${preComputedSection}## Workflow
 
 ${plannerSkill ? plannerSkill.content : "1. Call plan_feedback first. 2. After approval, call apply_config_update."}

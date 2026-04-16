@@ -23,6 +23,11 @@ type MaybeConfig = {
     colorScheme?: "light" | "dark";
     navStyle?: "bordered" | "transparent" | "filled";
   };
+  hero?: {
+    backgroundColor?: string;
+    layout?: string;
+    backgroundImage?: string;
+  };
 };
 
 export function normalizeHex(value?: string | null): string | null {
@@ -105,6 +110,25 @@ export function pickAccessibleTextColor(
   return best;
 }
 
+function ensureDistinctSurfaceColor(
+  background?: string | null,
+  adjacentBackground?: string | null,
+): string | undefined {
+  const bg = normalizeHex(background);
+  const adjacent = normalizeHex(adjacentBackground);
+
+  if (!bg) return undefined;
+  if (!adjacent || bg !== adjacent) return bg;
+
+  const isLightSurface = contrastRatio("#111111", bg) >= contrastRatio("#ffffff", bg);
+
+  if (isLightSurface) {
+    return bg === "#ffffff" ? "#f5f5f5" : "#ffffff";
+  }
+
+  return bg === "#0a0a0a" || bg === "#111111" ? "#171717" : "#0a0a0a";
+}
+
 function ensureStyleContrast(
   style: MaybeStylePatch | undefined,
   fallbackBackground?: string,
@@ -166,6 +190,37 @@ export function sanitizeConfigUpdateForAccessibility<
         colorScheme === "dark" ? "#0a0a0a" : "#111111",
       ),
     };
+
+    const heroBackground =
+      normalizeHex(componentStyleChanges.hero?.backgroundColor) ??
+      normalizeHex(currentConfig?.hero?.backgroundColor);
+    const navBackground =
+      normalizeHex(componentStyleChanges.navbar?.backgroundColor) ??
+      normalizeHex(next.navChanges?.backgroundColor) ??
+      normalizeHex(navStyle === "filled" ? filledNavBackground : baseBackground);
+
+    if (heroBackground && navBackground && heroBackground === navBackground) {
+      const adjustedNavBackground = ensureDistinctSurfaceColor(
+        navBackground,
+        heroBackground,
+      ) ?? navBackground;
+      const adjustedNavText = pickAccessibleTextColor(
+        adjustedNavBackground,
+        componentStyleChanges.navbar?.textColor ?? next.navChanges?.textColor,
+      );
+
+      componentStyleChanges.navbar = {
+        ...componentStyleChanges.navbar,
+        backgroundColor: adjustedNavBackground,
+        textColor: adjustedNavText,
+      };
+
+      next.navChanges = {
+        ...(next.navChanges ?? {}),
+        backgroundColor: adjustedNavBackground,
+        textColor: adjustedNavText,
+      } as T["navChanges"];
+    }
 
     next.componentStyleChanges =
       componentStyleChanges as T["componentStyleChanges"];

@@ -1,10 +1,10 @@
 {
   "theme": {
-    "primaryColor": "#c1571a",
+    "primaryColor": "#1a465f",
     "secondaryColor": "#1f3521",
     "borderRadius": "md",
     "navStyle": "bordered",
-    "colorScheme": "dark",
+    "colorScheme": "light",
     "fontStyle": "modern-sans"
   },
   "sections": [
@@ -27,62 +27,60 @@
       "order": 2
     },
     {
-      "id": "product-grid",
-      "type": "product-grid",
+      "id": "featured-collection",
+      "type": "featured-collection",
       "enabled": true,
       "order": 3
-    },
-    {
-      "id": "brand-strip",
-      "type": "brand-strip",
-      "enabled": true,
-      "order": 4
     },
     {
       "id": "testimonials",
       "type": "testimonials",
       "enabled": true,
-      "order": 5
+      "order": 4
     },
     {
       "id": "newsletter",
       "type": "newsletter",
       "enabled": true,
-      "order": 6
+      "order": 5
     },
     {
-      "id": "footer",
-      "type": "footer",
+      "id": "product-grid",
+      "type": "product-grid",
       "enabled": true,
-      "order": 7
+      "order": 6
     },
     {
       "id": "categories",
       "type": "categories",
+      "enabled": true,
+      "order": 7
+    },
+    {
+      "id": "footer",
+      "type": "footer",
       "enabled": true,
       "order": 8
     }
   ],
   "hero": {
     "layout": "split",
-    "title": "Discover Earthy Elegance",
-    "subtitle": "Experience nature-inspired personal care",
+    "title": "Curated Home Essentials",
+    "subtitle": "Discover natural personal care essentials",
     "ctaText": "Shop Now",
     "badge": "100% Natural Ingredients",
     "textAlign": "left",
     "ctaVariant": "solid",
-    "overlayOpacity": 0.65,
-    "ctaSecondaryText": "Learn More",
-    "backgroundColor": "#e9e8e7",
-    "textColor": "#ffffff"
+    "overlayOpacity": 0.5,
+    "ctaSecondaryText": "Learn More"
   },
   "productGrid": {
     "columns": 3
   },
   "sectionData": {
     "announcement-bar": {
-      "text": "Free Shipping on Orders Over $50!",
-      "backgroundColor": "#c1571a",
+      "text": "Buy More Get LESS",
+      "backgroundColor": "#07151d",
       "textColor": "#ffffff",
       "scrolling": true,
       "emoji": null,
@@ -113,58 +111,42 @@
         }
       ]
     },
-    "brand-strip": {
-      "heading": "As seen in",
-      "brands": [
-        {
-          "name": "Men's Health",
-          "logoText": "Men's Health"
-        },
-        {
-          "name": "GQ",
-          "logoText": "GQ"
-        },
-        {
-          "name": "Esquire",
-          "logoText": "Esquire"
-        },
-        {
-          "name": "Forbes",
-          "logoText": "Forbes"
-        }
-      ]
+    "featured-collection": {
+      "heading": "Our Best Sellers",
+      "subheading": "Explore our most popular natural care products",
+      "layout": "grid"
     },
     "testimonials": {
-      "heading": "What Customers Are Saying",
+      "heading": "What Our Customers Are Saying",
       "layout": "grid",
       "showRatings": true,
       "items": [
         {
-          "quote": "These products changed my routine completely. Amazing quality!",
-          "author": "Jake M.",
+          "quote": "These products have transformed my daily routine. Absolutely love the natural scents!",
+          "author": "James T.",
           "location": "Austin, TX",
           "rating": 5
         },
         {
-          "quote": "Love the natural ingredients. Feels great on my skin.",
-          "author": "Sam R.",
+          "quote": "Best personal care products I've ever used. My skin feels amazing!",
+          "author": "Michael R.",
           "location": "Denver, CO",
           "rating": 5
         },
         {
-          "quote": "Best soap I've ever used. Worth every penny.",
-          "author": "Mike T.",
-          "location": "Seattle, WA",
+          "quote": "Finally, products that match my values. Natural and effective!",
+          "author": "Sarah L.",
+          "location": "Portland, OR",
           "rating": 5
         }
       ]
     },
     "newsletter": {
       "heading": "Join Our Community",
-      "subtext": "Sign up and get 20% off your first order",
+      "subtext": "Sign up for exclusive offers and updates on natural care.",
       "placeholder": "Enter your email",
       "buttonText": "Subscribe",
-      "backgroundColor": "#1f3521",
+      "backgroundColor": "#f0ebe4",
       "incentive": "Sign up and get 20% off your first order"
     }
   },
@@ -182,17 +164,13 @@
         "href": "/products"
       },
       {
-        "id": "nav-ccd3dfb2",
-        "label": "Cool Announcement",
-        "href": "/cool-announcement"
+        "id": "nav-2d6a8610",
+        "label": "Announcement",
+        "href": "/announcement"
       }
     ],
-    "backgroundColor": "#c1571a",
-    "textColor": "#ffffff"
-  },
-  "categories": {
-    "backgroundColor": "#ffa848",
-    "textColor": "#ffffff"
+    "backgroundColor": "#faf5f0",
+    "textColor": "#1a465f"
   },
   "footer": {
     "backgroundColor": "#1b4332",
@@ -200,9 +178,9 @@
   },
   "customPages": [
     {
-      "id": "custom-6dfcabd1",
-      "name": "Cool Announcement",
-      "slug": "/cool-announcement",
+      "id": "custom-0fd6280a",
+      "name": "Announcement",
+      "slug": "/announcement",
       "sections": [
         {
           "id": "announcement-bar",

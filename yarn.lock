@@ -41,9 +41,9 @@
     json-schema "^0.4.0"
 
 "@ai-sdk/xai@^3.0.80":
-  version "3.0.81"
-  resolved "https://registry.yarnpkg.com/@ai-sdk/xai/-/xai-3.0.81.tgz#5b6452d2b6a248a7fc1092c46f16443adc6d16a8"
-  integrity sha512-Qd7B7Js/5cw5ZNRbnHO5e/aQ3Spf1iiAYqzUVSfQ7tEqLe1NJfBFjgOUogvQk7DE9runZIyYSsKjRrQYMcnlwg==
+  version "3.0.83"
+  resolved "https://registry.yarnpkg.com/@ai-sdk/xai/-/xai-3.0.83.tgz#7ebef403450edff1fabaff45dcfda53af943fbb3"
+  integrity sha512-SuQz68BZGeuZjrSUJAzku97IlhdiNJJBsvG/Tvm3K2tuxkBS7TJq0fH4/AzAM7w2H2jxVUgboP7kRR6IfpRxcg==
   dependencies:
     "@ai-sdk/openai-compatible" "2.0.41"
     "@ai-sdk/provider" "3.0.8"

@@ -68,6 +68,12 @@ export function StorefrontPreview({ config, cartCount = 0, cartItems = [], onAdd
     const baseBg = theme.colorScheme === 'dark' ? '#0a0a0a' : '#ffffff'
     const baseText = theme.colorScheme === 'dark' ? '#f5f5f5' : '#0a0a0a'
     const isTransparentNav = theme.navStyle === 'transparent'
+    const heroBackground = config.hero.backgroundColor
+        ?? (config.hero.layout === 'editorial'
+            ? theme.colorScheme === 'dark' ? '#0a0a0a' : theme.primaryColor
+            : config.hero.layout === 'centered'
+                ? config.hero.backgroundImage ? '#0a0a0a' : '#f5f5f5'
+                : '#ffffff')
 
     return (
         <div
@@ -80,7 +86,7 @@ export function StorefrontPreview({ config, cartCount = 0, cartItems = [], onAdd
                 color: baseText,
             }}
         >
-            <StorefrontNavbar theme={theme} navConfig={config.nav} cartCount={cartCount} />
+            <StorefrontNavbar theme={theme} navConfig={config.nav} cartCount={cartCount} heroBackground={heroBackground} />
             {sortedSections.map(renderSection)}
         </div>
     )

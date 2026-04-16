@@ -34,12 +34,156 @@ const QUESTIONS = [
         q: 'What should the design prioritize?',
         opts: ['Conversions & Sales', 'Brand storytelling', 'Product discovery', 'Trust & Credibility', 'Community & Lifestyle'],
     },
+    {
+        id: 'heroTreatment',
+        q: 'Pick a hero direction',
+        opts: ['Bold campaign split', 'Centered conversion hero', 'Editorial storytelling'],
+    },
+    {
+        id: 'density',
+        q: 'How dense should the page feel?',
+        opts: ['Spacious premium', 'Balanced', 'Dense discovery'],
+    },
+    {
+        id: 'merchandising',
+        q: 'Which merchandising modules matter most?',
+        opts: ['Social proof + trust', 'Promotions + urgency', 'Collections + editorial curation'],
+    },
 ] as const
 
 type QuestionId = typeof QUESTIONS[number]['id']
 type Answers = Partial<Record<QuestionId, string>>
 
+interface WizardDirectives {
+    heroLayout: 'split' | 'centered' | 'editorial'
+    dominantStyle: string
+    navStyle: 'bordered' | 'transparent' | 'filled'
+    colorScheme: 'light' | 'dark'
+    fontStyle: string
+    borderRadius: string
+    productGridColumns: 2 | 3 | 4
+    ctaStyle: string
+    imageryStyle: string
+    headlineTone: string
+    sectionOrder: string[]
+    modules: string[]
+}
+
+function toDirectives(answers: Answers): WizardDirectives {
+    const heroLayout =
+        answers.heroTreatment === 'Editorial storytelling'
+            ? 'editorial'
+            : answers.heroTreatment === 'Centered conversion hero'
+                ? 'centered'
+                : 'split'
+
+    const dominantStyle =
+        answers.personality === 'Luxury & High-end'
+            ? 'dark-luxury'
+            : answers.personality === 'Natural & Organic'
+                ? 'organic'
+                : answers.personality === 'Bold & Energetic'
+                    ? 'bold-playful'
+                    : answers.personality === 'Playful & Fun'
+                        ? 'maximalist'
+                        : answers.personality === 'Professional & Clinical'
+                            ? 'tech-precision'
+                            : 'minimalist'
+
+    const colorScheme: 'light' | 'dark' =
+        answers.mood === 'Dark & Moody' ? 'dark' : 'light'
+
+    const fontStyle =
+        answers.typography === 'Editorial & Refined'
+            ? 'editorial-serif'
+            : answers.typography === 'Technical & Precise'
+                ? 'mono-tech'
+                : answers.typography === 'Creative & Expressive'
+                    ? 'display-serif'
+                    : answers.typography === 'Friendly & Approachable'
+                        ? 'rounded'
+                        : 'modern-sans'
+
+    const navStyle: 'bordered' | 'transparent' | 'filled' =
+        answers.focus === 'Product discovery' || answers.focus === 'Conversions & Sales'
+            ? 'filled'
+            : answers.personality === 'Luxury & High-end'
+                ? 'transparent'
+                : 'bordered'
+
+    const borderRadius =
+        answers.personality === 'Luxury & High-end'
+            ? 'none'
+            : answers.personality === 'Playful & Fun'
+                ? 'full'
+                : 'md'
+
+    const productGridColumns: 2 | 3 | 4 =
+        answers.density === 'Spacious premium'
+            ? 2
+            : answers.density === 'Dense discovery'
+                ? 4
+                : 3
+
+    const ctaStyle =
+        answers.focus === 'Conversions & Sales'
+            ? 'promotion-first'
+            : answers.focus === 'Brand storytelling'
+                ? 'editorial-soft'
+                : answers.focus === 'Product discovery'
+                    ? 'utility-first'
+                    : 'brand-first'
+
+    const imageryStyle =
+        answers.category === 'Food & Beverage'
+            ? 'restaurant-food'
+            : answers.category === 'Electronics & Tech'
+                ? 'app-ui'
+                : answers.category === 'Fashion & Apparel'
+                    ? 'editorial-campaign'
+                    : 'lifestyle'
+
+    const headlineTone =
+        answers.focus === 'Conversions & Sales'
+            ? 'urgent'
+            : answers.focus === 'Trust & Credibility'
+                ? 'functional'
+                : answers.personality === 'Luxury & High-end'
+                    ? 'premium'
+                    : 'editorial'
+
+    const modules =
+        answers.merchandising === 'Promotions + urgency'
+            ? ['announcement-bar', 'benefits-bar', 'newsletter']
+            : answers.merchandising === 'Collections + editorial curation'
+                ? ['featured-collection', 'brand-strip', 'testimonials']
+                : ['trust-badges', 'benefits-bar', 'testimonials']
+
+    const sectionOrder =
+        answers.focus === 'Product discovery'
+            ? ['hero', 'categories', 'product-grid', ...modules, 'footer']
+            : answers.focus === 'Brand storytelling'
+                ? ['hero', 'featured-collection', ...modules, 'product-grid', 'footer']
+                : ['hero', ...modules, 'product-grid', 'categories', 'footer']
+
+    return {
+        heroLayout,
+        dominantStyle,
+        navStyle,
+        colorScheme,
+        fontStyle,
+        borderRadius,
+        productGridColumns,
+        ctaStyle,
+        imageryStyle,
+        headlineTone,
+        sectionOrder,
+        modules,
+    }
+}
+
 function synthesizeGoal(answers: Answers): string {
+    const d = toDirectives(answers)
     const parts: string[] = []
     if (answers.category) parts.push(`This is a ${answers.category} store`)
     if (answers.personality) parts.push(`with a "${answers.personality}" brand personality`)
@@ -47,7 +191,24 @@ function synthesizeGoal(answers: Answers): string {
     if (answers.typography) parts.push(`Typography should feel "${answers.typography}"`)
     if (answers.customer) parts.push(`targeting ${answers.customer}`)
     if (answers.focus) parts.push(`Primary focus: ${answers.focus}`)
-    return parts.join('. ') + '. Create a cohesive storefront design that captures all these qualities.'
+    return [
+        parts.join('. ') + '.',
+        'Create a cohesive storefront design that reflects these selections with clear visual differences.',
+        'Hard directives (must follow unless accessibility fails):',
+        `- heroLayout: ${d.heroLayout}`,
+        `- dominantStyle: ${d.dominantStyle}`,
+        `- navStyle: ${d.navStyle}`,
+        `- colorScheme: ${d.colorScheme}`,
+        `- fontStyle: ${d.fontStyle}`,
+        `- borderRadius: ${d.borderRadius}`,
+        `- productGridColumns: ${d.productGridColumns}`,
+        `- ctaStyle: ${d.ctaStyle}`,
+        `- imageryStyle: ${d.imageryStyle}`,
+        `- headlineTone: ${d.headlineTone}`,
+        `- prioritize sections: ${d.modules.join(', ')}`,
+        `- target section order: ${d.sectionOrder.join(' > ')}`,
+        'Please produce a plan that is visibly distinct from generic defaults and ties each major change back to these directives.',
+    ].join('\n')
 }
 
 function WizardStep({ q, selected, onSelect }: {

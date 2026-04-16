@@ -7,6 +7,7 @@ import {
   contrastRatio,
   pickAccessibleTextColor,
 } from "../../../../packages/storefront-components/src/accessibility";
+import { sanitizeConfigUpdateForAccessibility } from "@/lib/design-studio/accessibility";
 
 function parseToolPayload(result: Awaited<ReturnType<typeof executeTool>>) {
   return JSON.parse(result.content[0]?.text ?? "{}");
@@ -52,6 +53,55 @@ describe("apply_config_update accessibility", () => {
     expect(
       payload.applied.componentStyleChanges.categories.textColor,
     ).toBeTruthy();
+  });
+
+  it("prevents the navbar and hero from sharing the same surface color", async () => {
+    const result = await executeTool("apply_config_update", {
+      componentStyleChanges: {
+        navbar: {
+          backgroundColor: "#ffffff",
+          textColor: "#111111",
+        },
+        hero: {
+          backgroundColor: "#ffffff",
+          textColor: "#111111",
+        },
+      },
+    });
+
+    const payload = parseToolPayload(result);
+
+    expect(payload.applied.componentStyleChanges.navbar.backgroundColor).not.toBe(
+      payload.applied.componentStyleChanges.hero.backgroundColor,
+    );
+  });
+
+  it("prevents a filled navbar from matching the current hero background", () => {
+    const applied = sanitizeConfigUpdateForAccessibility(
+      {
+        componentStyleChanges: {
+          navbar: {
+            backgroundColor: "#f59e0b",
+            textColor: "#111111",
+          },
+        },
+      },
+      {
+        theme: {
+          primaryColor: "#f59e0b",
+          colorScheme: "light",
+          navStyle: "filled",
+        },
+        hero: {
+          backgroundColor: "#f59e0b",
+          layout: "split",
+        },
+      },
+    );
+
+    expect(applied.componentStyleChanges?.navbar?.backgroundColor).not.toBe(
+      "#f59e0b",
+    );
   });
 
   it("chooses readable text for bright accent and section colors", () => {

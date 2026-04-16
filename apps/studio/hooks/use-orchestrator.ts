@@ -48,7 +48,11 @@ export function useOrchestrator() {
 
     switch (event.type) {
       case "progress":
-        // agentStep already handled above
+        // Keep activity visible even when providers emit sparse reasoning chunks.
+        if (event.message) {
+          const label = event.agentStep ?? "status";
+          s.appendThinkingText(`[${label}] ${event.message}\n`);
+        }
         break;
 
       case "audit":

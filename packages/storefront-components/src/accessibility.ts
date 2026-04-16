@@ -80,3 +80,22 @@ export function pickAccessibleAccentColor(
 ) {
   return pickAccessibleTextColor(background, preferred, minRatio);
 }
+
+export function ensureDistinctSurfaceColor(
+  background?: string | null,
+  adjacentBackground?: string | null,
+) {
+  const bg = normalizeHex(background);
+  const adjacent = normalizeHex(adjacentBackground);
+
+  if (!bg) return undefined;
+  if (!adjacent || bg !== adjacent) return bg;
+
+  const isLightSurface = contrastRatio("#111111", bg) >= contrastRatio("#ffffff", bg);
+
+  if (isLightSurface) {
+    return bg === "#ffffff" ? "#f5f5f5" : "#ffffff";
+  }
+
+  return bg === "#0a0a0a" || bg === "#111111" ? "#171717" : "#0a0a0a";
+}

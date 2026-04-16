@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Search, ShoppingBag, User, Menu, X } from 'lucide-react'
 import type { NavConfig, ThemeConfig } from '@ai-storefront/types'
-import { pickAccessibleTextColor } from './accessibility'
+import { ensureDistinctSurfaceColor, pickAccessibleTextColor } from './accessibility'
 import { defaultNavConfig } from './data'
 
 interface NavbarProps {
@@ -11,11 +11,12 @@ interface NavbarProps {
     navConfig?: NavConfig
     cartCount?: number
     onCartClick?: () => void
+    heroBackground?: string
 }
 
 const FONT_SIZE_MAP = { sm: '0.875rem', base: '1rem', lg: '1.125rem', xl: '1.25rem' } as const
 
-export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick }: NavbarProps) {
+export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick, heroBackground }: NavbarProps) {
     const [menuOpen, setMenuOpen] = useState(false)
     const nav = navConfig ?? defaultNavConfig
 
@@ -40,18 +41,18 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
                 ? '#0a0a0a'
                 : '#ffffff')
 
+    const resolvedNavBackground = navStyle === 'transparent'
+        ? navBackground
+        : ensureDistinctSurfaceColor(navBackground, heroBackground) ?? navBackground
+
     const containerStyle = {
-        backgroundColor: overrideBg
-            ? overrideBg
-            : navStyle === 'filled'
-                ? theme.primaryColor
-                : navStyle === 'transparent'
-                    ? 'transparent'
-                    : '#ffffff',
+        backgroundColor: navStyle === 'transparent'
+            ? 'transparent'
+            : resolvedNavBackground,
         ...(overrideFontSize ? { fontSize: overrideFontSize } : {}),
     }
 
-    const textColor = pickAccessibleTextColor(navBackground, overrideText ?? (navStyle === 'transparent' || navStyle === 'filled' ? '#ffffff' : theme.primaryColor))
+    const textColor = pickAccessibleTextColor(resolvedNavBackground, overrideText ?? (navStyle === 'transparent' || navStyle === 'filled' ? '#ffffff' : theme.primaryColor))
     const linkCls = 'transition-opacity hover:opacity-80'
     const iconCls = linkCls
     const badgeTextColor = pickAccessibleTextColor(theme.secondaryColor, '#ffffff')
@@ -61,13 +62,9 @@ export function StorefrontNavbar({ theme, navConfig, cartCount = 0, onCartClick 
             ? 'border-t border-white/20'
             : 'border-t border-neutral-200'
 
-    const mobileContainerStyle = overrideBg
-        ? { backgroundColor: overrideBg }
-        : navStyle === 'filled'
-            ? { backgroundColor: theme.primaryColor }
-            : navStyle === 'transparent'
-                ? { backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }
-                : {}
+    const mobileContainerStyle = navStyle === 'transparent'
+        ? { backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }
+        : { backgroundColor: resolvedNavBackground }
 
     return (
         <nav data-testid="storefront-navbar" className={containerCls} style={containerStyle}>
