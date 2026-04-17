@@ -51,7 +51,15 @@ function BaselinePreview({ baseline }: { baseline: AnalyticBaseline }) {
     )
 }
 
-export function DesignWizard({ onComplete, onApplyBaseline }: { onComplete: (goal: string) => void; onApplyBaseline: (baseline: AnalyticBaseline) => void }) {
+export function DesignWizard({
+    onComplete,
+    onApplyBaseline,
+    allowAiPrompt = true,
+}: {
+    onComplete: (goal: string) => void
+    onApplyBaseline: (baseline: AnalyticBaseline) => void
+    allowAiPrompt?: boolean
+}) {
     const [step, setStep] = useState(0)
     const [answers, setAnswers] = useState<Answers>({})
     const [reviewing, setReviewing] = useState(false)
@@ -100,14 +108,23 @@ export function DesignWizard({ onComplete, onApplyBaseline }: { onComplete: (goa
                             <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                             <span>Apply Baseline</span>
                         </button>
-                        <button
-                            onClick={() => onComplete(baseline.goal)}
-                            data-testid="wizard-use-ai-prompt"
-                            className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-2 text-center text-xs font-medium text-primary-foreground sm:min-w-[140px]"
-                        >
-                            <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                            <span>Use as AI Prompt</span>
-                        </button>
+                        {allowAiPrompt ? (
+                            <button
+                                onClick={() => onComplete(baseline.goal)}
+                                data-testid="wizard-use-ai-prompt"
+                                className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-2 text-center text-xs font-medium text-primary-foreground sm:min-w-[140px]"
+                            >
+                                <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                                <span>Use as AI Prompt</span>
+                            </button>
+                        ) : (
+                            <div
+                                data-testid="wizard-analytic-only-hint"
+                                className="flex min-h-10 flex-1 items-center justify-center rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-center text-[11px] text-muted-foreground sm:min-w-[140px]"
+                            >
+                                AI is offline — apply the analytic baseline.
+                            </div>
+                        )}
                     </>
                 ) : (
                     <button

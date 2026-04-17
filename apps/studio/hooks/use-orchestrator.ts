@@ -384,7 +384,7 @@ export function useOrchestrator() {
           method: "agent/error",
           params: { error: (err as Error).message },
         });
-        return;
+        return false;
       }
 
       if (!response.ok) {
@@ -402,12 +402,14 @@ export function useOrchestrator() {
             body: body.slice(0, 500),
           },
         });
-        return;
+        return false;
       }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      if (!reader) return;
+      if (!reader) return false;
+
+      let sawError = false;
 
       try {
         let buffer = "";
@@ -422,6 +424,9 @@ export function useOrchestrator() {
             if (!frame.startsWith("data: ")) continue;
             try {
               const event = JSON.parse(frame.slice(6)) as OrchestratorEvent;
+              if (event.type === "error") {
+                sawError = true;
+              }
               handleEvent(event);
             } catch (parseErr) {
               console.error(
@@ -435,6 +440,8 @@ export function useOrchestrator() {
       } finally {
         reader.releaseLock();
       }
+
+      return !sawError;
     },
     [handleEvent],
   );

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { runOrchestrator } from "@/lib/design-studio/orchestrator";
+import { checkAiHandshake } from "@/lib/design-studio/ai-handshake";
 import type { OrchestratorContext } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -29,6 +30,21 @@ export async function POST(request: NextRequest) {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
+  }
+
+  const aiStatus = await checkAiHandshake();
+  if (!aiStatus.available) {
+    return new Response(
+      JSON.stringify({
+        error: "AI unavailable. Use the analytic wizard instead.",
+        mode: "analytic-only",
+        reason: aiStatus.reason,
+      }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 
   // Augment goal with page-scoped instructions

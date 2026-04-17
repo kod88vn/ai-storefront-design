@@ -42,16 +42,67 @@ export function LeftSidebar() {
   const [imageTokens, setImageTokens] = useState<UploadedImageTokens | null>(null)
   const [goalText, setGoalText] = useState('')
   const [inputMode, setInputMode] = useState<'describe' | 'wizard'>('describe')
+  const [aiStatus, setAiStatus] = useState<{ available: boolean | null; reason: string }>({
+    available: null,
+    reason: 'Checking AI connection…',
+  })
 
   useEffect(() => {
+    let active = true
+
     fetch('/api/skills')
       .then((r) => r.json())
-      .then(({ skills }) => setLoadedSkills(skills))
+      .then(({ skills }) => {
+        if (active) {
+          setLoadedSkills(skills)
+        }
+      })
       .catch(() => { })
+
+    fetch('/api/ai-status', { cache: 'no-store' })
+      .then(async (r) => {
+        const payload = await r.json().catch(() => ({ available: false, reason: 'AI handshake failed.' }))
+        if (!active) return
+
+        if (payload.available === false) {
+          setAiStatus({
+            available: false,
+            reason: payload.reason ?? 'AI is unavailable right now. Use the guided analytic baseline instead.',
+          })
+          setInputMode('wizard')
+          addAuditEntry({
+            method: 'ai/handshake',
+            params: payload,
+          })
+          return
+        }
+
+        setAiStatus({
+          available: true,
+          reason: payload.reason ?? 'AI connection ready.',
+        })
+      })
+      .catch(() => {
+        if (!active) return
+        setAiStatus({
+          available: false,
+          reason: 'AI is unavailable right now. Use the guided analytic baseline instead.',
+        })
+        setInputMode('wizard')
+      })
+
+    return () => {
+      active = false
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function handleSimulate() {
+    if (aiStatus.available === false) {
+      setInputMode('wizard')
+      return
+    }
+
     const textGoal = goalText.trim()
     if (!textGoal && !droppedImage && !visionUrl) return
 
@@ -83,18 +134,30 @@ export function LeftSidebar() {
     } else {
       goal = textGoal
     }
-    startOrchestrator(goal, {
+    void startOrchestrator(goal, {
       visionUrl: effectiveVisionUrl,
       imageData: droppedImage,
       uploadedImageTokens: imageTokens,
       currentConfig: config,
       planFeedback: null,
       page: useStudioStore.getState().currentPage as import('@ai-storefront/types').PageType,
+    }).then((started) => {
+      if (started === false) {
+        setAiStatus({
+          available: false,
+          reason: 'AI is unavailable right now. Use the guided analytic baseline instead.',
+        })
+        setInputMode('wizard')
+      }
     })
   }
 
   function handleWizardComplete(goal: string) {
     setGoalText(goal)
+    if (aiStatus.available === false) {
+      setInputMode('wizard')
+      return
+    }
     setInputMode('describe')
     // Switch to describe mode so user can review the synthesized goal before clicking Simulate
   }
@@ -134,7 +197,7 @@ export function LeftSidebar() {
       },
     })
     setGoalText(baseline.goal)
-    setInputMode('describe')
+    setInputMode(aiStatus.available === false ? 'wizard' : 'describe')
     setAppliedSummary(null)
   }
 
@@ -148,6 +211,8 @@ export function LeftSidebar() {
   const skillsLoaded = loadedSkills.length > 0
   const isRunning = agentStep !== 'idle' && agentStep !== 'complete' && agentStep !== 'awaiting-approval'
   const hasInput = goalText.trim().length > 0 || !!droppedImage || !!visionUrl
+  const aiChecking = aiStatus.available === null
+  const aiUnavailable = aiStatus.available === false
 
   return (
     <div data-testid="left-sidebar" className="flex h-full w-72 shrink-0 flex-col border-r border-border bg-background">
@@ -176,24 +241,36 @@ export function LeftSidebar() {
                     transition={{ duration: 0.3, ease: 'easeInOut' }}
                     className="space-y-6 overflow-hidden"
                   >
+                    {aiUnavailable && (
+                      <div
+                        data-testid="ai-fallback-notice"
+                        className="rounded-md border border-amber-500/30 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                      >
+                        AI is unavailable right now. Use the guided analytic baseline instead.
+                      </div>
+                    )}
+
                     <div className="flex overflow-hidden rounded-md border border-border text-xs" data-testid="input-mode-toggle">
-                      {(['describe', 'wizard'] as const).map((m) => (
+                      {(['describe', 'wizard'] as const).map((m) => {
+                        const disabled = aiUnavailable && m === 'describe'
+                        return (
                         <button
                           key={m}
-                          onClick={() => setInputMode(m)}
+                          onClick={() => !disabled && setInputMode(m)}
                           data-testid={`input-mode-${m}`}
-                          className={`flex flex-1 items-center justify-center gap-1.5 py-1.5 font-medium transition-colors ${inputMode === m ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
-                            }`}
+                          aria-pressed={(aiUnavailable ? 'wizard' : inputMode) === m}
+                          disabled={disabled}
+                          className={`flex flex-1 items-center justify-center gap-1.5 py-1.5 font-medium transition-colors ${inputMode === m ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
                         >
                           {m === 'describe'
                             ? <><MessageSquare className="h-3 w-3" />Describe</>
                             : <><Wand2 className="h-3 w-3" />Guide Me</>}
                         </button>
-                      ))}
+                      )})}
                     </div>
 
-                    {inputMode === 'wizard' ? (
-                      <DesignWizard onComplete={handleWizardComplete} onApplyBaseline={handleWizardApplyBaseline} />
+                    {inputMode === 'wizard' || aiUnavailable ? (
+                      <DesignWizard onComplete={handleWizardComplete} onApplyBaseline={handleWizardApplyBaseline} allowAiPrompt={!aiUnavailable} />
                     ) : (
                       <>
                         <div data-testid="goal-input-section" className="space-y-2">
@@ -246,13 +323,15 @@ export function LeftSidebar() {
           <button
             data-testid="simulate-button"
             onClick={handleSimulate}
-            disabled={isRunning || isAwaitingApproval || !skillsLoaded || !hasInput}
+            disabled={isRunning || isAwaitingApproval || !skillsLoaded || !hasInput || aiChecking || aiUnavailable}
             className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isRunning ? (
               <><Loader2 className="h-4 w-4 animate-spin" />Running...</>
-            ) : !skillsLoaded ? (
+            ) : !skillsLoaded || aiStatus.available === null ? (
               <><Loader2 className="h-4 w-4 animate-spin" />Loading...</>
+            ) : aiUnavailable ? (
+              <><Wand2 className="h-4 w-4" />AI unavailable — use Guide Me</>
             ) : (
               <><Brain className="h-4 w-4" />Simulate AI Design</>
             )}
