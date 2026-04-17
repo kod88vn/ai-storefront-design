@@ -614,10 +614,13 @@ export const useStudioStore = create<StudioState>((set, get) => ({
   undo: () => {
     set((state) => {
       if (state.historyIndex < 0) return {};
+      const updated = [...state.configHistory];
+      updated[state.historyIndex + 1] = state.config;
       const restoredConfig = state.configHistory[state.historyIndex];
       const newIndex = state.historyIndex - 1;
-      saveHistory(state.configHistory, newIndex);
+      saveHistory(updated, newIndex);
       return {
+        configHistory: updated,
         config: restoredConfig,
         historyIndex: newIndex,
         canUndo: newIndex >= 0,
@@ -628,20 +631,16 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
   redo: () => {
     set((state) => {
-      // Redo index is one past current (the "future" entry)
-      const redoIdx = state.historyIndex + 1;
+      const redoIdx = state.historyIndex + 2;
       if (redoIdx >= state.configHistory.length) return {};
-      // Push current config back first so undo after redo works
-      const updated = [...state.configHistory];
-      updated[redoIdx - 1] = state.config; // keep current as undo target
       const restoredConfig = state.configHistory[redoIdx];
-      saveHistory(updated, redoIdx);
+      const newIndex = redoIdx - 1;
+      saveHistory(state.configHistory, newIndex);
       return {
-        configHistory: updated,
         config: restoredConfig,
-        historyIndex: redoIdx,
+        historyIndex: newIndex,
         canUndo: true,
-        canRedo: redoIdx + 1 < state.configHistory.length,
+        canRedo: newIndex + 2 < state.configHistory.length,
       };
     });
   },
