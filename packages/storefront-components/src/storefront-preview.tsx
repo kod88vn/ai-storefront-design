@@ -28,7 +28,7 @@ export function StorefrontPreview({ config, cartCount = 0, cartItems = [], onAdd
             case 'hero':
                 return <StorefrontHero key={`${section.id}-${config.hero.layout}`} config={config.hero} theme={config.theme} />
             case 'product-grid':
-                return <StorefrontProductGrid key={section.id} config={config.productGrid} theme={config.theme} />
+                return <StorefrontProductGrid key={`${section.id}-${config.productGrid.layout ?? 'grid'}-${config.productGrid.columns}`} config={config.productGrid} theme={config.theme} />
             case 'categories':
                 return <StorefrontCategories key={section.id} theme={config.theme} categoriesConfig={config.categories} />
             case 'footer':

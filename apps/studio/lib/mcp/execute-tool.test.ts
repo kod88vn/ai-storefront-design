@@ -129,4 +129,18 @@ describe("apply_config_update accessibility", () => {
     expect(payload.primaryColor).not.toBe("#d97706");
     expect(payload.secondaryColor).toBe("#d97706");
   });
+
+  it("recommends product list mode for dense discovery layouts", async () => {
+    const result = await executeTool("plan_layout", {
+      productCategory: "electronics",
+      dominantStyle: "tech-precision",
+      colorScheme: "light",
+      visualDensity: "dense",
+      ctaStyle: "utility-first",
+    });
+
+    const payload = parseToolPayload(result);
+
+    expect(payload.productGridLayout).toBe("list");
+  });
 });

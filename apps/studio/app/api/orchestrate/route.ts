@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const PAGE_CONTEXT: Record<string, string> = {
   home: "You are editing the HOME page of the storefront (hero, product grid, sections, containers).",
   products:
-    "You are editing the PRODUCTS listing page. Focus on layout heading, filter visibility, grid columns, and color scheme for the products page.",
+    "You are editing the PRODUCTS listing page. Focus on layout heading, filter visibility, grid or list merchandising mode, grid columns, and color scheme for the products page.",
   "product-detail":
     "You are editing the PRODUCT DETAIL page. Focus on image gallery style, add-to-cart section, related products, and overall theme.",
   cart: "You are editing the CART page. Focus on cart layout, empty state message, checkout button text, and color scheme.",

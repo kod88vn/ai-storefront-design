@@ -5,6 +5,7 @@ import {
   FONT_STYLES,
   HERO_LAYOUTS,
   NAV_STYLES,
+  PRODUCT_GRID_LAYOUTS,
   SOURCE_LAYOUT_TYPES,
 } from "@ai-storefront/types";
 
@@ -72,7 +73,7 @@ export const TOOLS: MCPTool[] = [
   {
     name: "plan_layout",
     description:
-      "Determine the optimal hero variant, section order, product grid columns, and hero micro-parameters (badge, textAlign, ctaVariant, overlayOpacity) given product category and style signals.",
+      "Determine the optimal hero variant, section order, product grid columns, product grid layout mode, and hero micro-parameters (badge, textAlign, ctaVariant, overlayOpacity) given product category and style signals.",
     inputSchema: {
       type: "object",
       properties: {
@@ -97,6 +98,19 @@ export const TOOLS: MCPTool[] = [
         navStyle: {
           type: "string",
           enum: NAV_STYLES,
+        },
+        visualDensity: {
+          type: "string",
+          enum: ["sparse", "balanced", "dense"],
+        },
+        ctaStyle: {
+          type: "string",
+          enum: [
+            "utility-first",
+            "promotion-first",
+            "brand-first",
+            "editorial-soft",
+          ],
         },
       },
       required: ["dominantStyle"],
@@ -157,6 +171,7 @@ export const TOOLS: MCPTool[] = [
           },
         },
         productGridColumns: { type: "number", enum: [2, 3, 4] },
+        productGridLayout: { type: "string", enum: PRODUCT_GRID_LAYOUTS },
         sectionOrder: { type: "array", items: { type: "string" } },
         enableSections: { type: "array", items: { type: "string" } },
         disableSections: { type: "array", items: { type: "string" } },
@@ -187,6 +202,7 @@ export const TOOLS: MCPTool[] = [
             productGrid: {
               type: "object",
               properties: {
+                layout: { type: "string", enum: PRODUCT_GRID_LAYOUTS },
                 backgroundColor: { type: "string" },
                 textColor: { type: "string" },
                 fontSize: { type: "string" },

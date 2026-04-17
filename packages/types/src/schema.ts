@@ -94,6 +94,9 @@ export type ImageryStyle = (typeof IMAGERY_STYLES)[number];
 export const GRID_COLUMNS = [2, 3, 4] as const;
 export type GridColumns = (typeof GRID_COLUMNS)[number];
 
+export const PRODUCT_GRID_LAYOUTS = ["grid", "list"] as const;
+export type ProductGridLayout = (typeof PRODUCT_GRID_LAYOUTS)[number];
+
 // ─── Component font sizes ─────────────────────────────────────────────────────
 
 export const FONT_SIZES = ["sm", "base", "lg", "xl"] as const;
@@ -170,6 +173,7 @@ export const SKILL_TEMPLATE_VARS: Record<string, string> = {
   HERO_CTA_VARIANTS: HERO_CTA_VARIANTS.join(" | "),
   FONT_SIZES: FONT_SIZES.join(" | "),
   GRID_COLUMNS: GRID_COLUMNS.join(" | "),
+  PRODUCT_GRID_LAYOUTS: PRODUCT_GRID_LAYOUTS.join(" | "),
   BENEFIT_ICONS: BENEFIT_ICONS.join(" | "),
   COLLECTION_LAYOUTS: COLLECTION_LAYOUTS.join(" | "),
   TESTIMONIAL_LAYOUTS: TESTIMONIAL_LAYOUTS.join(" | "),

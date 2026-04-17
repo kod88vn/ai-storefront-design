@@ -62,6 +62,7 @@ interface WizardDirectives {
     fontStyle: string
     borderRadius: string
     productGridColumns: 2 | 3 | 4
+    productGridLayout: 'grid' | 'list'
     ctaStyle: string
     imageryStyle: string
     headlineTone: string
@@ -125,6 +126,14 @@ function toDirectives(answers: Answers): WizardDirectives {
                 ? 4
                 : 3
 
+    const productGridLayout: 'grid' | 'list' =
+        answers.density === 'Dense discovery' ||
+            answers.category === 'Electronics & Tech' ||
+            answers.category === 'Health & Wellness' ||
+            answers.focus === 'Trust & Credibility'
+            ? 'list'
+            : 'grid'
+
     const ctaStyle =
         answers.focus === 'Conversions & Sales'
             ? 'promotion-first'
@@ -174,6 +183,7 @@ function toDirectives(answers: Answers): WizardDirectives {
         fontStyle,
         borderRadius,
         productGridColumns,
+        productGridLayout,
         ctaStyle,
         imageryStyle,
         headlineTone,
@@ -202,6 +212,7 @@ function synthesizeGoal(answers: Answers): string {
         `- fontStyle: ${d.fontStyle}`,
         `- borderRadius: ${d.borderRadius}`,
         `- productGridColumns: ${d.productGridColumns}`,
+        `- productGridLayout: ${d.productGridLayout}`,
         `- ctaStyle: ${d.ctaStyle}`,
         `- imageryStyle: ${d.imageryStyle}`,
         `- headlineTone: ${d.headlineTone}`,

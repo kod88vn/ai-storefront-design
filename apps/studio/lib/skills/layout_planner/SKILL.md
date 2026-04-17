@@ -37,6 +37,7 @@ Decide the hero variant, section ordering, product grid columns, and hero micro-
   "heroOverlayOpacity": "number (0-1)",
   "sectionOrder": ["hero", "product-grid", "categories", "footer"],
   "productGridColumns": "{{GRID_COLUMNS}}",
+  "productGridLayout": "{{PRODUCT_GRID_LAYOUTS}}",
   "rationale": "string"
 }
 ```
@@ -74,6 +75,12 @@ Decide the hero variant, section ordering, product grid columns, and hero micro-
 - `trust-badges` just above or just below the fold — a second trust signal near the CTA
 - `newsletter` second-to-last — captures intent after browse
 - **`footer` ALWAYS LAST** — regardless of vision extraction or input sectionOrder, footer must be the final section
+
+## Product Grid Layout Rules
+
+- Use `productGridLayout: list` for dense discovery, comparison-friendly catalogs, spec-heavy tech, health/supplement, or utility-first conversion flows.
+- Use `productGridLayout: grid` for editorial, fashion, lifestyle, or image-led browsing experiences.
+- When `visualDensity = dense`, strongly prefer `list` unless the storefront is clearly campaign-led fashion or luxury.
 
 ## Business Model / Density Overrides
 

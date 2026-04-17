@@ -5,6 +5,7 @@ import type {
   ColorScheme,
   FontStyle,
   BorderRadius,
+  ProductGridLayout,
 } from "@ai-storefront/types";
 export type { SectionType };
 
@@ -44,6 +45,7 @@ export interface HeroConfig {
 
 export interface ProductGridConfig {
   columns: 2 | 3 | 4;
+  layout?: ProductGridLayout;
   showRatings?: boolean;
   showBadges?: boolean;
 }
@@ -267,6 +269,7 @@ export interface OrchestratorConfigUpdate {
   themeChanges?: Partial<ThemeConfig>;
   heroChanges?: Partial<HeroConfig>;
   productGridColumns?: 2 | 3 | 4;
+  productGridLayout?: ProductGridLayout;
   sectionOrder?: string[];
   enableSections?: SectionType[];
   disableSections?: SectionType[];

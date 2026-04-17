@@ -158,3 +158,31 @@ Reusable storefront section components: `Navbar`, `Hero`, `ProductGrid`, `Catego
 - **Components ≤ 80 lines** — split into named sub-components if larger
 - **`data-testid`** on every meaningful UI element (kebab-case)
 - **Yarn only** — never `npm install` or `pnpm`; use `yarn workspace <name> add <pkg>` to add to a specific app
+
+---
+
+## AI workspace customizations
+
+This repository now includes a shared, editor-agnostic AI setup:
+
+- **`.vscode/mcp.json`** configures workspace MCP servers for:
+  - `nextjs-studio` → local studio MCP endpoint
+  - `nextjs-web` → local storefront MCP endpoint
+  - `context7` → version-aware docs lookup
+  - `playwright` → browser automation and verification
+- **`.github/copilot-instructions.md`** provides repository-wide guidance for GitHub Copilot.
+- **`.github/instructions/*.instructions.md`** adds focused rules for Next.js and MCP-related files.
+- **`.github/skills/*`** adds reusable agent skills for docs lookup, Next.js work, and UI verification.
+- **`.github/copilot/agents/*`** adds specialist Copilot agents for both E2E flows and general productivity work, including planner, executor, reviewer, generator, and healer roles.
+- **`.github/prompts/*`** adds reusable slash prompts for common verification flows.
+
+### How to use it
+
+1. Open the repo in VS Code.
+2. Run `yarn dev` from the repo root if you want to use the local MCP endpoints.
+3. Trust and start the configured MCP servers from the MCP or Chat UI.
+4. Use the shared skills, Copilot agents, and prompts directly in chat.
+5. For browser test authoring, use the planner → generator → healer flow.
+6. For general coding tasks, use the planner → executor → reviewer flow.
+
+The old assistant-specific `.claude` folder is intentionally no longer used so the setup stays shareable across tools.

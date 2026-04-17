@@ -89,6 +89,9 @@ export function useOrchestrator() {
           accGridCols.current = u.productGridColumns;
           s.setProductGridColumns(u.productGridColumns);
         }
+        if (u.productGridLayout) {
+          s.updateProductGrid({ layout: u.productGridLayout });
+        }
 
         // ── Section updates: sync both config.sections AND containers ────────
         // The canvas renders from `containers`; the web preview renders from

@@ -3,7 +3,7 @@
 import { useStudioStore } from '@/lib/store'
 import { AdvancedSection } from './advanced-section'
 import type { ComponentItem } from '@/lib/types'
-import { HERO_LAYOUTS } from '@ai-storefront/types'
+import { HERO_LAYOUTS, PRODUCT_GRID_LAYOUTS } from '@ai-storefront/types'
 import { ColorRow, Field, FONT_SIZES, inputCls, labelCls, selectCls } from './prebuilt-editor-shared'
 import { SECTION_DATA_TYPES, SectionDataEditor } from './section-data-editor'
 
@@ -51,11 +51,33 @@ function HeroEditor() {
 function ProductGridEditor() {
     const { config, setProductGridColumns, updateProductGrid } = useStudioStore()
     const pg = config.productGrid
+    const isList = (pg.layout ?? 'grid') === 'list'
     return (
         <div className="space-y-3">
+            <Field label="Layout">
+                <select
+                    value={pg.layout ?? 'grid'}
+                    onChange={(e) => {
+                        const nextLayout = e.target.value as 'grid' | 'list'
+                        updateProductGrid({ layout: nextLayout })
+                        if (nextLayout === 'list') setProductGridColumns(2)
+                    }}
+                    className={selectCls}
+                    data-testid="product-grid-layout-select"
+                >
+                    {PRODUCT_GRID_LAYOUTS.map((v) => <option key={v} value={v}>{v === 'grid' ? 'Grid' : 'List'}</option>)}
+                </select>
+            </Field>
             <Field label="Columns">
-                <select value={pg.columns} onChange={(e) => setProductGridColumns(parseInt(e.target.value) as 2 | 3 | 4)} className={selectCls}>
-                    <option value={2}>2 Columns</option><option value={3}>3 Columns</option><option value={4}>4 Columns</option>
+                <select
+                    value={isList ? 2 : pg.columns}
+                    onChange={(e) => setProductGridColumns(parseInt(e.target.value) as 2 | 3 | 4)}
+                    className={`${selectCls} ${isList ? 'cursor-not-allowed opacity-50' : ''}`}
+                    data-testid="product-grid-columns-select"
+                    disabled={isList}
+                    aria-disabled={isList}
+                >
+                    <option value={2}>{isList ? '1 Column (list mode)' : '2 Columns'}</option><option value={3}>3 Columns</option><option value={4}>4 Columns</option>
                 </select>
             </Field>
             <Field label="Section Heading (optional)"><input className={inputCls} value={pg.heading ?? ''} onChange={(e) => updateProductGrid({ heading: e.target.value })} placeholder="e.g. Best Sellers" /></Field>

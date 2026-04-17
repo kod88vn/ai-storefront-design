@@ -1,6 +1,10 @@
 import { sanitizeConfigUpdateForAccessibility } from "@/lib/design-studio/accessibility";
 import { readStoreConfig } from "@/lib/store-config";
-import { type DominantStyle, type HeroLayout } from "@ai-storefront/types";
+import {
+  type DominantStyle,
+  type HeroLayout,
+  type ProductGridLayout,
+} from "@ai-storefront/types";
 
 import type { MCPToolResult } from "./types";
 
@@ -440,6 +444,8 @@ function planLayout(args: Record<string, unknown>): MCPToolResult {
   const category = String(args.productCategory ?? "general");
   const style = String(args.dominantStyle ?? "minimalist") as DominantStyle;
   const colorScheme = String(args.colorScheme ?? "light");
+  const visualDensity = String(args.visualDensity ?? "balanced");
+  const ctaStyle = String(args.ctaStyle ?? "brand-first");
 
   const heroMap: Record<DominantStyle, HeroLayout> = {
     "dark-luxury": "editorial",
@@ -523,6 +529,16 @@ function planLayout(args: Record<string, unknown>): MCPToolResult {
     style === "dark-luxury" ||
     style === "tech-precision";
 
+  const isComparisonHeavy = /electronics|tech|health|supplement|furniture|lighting/i.test(
+    category,
+  );
+  const productGridLayout: ProductGridLayout =
+    visualDensity === "dense" ||
+    ctaStyle === "utility-first" ||
+    (isComparisonHeavy && style !== "bold-playful" && style !== "editorial")
+      ? "list"
+      : "grid";
+
   return textResult({
     heroVariant: heroMap[style] ?? "split",
     heroBadge: badgeMap[style] ?? null,
@@ -542,7 +558,8 @@ function planLayout(args: Record<string, unknown>): MCPToolResult {
           "footer",
         ],
     productGridColumns: colsMap[category] ?? 3,
-    rationale: `${style} style for ${category} — ${heroMap[style] ?? "split"} hero`,
+    productGridLayout,
+    rationale: `${style} style for ${category} — ${heroMap[style] ?? "split"} hero with ${productGridLayout} merchandising`,
   });
 }
 

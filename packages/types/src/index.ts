@@ -10,6 +10,8 @@ import type {
   BenefitIconType,
   CollectionLayout,
   TestimonialLayout,
+  ProductGridLayout,
+  DominantStyle,
 } from "./schema";
 export * from "./schema";
 
@@ -88,6 +90,8 @@ export interface HeroConfig {
 
 export interface ProductGridConfig {
   columns: 2 | 3 | 4;
+  /** grid = card grid, list = stacked comparison-friendly rows */
+  layout?: ProductGridLayout;
   showRatings?: boolean;
   showBadges?: boolean;
   /** Section heading text */
@@ -423,6 +427,7 @@ export interface OrchestratorConfigUpdate {
   themeChanges?: Partial<ThemeConfig>;
   heroChanges?: Partial<HeroConfig>;
   productGridColumns?: 2 | 3 | 4;
+  productGridLayout?: ProductGridLayout;
   sectionOrder?: string[];
   enableSections?: SectionType[];
   disableSections?: SectionType[];

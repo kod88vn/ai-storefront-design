@@ -56,7 +56,7 @@ export function buildSystemPrompt({
   const configSummary = [
     `hero: ${context.currentConfig.hero.layout} layout, title="${context.currentConfig.hero.title}"`,
     `theme: primary=${context.currentConfig.theme.primaryColor}, secondary=${context.currentConfig.theme.secondaryColor}, radius=${context.currentConfig.theme.borderRadius}, font=${context.currentConfig.theme.fontStyle ?? "modern-sans"}, nav=${context.currentConfig.theme.navStyle ?? "bordered"}, scheme=${context.currentConfig.theme.colorScheme ?? "light"}`,
-    `grid: ${context.currentConfig.productGrid.columns} columns`,
+    `grid: ${context.currentConfig.productGrid.columns} columns, ${context.currentConfig.productGrid.layout ?? "grid"} mode`,
   ].join(" | ");
 
   const plannerSkill = skills.find((skill) => skill.name === "planner");

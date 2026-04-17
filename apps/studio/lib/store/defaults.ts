@@ -78,6 +78,7 @@ export const defaultConfig: StorefrontConfig = {
   } as HeroConfig,
   productGrid: {
     columns: 3,
+    layout: "grid",
   } as ProductGridConfig,
   sectionData: {},
   nav: defaultNavConfig,

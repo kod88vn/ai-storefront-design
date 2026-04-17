@@ -66,7 +66,7 @@ function renderPrebuilt(type: SectionType, config: StorefrontConfig, cartItems: 
   const section = { id: type, type, enabled: true, order: 0 }
   switch (type) {
     case 'hero': return <StorefrontHero key={config.hero.layout} config={config.hero} theme={config.theme} />
-    case 'product-grid': return <StorefrontProductGrid config={config.productGrid} theme={config.theme} />
+    case 'product-grid': return <StorefrontProductGrid key={`${type}-${config.productGrid.layout ?? 'grid'}-${config.productGrid.columns}`} config={config.productGrid} theme={config.theme} />
     case 'categories': return <StorefrontCategories theme={config.theme} categoriesConfig={config.categories} />
     case 'footer': return <StorefrontFooter theme={config.theme} footerConfig={config.footer} />
     case 'products-listing': return <ProductsPage theme={config.theme} navConfig={config.nav} pagesConfig={config.pages?.products} cartItems={cartItems} />
