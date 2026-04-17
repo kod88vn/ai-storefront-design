@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Save, Check } from 'lucide-react'
 import { useStudioStore } from '@/lib/store'
+import { saveStorefrontConfig } from '@/lib/design-studio/data/client'
 import { ComponentEditor } from '@/components/studio/component-editor'
 import { ThemePanel } from './theme-panel'
 import { NavPanel } from './nav-panel'
@@ -42,7 +43,7 @@ export function RightSidebar() {
         )
       }
       const payload = { ...config, customPages: customPagesWithSections, pagesSections }
-      await fetch('/api/store-config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ config: payload }) })
+      await saveStorefrontConfig(payload)
       setSaveState('saved')
       setTimeout(() => setSaveState('idle'), 2000)
     } catch { setSaveState('idle') }

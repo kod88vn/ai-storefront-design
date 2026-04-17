@@ -7,6 +7,7 @@ import type { UploadedImageTokens } from '@/lib/types'
 import { useStudioStore } from '@/lib/store'
 import { useOrchestrator } from '@/hooks/use-orchestrator'
 import type { AnalyticBaseline } from '@/lib/design-studio/analytic-recommender'
+import { ANALYTIC_FALLBACK_REASON, loadStudioBootstrapData } from '@/lib/design-studio/data/client'
 import { InlinePlanApproval } from './plan-approval'
 import { AppliedSummaryPanel } from './applied-summary'
 import { VisionInput } from './vision-input'
@@ -50,43 +51,26 @@ export function LeftSidebar() {
   useEffect(() => {
     let active = true
 
-    fetch('/api/skills')
-      .then((r) => r.json())
-      .then(({ skills }) => {
-        if (active) {
-          setLoadedSkills(skills)
-        }
-      })
-      .catch(() => { })
-
-    fetch('/api/ai-status', { cache: 'no-store' })
-      .then(async (r) => {
-        const payload = await r.json().catch(() => ({ available: false, reason: 'AI handshake failed.' }))
+    loadStudioBootstrapData()
+      .then(({ skills, aiStatus }) => {
         if (!active) return
 
-        if (payload.available === false) {
-          setAiStatus({
-            available: false,
-            reason: payload.reason ?? 'AI is unavailable right now. Use the guided analytic baseline instead.',
-          })
+        setLoadedSkills(skills)
+        setAiStatus(aiStatus)
+
+        if (!aiStatus.available) {
           setInputMode('wizard')
           addAuditEntry({
             method: 'ai/handshake',
-            params: payload,
+            params: aiStatus,
           })
-          return
         }
-
-        setAiStatus({
-          available: true,
-          reason: payload.reason ?? 'AI connection ready.',
-        })
       })
       .catch(() => {
         if (!active) return
         setAiStatus({
           available: false,
-          reason: 'AI is unavailable right now. Use the guided analytic baseline instead.',
+          reason: ANALYTIC_FALLBACK_REASON,
         })
         setInputMode('wizard')
       })
@@ -145,7 +129,7 @@ export function LeftSidebar() {
       if (started === false) {
         setAiStatus({
           available: false,
-          reason: 'AI is unavailable right now. Use the guided analytic baseline instead.',
+          reason: ANALYTIC_FALLBACK_REASON,
         })
         setInputMode('wizard')
       }

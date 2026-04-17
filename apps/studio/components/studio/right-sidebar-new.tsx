@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Save, Check } from 'lucide-react'
 import { useStudioStore } from '@/lib/store'
+import { saveStorefrontConfig } from '@/lib/design-studio/data/client'
 import { ComponentEditor } from '@/components/studio/component-editor'
 import { ThemePanel } from './theme-panel'
 import { ContainersPanel } from './containers-panel'
@@ -15,7 +16,7 @@ export function RightSidebar() {
     async function handleSave() {
         setSaveState('saving')
         try {
-            await fetch('/api/store-config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ config }) })
+            await saveStorefrontConfig(config)
             setSaveState('saved')
             setTimeout(() => setSaveState('idle'), 2000)
         } catch { setSaveState('idle') }

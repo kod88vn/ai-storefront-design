@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { useStudioStore } from "@/lib/store";
+import { requestOrchestratorStream } from "@/lib/design-studio/data/client";
 import type {
   OrchestratorContext,
   OrchestratorEvent,
@@ -373,11 +374,7 @@ export function useOrchestrator() {
 
       let response: Response;
       try {
-        response = await fetch("/api/orchestrate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ goal, context }),
-        });
+        response = await requestOrchestratorStream(goal, context);
       } catch (err) {
         useStudioStore.getState().setAgentStep("idle");
         useStudioStore.getState().addAuditEntry({
