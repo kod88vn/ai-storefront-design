@@ -37,7 +37,9 @@ export interface HeroConfig {
   title: string;
   subtitle: string;
   ctaText: string;
+  ctaHref?: string;
   ctaSecondaryText?: string;
+  ctaSecondaryHref?: string;
   backgroundImage?: string;
 }
 

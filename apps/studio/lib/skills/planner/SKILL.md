@@ -10,8 +10,8 @@ Orchestrate the full design agent workflow. Decides which skills to invoke, in w
 
 ## Content Rules — ALWAYS ENFORCED
 
-**Rule 1 — Never touch existing content.**
-Do NOT modify any content that is already present on the storefront: product names, product descriptions, prices, category names, hero titles, hero subtitles, hero CTAs, navbar links, footer links, or any other copy that comes from the store's current data. `apply_config_update` must never overwrite or rewrite live product or brand content.
+**Rule 1 — Protect real catalog and brand content.**
+Do NOT modify any content that is already present on the storefront: product names, product descriptions, prices, category names, navbar links, footer links, or any other copy that comes from the store's current data. `apply_config_update` must never overwrite or rewrite live product or brand content. Hero CTA labels and destinations are allowed to change when improving conversion clarity, but they must stay short, specific, and route to valid internal pages.
 
 **Rule 2 — New sections render with built-in component defaults.**
 Every section component has hardcoded placeholder content (generic copy, lorem-style testimonials, common brand names). You do not need to define fallback values — the components handle that. Always supply `sectionData` for sections you enable so the merchant can distinguish AI-generated copy from the built-in defaults.
@@ -155,7 +155,7 @@ Once `planFeedback.approved === true`:
 1. If Phase 1 MCP tools have not yet been called (text-only goal path), call them now to get concrete values.
 2. Call `apply_config_update` with **all** computed values in one call:
    - `themeChanges`: `primaryColor`, `secondaryColor`, `borderRadius`, `navStyle`, `colorScheme`, `fontStyle`
-   - `heroChanges`: `layout`, `title`, `subtitle`, `badge`, `textAlign`, `ctaVariant`, `overlayOpacity`, `ctaText`, `ctaSecondaryText`
+   - `heroChanges`: `layout`, `title`, `subtitle`, `badge`, `textAlign`, `ctaVariant`, `overlayOpacity`, `ctaText`, `ctaHref`, `ctaSecondaryText`, `ctaSecondaryHref`
    - `productGridColumns`
    - `sectionOrder`, `enableSections`, `disableSections`, `sectionData`
    - `componentStyleChanges`: **always include `navbar.backgroundColor`** — set it to the extracted page background color (e.g. `#faf5f0` for earthy/cream sites) for bordered navs, or to `primaryColor` for filled navs. Also set `footer.backgroundColor` and `categories.backgroundColor` when the archetype calls for them (see `theme_generator` skill).

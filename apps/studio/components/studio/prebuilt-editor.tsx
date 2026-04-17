@@ -20,7 +20,9 @@ function HeroEditor() {
             <Field label="Title"><input className={inputCls} value={h.title} onChange={(e) => updateHero({ title: e.target.value })} /></Field>
             <Field label="Subtitle"><input className={inputCls} value={h.subtitle} onChange={(e) => updateHero({ subtitle: e.target.value })} /></Field>
             <Field label="CTA Button Text"><input className={inputCls} value={h.ctaText} onChange={(e) => updateHero({ ctaText: e.target.value })} /></Field>
+            <Field label="Primary CTA Link"><input className={inputCls} value={h.ctaHref ?? ''} onChange={(e) => updateHero({ ctaHref: e.target.value || undefined })} placeholder="/products" /></Field>
             <Field label="Secondary CTA (optional)"><input className={inputCls} value={h.ctaSecondaryText ?? ''} onChange={(e) => updateHero({ ctaSecondaryText: e.target.value })} /></Field>
+            <Field label="Secondary CTA Link"><input className={inputCls} value={h.ctaSecondaryHref ?? ''} onChange={(e) => updateHero({ ctaSecondaryHref: e.target.value || undefined })} placeholder="/about" /></Field>
             <Field label="Background Image URL"><input className={inputCls} value={h.backgroundImage ?? ''} onChange={(e) => updateHero({ backgroundImage: e.target.value })} placeholder="https://..." /></Field>
             <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="space-y-1">

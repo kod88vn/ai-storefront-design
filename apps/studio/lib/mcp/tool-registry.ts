@@ -73,7 +73,7 @@ export const TOOLS: MCPTool[] = [
   {
     name: "plan_layout",
     description:
-      "Determine the optimal hero variant, section order, product grid columns, product grid layout mode, and hero micro-parameters (badge, textAlign, ctaVariant, overlayOpacity) given product category and style signals.",
+      "Determine the optimal hero variant, section order, product grid columns, product grid layout mode, hero micro-parameters, and action-oriented CTA suggestions given product category and style signals.",
     inputSchema: {
       type: "object",
       properties: {
@@ -167,7 +167,9 @@ export const TOOLS: MCPTool[] = [
             ctaVariant: { type: "string", enum: ["solid", "outline", "ghost"] },
             overlayOpacity: { type: "number" },
             ctaText: { type: "string" },
+            ctaHref: { type: "string" },
             ctaSecondaryText: { type: "string" },
+            ctaSecondaryHref: { type: "string" },
           },
         },
         productGridColumns: { type: "number", enum: [2, 3, 4] },

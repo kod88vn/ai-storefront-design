@@ -54,7 +54,7 @@ export function buildSystemPrompt({
   }
 
   const configSummary = [
-    `hero: ${context.currentConfig.hero.layout} layout, title="${context.currentConfig.hero.title}"`,
+    `hero: ${context.currentConfig.hero.layout} layout, title="${context.currentConfig.hero.title}", cta=${context.currentConfig.hero.ctaText} -> ${context.currentConfig.hero.ctaHref ?? "/products"}`,
     `theme: primary=${context.currentConfig.theme.primaryColor}, secondary=${context.currentConfig.theme.secondaryColor}, radius=${context.currentConfig.theme.borderRadius}, font=${context.currentConfig.theme.fontStyle ?? "modern-sans"}, nav=${context.currentConfig.theme.navStyle ?? "bordered"}, scheme=${context.currentConfig.theme.colorScheme ?? "light"}`,
     `grid: ${context.currentConfig.productGrid.columns} columns, ${context.currentConfig.productGrid.layout ?? "grid"} mode`,
   ].join(" | ");
@@ -83,6 +83,8 @@ export function buildSystemPrompt({
   return `You are an AI storefront design agent. Redesign the storefront based on the user's goal.
 
 When writing plan_feedback descriptions, explain the *why* — e.g. "dark palette matches the luxury feel in the uploaded image" or "editorial serif suits the fashion category". Users need reasoning, not just a list of changes.
+
+Update the hero CTA labels and links with meaningful actions that match the merchandising goal. Prefer valid internal routes like /products and /cart instead of leaving generic or empty buttons.
 
   If the user goal includes a "Hard directives" block, treat those directives as strict constraints and make the output visibly different based on those choices.
 

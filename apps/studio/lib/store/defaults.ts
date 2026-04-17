@@ -75,6 +75,7 @@ export const defaultConfig: StorefrontConfig = {
     title: "Curated Home Essentials",
     subtitle: "Discover timeless pieces for modern living",
     ctaText: "Shop Collection",
+    ctaHref: "/products",
   } as HeroConfig,
   productGrid: {
     columns: 3,

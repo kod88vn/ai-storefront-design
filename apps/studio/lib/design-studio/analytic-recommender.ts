@@ -274,6 +274,7 @@ export function toDirectives(answers: Answers): WizardDirectives {
 
 export function synthesizeGoal(answers: Answers): string {
   const d = toDirectives(answers)
+  const cta = heroCopy(answers, d)
   const parts: string[] = []
   if (answers.category) parts.push(`This is a ${answers.category} store`)
   if (answers.personality) parts.push(`with a "${answers.personality}" brand personality`)
@@ -294,6 +295,10 @@ export function synthesizeGoal(answers: Answers): string {
     `- productGridColumns: ${d.productGridColumns}`,
     `- productGridLayout: ${d.productGridLayout}`,
     `- ctaStyle: ${d.ctaStyle}`,
+    `- heroPrimaryCta: ${cta.ctaText}`,
+    `- heroPrimaryCtaHref: ${cta.ctaHref}`,
+    `- heroSecondaryCta: ${cta.ctaSecondaryText}`,
+    `- heroSecondaryCtaHref: ${cta.ctaSecondaryHref}`,
     `- imageryStyle: ${d.imageryStyle}`,
     `- headlineTone: ${d.headlineTone}`,
     `- prioritize sections: ${d.modules.join(', ')}`,
@@ -304,12 +309,18 @@ export function synthesizeGoal(answers: Answers): string {
 
 function heroCopy(answers: Answers, directives: WizardDirectives) {
   const category = baseCategoryLabel(answers.category)
+  const secondary = {
+    ctaSecondaryText: 'View Cart',
+    ctaSecondaryHref: '/cart',
+  }
 
   if (answers.focus === 'Product discovery') {
     return {
       title: `Find the right ${category.toLowerCase()} faster`,
       subtitle: 'Compare the top picks, scan the details, and move quickly from browsing to buying.',
-      ctaText: 'Browse Best Sellers',
+      ctaText: 'Compare Top Picks',
+      ctaHref: '/products',
+      ...secondary,
     }
   }
 
@@ -318,6 +329,8 @@ function heroCopy(answers: Answers, directives: WizardDirectives) {
       title: `Shop our best ${category.toLowerCase()} now`,
       subtitle: 'A high-conversion storefront built to highlight value, urgency, and confident first clicks.',
       ctaText: 'Shop Now',
+      ctaHref: '/products',
+      ...secondary,
     }
   }
 
@@ -326,6 +339,8 @@ function heroCopy(answers: Answers, directives: WizardDirectives) {
       title: `Trusted ${category.toLowerCase()} essentials`,
       subtitle: 'Clear product proof, strong reassurance, and a storefront that feels dependable at a glance.',
       ctaText: 'Explore Products',
+      ctaHref: '/products',
+      ...secondary,
     }
   }
 
@@ -333,6 +348,8 @@ function heroCopy(answers: Answers, directives: WizardDirectives) {
     title: directives.heroLayout === 'editorial' ? `A more considered take on ${category.toLowerCase()}` : `Discover standout ${category.toLowerCase()}`,
     subtitle: 'A curated baseline with stronger visual hierarchy, clearer storytelling, and a more intentional first impression.',
     ctaText: directives.heroLayout === 'editorial' ? 'View Collection' : 'Explore Collection',
+    ctaHref: '/products',
+    ...secondary,
   }
 }
 
@@ -394,6 +411,7 @@ export function buildAnalyticBaseline(answers: Answers): AnalyticBaseline {
     directives.productGridLayout === 'list'
       ? `comparison-friendly list layout with ${directives.productGridColumns} density settings`
       : `${directives.productGridColumns}-column grid for more visual browsing`,
+    `hero actions: ${copy.ctaText} and ${copy.ctaSecondaryText}`,
     `priority modules: ${directives.modules.map(humanize).join(', ')}`,
   ]
 
@@ -412,6 +430,9 @@ export function buildAnalyticBaseline(answers: Answers): AnalyticBaseline {
       title: copy.title,
       subtitle: copy.subtitle,
       ctaText: copy.ctaText,
+      ctaHref: copy.ctaHref,
+      ctaSecondaryText: copy.ctaSecondaryText,
+      ctaSecondaryHref: copy.ctaSecondaryHref,
       badge: answers.personality === 'Luxury & High-end' ? 'Curated edit' : answers.focus === 'Conversions & Sales' ? 'Best sellers' : 'Recommended baseline',
       textAlign: directives.heroLayout === 'centered' ? 'center' : 'left',
       ctaVariant: directives.heroLayout === 'editorial' ? 'outline' : 'solid',

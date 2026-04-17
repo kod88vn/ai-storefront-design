@@ -447,6 +447,35 @@ function planLayout(args: Record<string, unknown>): MCPToolResult {
   const visualDensity = String(args.visualDensity ?? "balanced");
   const ctaStyle = String(args.ctaStyle ?? "brand-first");
 
+  const heroCta =
+    ctaStyle === "utility-first"
+      ? {
+          heroCtaText: "Compare Top Picks",
+          heroCtaHref: "/products",
+          heroSecondaryCtaText: "View Cart",
+          heroSecondaryCtaHref: "/cart",
+        }
+      : ctaStyle === "promotion-first"
+        ? {
+            heroCtaText: "Shop the Offer",
+            heroCtaHref: "/products",
+            heroSecondaryCtaText: "View Cart",
+            heroSecondaryCtaHref: "/cart",
+          }
+        : ctaStyle === "editorial-soft"
+          ? {
+              heroCtaText: "View Collection",
+              heroCtaHref: "/products",
+              heroSecondaryCtaText: "View Cart",
+              heroSecondaryCtaHref: "/cart",
+            }
+          : {
+              heroCtaText: "Explore Collection",
+              heroCtaHref: "/products",
+              heroSecondaryCtaText: "View Cart",
+              heroSecondaryCtaHref: "/cart",
+            };
+
   const heroMap: Record<DominantStyle, HeroLayout> = {
     "dark-luxury": "editorial",
     organic: "split",
@@ -545,6 +574,7 @@ function planLayout(args: Record<string, unknown>): MCPToolResult {
     heroTextAlign: textAlignMap[style] ?? "left",
     heroCtaVariant: ctaVariantMap[style] ?? "solid",
     heroOverlayOpacity: overlayMap[style] ?? 0,
+    ...heroCta,
     sectionOrder: isDark
       ? ["hero", "benefits-bar", "product-grid", "categories", "footer"]
       : [

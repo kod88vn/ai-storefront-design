@@ -39,9 +39,11 @@ describe("buildSystemPrompt", () => {
     });
 
     expect(prompt).toContain("hero: split layout");
+    expect(prompt).toContain("cta=Shop Collection -> /products");
     expect(prompt).toContain("nav=transparent");
     expect(prompt).toContain("scheme=dark");
     expect(prompt).toContain("grid: 2 columns, list mode");
+    expect(prompt).toContain("Update the hero CTA labels and links");
   });
 
   it("adds explicit rejection instructions for the HITL revision loop", () => {

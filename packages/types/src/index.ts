@@ -70,7 +70,11 @@ export interface HeroConfig {
   title: string;
   subtitle: string;
   ctaText: string;
+  /** Destination for the primary CTA, e.g. /products or /collections */
+  ctaHref?: string;
   ctaSecondaryText?: string;
+  /** Destination for the secondary CTA */
+  ctaSecondaryHref?: string;
   backgroundImage?: string;
   /** Eyebrow label above the headline — e.g. "New Collection" or "Free Shipping Over $50" */
   badge?: string;

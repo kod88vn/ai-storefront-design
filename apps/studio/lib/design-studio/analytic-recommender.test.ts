@@ -21,6 +21,10 @@ describe("analytic recommender", () => {
     expect(baseline.theme.fontStyle).toBe("mono-tech");
     expect(baseline.productGrid.layout).toBe("list");
     expect(baseline.productGrid.columns).toBe(4);
+    expect(baseline.hero.ctaText).toBe("Compare Top Picks");
+    expect(baseline.hero.ctaHref).toBe("/products");
+    expect(baseline.hero.ctaSecondaryText).toBe("View Cart");
+    expect(baseline.hero.ctaSecondaryHref).toBe("/cart");
     expect(baseline.sectionOrder.slice(0, 3)).toEqual([
       "hero",
       "categories",
@@ -46,9 +50,15 @@ describe("analytic recommender", () => {
     expect(baseline.theme.colorScheme).toBe("dark");
     expect(baseline.theme.navStyle).toBe("transparent");
     expect(baseline.hero.layout).toBe("editorial");
+    expect(baseline.hero.ctaText).toBe("View Collection");
+    expect(baseline.hero.ctaHref).toBe("/products");
+    expect(baseline.hero.ctaSecondaryText).toBe("View Cart");
+    expect(baseline.hero.ctaSecondaryHref).toBe("/cart");
     expect(baseline.productGrid.layout).toBe("grid");
     expect(baseline.productGrid.columns).toBe(2);
     expect(goal).toContain("heroLayout: editorial");
     expect(goal).toContain("productGridLayout: grid");
+    expect(goal).toContain("heroPrimaryCta: View Collection");
+    expect(goal).toContain("heroPrimaryCtaHref: /products");
   });
 });

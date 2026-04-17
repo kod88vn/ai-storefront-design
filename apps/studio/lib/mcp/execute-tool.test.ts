@@ -142,5 +142,9 @@ describe("apply_config_update accessibility", () => {
     const payload = parseToolPayload(result);
 
     expect(payload.productGridLayout).toBe("list");
+    expect(payload.heroCtaText).toBe("Compare Top Picks");
+    expect(payload.heroCtaHref).toBe("/products");
+    expect(payload.heroSecondaryCtaText).toBe("View Cart");
+    expect(payload.heroSecondaryCtaHref).toBe("/cart");
   });
 });
