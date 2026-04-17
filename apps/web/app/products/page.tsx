@@ -4,6 +4,7 @@ import { StorefrontPreview } from '@ai-storefront/storefront-components'
 import type { LayoutSection } from '@ai-storefront/types'
 import { useCart } from '../../lib/cart-context'
 import { useConfig } from '../../lib/use-config'
+import { buildLivePageSections } from '../../lib/live-page-sections'
 
 const DEFAULT_SECTIONS: LayoutSection[] = [
     { id: 'products-listing', type: 'products-listing', enabled: true, order: 0 },
@@ -16,7 +17,10 @@ export default function ProductsListPage() {
 
     if (!config) return null
 
-    const pageConfig = { ...config, sections: config.pagesSections?.products ?? DEFAULT_SECTIONS }
+    const pageConfig = {
+        ...config,
+        sections: buildLivePageSections(config.sections, config.pagesSections?.products ?? DEFAULT_SECTIONS),
+    }
 
     return (
         <StorefrontPreview

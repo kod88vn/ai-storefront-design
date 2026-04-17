@@ -1,0 +1,143 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "verify-analytic-fallback-tests",
+			"type": "shell",
+			"command": "yarn",
+			"args": [
+				"workspace",
+				"studio",
+				"test",
+				"--runInBand",
+				"lib/design-studio/analytic-recommender.test.ts",
+				"components/studio/design-wizard.test.tsx"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "verify-analytic-fallback-flow",
+			"type": "shell",
+			"command": "yarn",
+			"args": [
+				"workspace",
+				"studio",
+				"test",
+				"--runInBand",
+				"lib/design-studio/analytic-recommender.test.ts",
+				"components/studio/design-wizard.test.tsx"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "verify-full-quality-suite-with-analytic-flow",
+			"type": "shell",
+			"command": "yarn",
+			"args": [
+				"workspace",
+				"studio",
+				"test",
+				"--runInBand",
+				"lib/schema-contract.test.ts",
+				"lib/store.test.ts",
+				"lib/design-studio/build-system-prompt.test.ts",
+				"lib/design-studio/accessibility.test.ts",
+				"lib/design-studio/analytic-recommender.test.ts",
+				"lib/mcp/execute-tool.test.ts",
+				"components/studio/product-grid-layout.test.tsx",
+				"components/studio/design-wizard.test.tsx"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "verify-analytic-fallback-flow",
+			"type": "shell",
+			"command": "yarn",
+			"args": [
+				"workspace",
+				"studio",
+				"test",
+				"--runInBand",
+				"lib/design-studio/analytic-recommender.test.ts",
+				"components/studio/design-wizard.test.tsx"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "verify-live-announcement-regression",
+			"type": "shell",
+			"command": "yarn",
+			"args": [
+				"workspace",
+				"studio",
+				"test",
+				"--runInBand",
+				"lib/live-page-sections.test.ts"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "verify-live-announcement-regression",
+			"type": "shell",
+			"command": "yarn",
+			"args": [
+				"workspace",
+				"studio",
+				"test",
+				"--runInBand",
+				"lib/live-page-sections.test.ts"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "verify-live-announcement-regression",
+			"type": "shell",
+			"command": "yarn",
+			"args": [
+				"workspace",
+				"studio",
+				"test",
+				"--runInBand",
+				"lib/live-page-sections.test.ts"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "verify-announcement-live-fix-suite",
+			"type": "shell",
+			"command": "yarn",
+			"args": [
+				"workspace",
+				"studio",
+				"test",
+				"--runInBand",
+				"lib/live-page-sections.test.ts",
+				"lib/schema-contract.test.ts",
+				"lib/store.test.ts",
+				"lib/design-studio/build-system-prompt.test.ts",
+				"lib/design-studio/accessibility.test.ts",
+				"lib/design-studio/analytic-recommender.test.ts",
+				"lib/mcp/execute-tool.test.ts",
+				"components/studio/product-grid-layout.test.tsx",
+				"components/studio/design-wizard.test.tsx"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}

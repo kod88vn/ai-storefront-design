@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { UploadedImageTokens } from '@/lib/types'
 import { useStudioStore } from '@/lib/store'
 import { useOrchestrator } from '@/hooks/use-orchestrator'
+import type { AnalyticBaseline } from '@/lib/design-studio/analytic-recommender'
 import { InlinePlanApproval } from './plan-approval'
 import { AppliedSummaryPanel } from './applied-summary'
 import { VisionInput } from './vision-input'
@@ -26,6 +27,14 @@ export function LeftSidebar() {
     config,
     appliedSummary,
     setAppliedSummary,
+    updateTheme,
+    updateHero,
+    updateProductGrid,
+    reorderSections,
+    updateSectionData,
+    updateCategoriesConfig,
+    updateFooterConfig,
+    addAuditEntry,
   } = useStudioStore()
 
   const { startOrchestrator } = useOrchestrator()
@@ -90,6 +99,45 @@ export function LeftSidebar() {
     // Switch to describe mode so user can review the synthesized goal before clicking Simulate
   }
 
+  function handleWizardApplyBaseline(baseline: AnalyticBaseline) {
+    const orderedTypes = new Set(baseline.sectionOrder)
+    const nextSections = [
+      ...baseline.sectionOrder.map((type, order) => {
+        const existing = config.sections.find((section) => section.type === type || section.id === type)
+        return {
+          id: existing?.id ?? type,
+          type,
+          enabled: true,
+          order,
+        }
+      }),
+      ...config.sections
+        .filter((section) => !orderedTypes.has(section.type))
+        .map((section, index) => ({
+          ...section,
+          enabled: false,
+          order: baseline.sectionOrder.length + index,
+        })),
+    ]
+
+    updateTheme(baseline.theme)
+    updateHero(baseline.hero)
+    updateProductGrid(baseline.productGrid)
+    updateCategoriesConfig(baseline.categories)
+    updateFooterConfig(baseline.footer)
+    updateSectionData(baseline.sectionData)
+    reorderSections(nextSections)
+    addAuditEntry({
+      method: 'wizard/applyBaseline',
+      params: {
+        directives: baseline.directives,
+      },
+    })
+    setGoalText(baseline.goal)
+    setInputMode('describe')
+    setAppliedSummary(null)
+  }
+
   function handleReset() {
     setAgentStep('idle')
     setAppliedSummary(null)
@@ -105,7 +153,7 @@ export function LeftSidebar() {
     <div data-testid="left-sidebar" className="flex h-full w-72 shrink-0 flex-col border-r border-border bg-background">
       <div data-testid="left-sidebar-header" className="shrink-0 border-b border-border p-4">
         <h2 className="text-sm font-semibold text-foreground">Orchestrator</h2>
-        <p className="mt-1 text-xs text-muted-foreground">AI-powered design assistant</p>
+        <p className="mt-1 text-xs text-muted-foreground">AI + analytic design assistant</p>
       </div>
 
       <div data-testid="left-sidebar-content" className="min-h-0 flex-1 overflow-y-auto">
@@ -145,7 +193,7 @@ export function LeftSidebar() {
                     </div>
 
                     {inputMode === 'wizard' ? (
-                      <DesignWizard onComplete={handleWizardComplete} />
+                      <DesignWizard onComplete={handleWizardComplete} onApplyBaseline={handleWizardApplyBaseline} />
                     ) : (
                       <>
                         <div data-testid="goal-input-section" className="space-y-2">

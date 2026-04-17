@@ -1,22 +1,22 @@
 {
   "theme": {
-    "primaryColor": "#1a465f",
-    "secondaryColor": "#1f3521",
+    "primaryColor": "#0f172a",
+    "secondaryColor": "#2563eb",
     "borderRadius": "md",
     "navStyle": "bordered",
     "colorScheme": "light",
-    "fontStyle": "modern-sans"
+    "fontStyle": "mono-tech"
   },
   "sections": [
     {
-      "id": "announcement-bar",
-      "type": "announcement-bar",
+      "id": "hero",
+      "type": "hero",
       "enabled": true,
       "order": 0
     },
     {
-      "id": "hero",
-      "type": "hero",
+      "id": "trust-badges",
+      "type": "trust-badges",
       "enabled": true,
       "order": 1
     },
@@ -27,127 +27,177 @@
       "order": 2
     },
     {
-      "id": "featured-collection",
-      "type": "featured-collection",
-      "enabled": true,
-      "order": 3
-    },
-    {
       "id": "testimonials",
       "type": "testimonials",
       "enabled": true,
-      "order": 4
-    },
-    {
-      "id": "newsletter",
-      "type": "newsletter",
-      "enabled": true,
-      "order": 5
+      "order": 3
     },
     {
       "id": "product-grid",
       "type": "product-grid",
       "enabled": true,
-      "order": 6
+      "order": 4
     },
     {
       "id": "categories",
       "type": "categories",
       "enabled": true,
-      "order": 7
+      "order": 5
     },
     {
       "id": "footer",
       "type": "footer",
       "enabled": true,
+      "order": 6
+    },
+    {
+      "id": "announcement-bar",
+      "type": "announcement-bar",
+      "enabled": false,
+      "order": 7
+    },
+    {
+      "id": "featured-collection",
+      "type": "featured-collection",
+      "enabled": false,
       "order": 8
+    },
+    {
+      "id": "newsletter",
+      "type": "newsletter",
+      "enabled": false,
+      "order": 9
+    },
+    {
+      "id": "brand-strip",
+      "type": "brand-strip",
+      "enabled": false,
+      "order": 10
     }
   ],
   "hero": {
-    "layout": "split",
-    "title": "Curated Home Essentials",
-    "subtitle": "Discover natural personal care essentials",
-    "ctaText": "Shop Now",
-    "badge": "100% Natural Ingredients",
-    "textAlign": "left",
+    "layout": "centered",
+    "title": "Discover standout food & beverage",
+    "subtitle": "A curated baseline with stronger visual hierarchy, clearer storytelling, and a more intentional first impression.",
+    "ctaText": "Explore Collection",
+    "badge": "Recommended baseline",
+    "textAlign": "center",
     "ctaVariant": "solid",
-    "overlayOpacity": 0.5,
-    "ctaSecondaryText": "Learn More"
+    "overlayOpacity": 0.15,
+    "ctaSecondaryText": "",
+    "backgroundColor": "#ffffff",
+    "textColor": "#1a465f"
   },
   "productGrid": {
-    "columns": 3
+    "columns": 4,
+    "layout": "list",
+    "backgroundColor": "#ffffff",
+    "textColor": "#1a465f",
+    "showRatings": true,
+    "showBadges": true,
+    "heading": "Featured products"
   },
   "sectionData": {
     "announcement-bar": {
-      "text": "Buy More Get LESS",
-      "backgroundColor": "#07151d",
-      "textColor": "#ffffff",
-      "scrolling": true,
-      "emoji": null,
-      "link": "/shop",
-      "dismissible": false
+      "text": "Designed baseline activated — refine the copy and visuals from here.",
+      "backgroundColor": "#2563eb",
+      "scrolling": true
     },
     "benefits-bar": {
       "items": [
         {
           "icon": "leaf",
           "label": "Natural Ingredients",
-          "detail": "100% plant-based"
+          "detail": "100% Organic"
         },
         {
           "icon": "check",
-          "label": "No Harmful Chemicals",
-          "detail": "Safe for all skin types"
+          "label": "No Harmful Stuff",
+          "detail": "Safe for All"
         },
         {
           "icon": "shield",
           "label": "Quality Guarantee",
-          "detail": "Satisfaction assured"
+          "detail": "Trusted Products"
         },
         {
           "icon": "award",
-          "label": "Award-Winning Formulas",
-          "detail": "Trusted by thousands"
+          "label": "Satisfaction Guaranteed",
+          "detail": "Customer Approved"
         }
       ]
     },
-    "featured-collection": {
-      "heading": "Our Best Sellers",
-      "subheading": "Explore our most popular natural care products",
-      "layout": "grid"
+    "brand-strip": {
+      "heading": "Trusted by growing brands",
+      "brands": [
+        {
+          "name": "Northstar"
+        },
+        {
+          "name": "Harbor"
+        },
+        {
+          "name": "Aster"
+        },
+        {
+          "name": "Pioneer"
+        }
+      ]
     },
     "testimonials": {
-      "heading": "What Our Customers Are Saying",
-      "layout": "grid",
+      "heading": "What customers notice first",
+      "layout": "list",
       "showRatings": true,
       "items": [
         {
-          "quote": "These products have transformed my daily routine. Absolutely love the natural scents!",
-          "author": "James T.",
-          "location": "Austin, TX",
+          "quote": "Sharper hierarchy and easier browsing right away.",
+          "author": "Studio Shopper",
+          "location": "Online",
           "rating": 5
         },
         {
-          "quote": "Best personal care products I've ever used. My skin feels amazing!",
-          "author": "Michael R.",
-          "location": "Denver, CO",
+          "quote": "The layout feels more confident and easier to trust.",
+          "author": "Early Customer",
+          "location": "Web",
           "rating": 5
         },
         {
-          "quote": "Finally, products that match my values. Natural and effective!",
-          "author": "Sarah L.",
-          "location": "Portland, OR",
+          "quote": "Great baseline for quick iteration and refinement.",
+          "author": "Merch Lead",
+          "location": "In-house",
           "rating": 5
         }
       ]
     },
     "newsletter": {
-      "heading": "Join Our Community",
-      "subtext": "Sign up for exclusive offers and updates on natural care.",
-      "placeholder": "Enter your email",
-      "buttonText": "Subscribe",
-      "backgroundColor": "#f0ebe4",
-      "incentive": "Sign up and get 20% off your first order"
+      "heading": "Stay in the loop",
+      "subtext": "Use this block for offers, launches, or subscriber perks.",
+      "buttonText": "Subscribe"
+    },
+    "featured-collection": {
+      "heading": "Featured collection",
+      "subheading": "A curated starting point for food & beverage.",
+      "layout": "horizontal-scroll"
+    },
+    "trust-badges": {
+      "items": [
+        {
+          "icon": "shield",
+          "label": "Secure checkout"
+        },
+        {
+          "icon": "truck",
+          "label": "Fast shipping"
+        },
+        {
+          "icon": "refresh",
+          "label": "Easy returns"
+        },
+        {
+          "icon": "award",
+          "label": "Top-rated products"
+        }
+      ]
     }
   },
   "nav": {
@@ -164,33 +214,30 @@
         "href": "/products"
       },
       {
-        "id": "nav-2d6a8610",
-        "label": "Announcement",
-        "href": "/announcement"
+        "id": "nav-collections",
+        "label": "Collections",
+        "href": "/products"
+      },
+      {
+        "id": "nav-journal",
+        "label": "Journal",
+        "href": "#"
       }
     ],
-    "backgroundColor": "#faf5f0",
+    "backgroundColor": "#f0ebe4",
     "textColor": "#1a465f"
+  },
+  "categories": {
+    "backgroundColor": "#f0ebe4",
+    "textColor": "#1a465f",
+    "heading": "Browse the collection"
   },
   "footer": {
     "backgroundColor": "#1b4332",
-    "textColor": "#ffffff"
+    "textColor": "#ffffff",
+    "tagline": "A practical baseline built for fast iteration."
   },
-  "customPages": [
-    {
-      "id": "custom-0fd6280a",
-      "name": "Announcement",
-      "slug": "/announcement",
-      "sections": [
-        {
-          "id": "announcement-bar",
-          "type": "announcement-bar",
-          "enabled": true,
-          "order": 0
-        }
-      ]
-    }
-  ],
+  "customPages": [],
   "pagesSections": {
     "products": [
       {
