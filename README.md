@@ -84,6 +84,21 @@ yarn web
 yarn build
 ```
 
+### Deploy to Vercel
+
+This repository is a monorepo with **two separate Next.js apps**, so each app should be imported into Vercel as its **own Project**:
+
+- **Studio project** → Root Directory: `apps/studio`
+- **Web storefront project** → Root Directory: `apps/web`
+
+To avoid the "routes-manifest.json couldn't be found" error:
+
+1. Set the Vercel **Root Directory** to the app you want to deploy
+2. Leave **Output Directory** empty unless you explicitly changed Next.js `distDir`
+3. Keep the app build command on the default `next build` (or the package `build` script)
+
+Do **not** deploy the repository root as a single Next.js app, because the build outputs live inside each app folder rather than at the repo root.
+
 ---
 
 ## App: Studio (`apps/studio`)
