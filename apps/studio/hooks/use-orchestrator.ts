@@ -129,6 +129,13 @@ export function useOrchestrator() {
                 .sort((a, b) => a.order - b.order)
                 .map((sec) => sec.id);
 
+          // Keep footer anchored at the bottom whenever it is present.
+          if (orderedIds.includes("footer")) {
+            const withoutFooter = orderedIds.filter((id) => id !== "footer");
+            orderedIds.length = 0;
+            orderedIds.push(...withoutFooter, "footer");
+          }
+
           if (u.sectionOrder) {
             accSectionOrder.current = orderedIds;
           }

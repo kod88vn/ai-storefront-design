@@ -15,6 +15,7 @@
 
 import { generateText, streamText, tool } from "ai";
 import { xai } from "@ai-sdk/xai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 
 import type { OrchestratorContext, OrchestratorEvent } from "@/lib/types";
@@ -28,18 +29,26 @@ import { filterSkills, loadSkills } from "@/lib/design-studio/skill-loader";
 
 const MAX_STEPS = 15;
 const USE_AI_GATEWAY = Boolean(process.env.AI_GATEWAY_API_KEY);
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL; // e.g. http://ai:11434
 const DEFAULT_XAI_MODEL = "grok-3-fast";
 const DEFAULT_GATEWAY_MODEL = "openai/gpt-4.1-mini";
+const DEFAULT_OLLAMA_MODEL = "qwen3-coder:latest";
 
 // With AI Gateway enabled, use provider/model IDs such as
 // "openai/gpt-4.1-mini", "anthropic/claude-sonnet-4-5", or "xai/grok-4.1-mini".
 // Otherwise use native xAI Responses API model IDs.
+// With OLLAMA_BASE_URL, point at a local Ollama instance.
 const AI_MODEL =
   process.env.AI_MODEL ??
-  (USE_AI_GATEWAY ? DEFAULT_GATEWAY_MODEL : DEFAULT_XAI_MODEL);
+  (OLLAMA_BASE_URL ? DEFAULT_OLLAMA_MODEL : USE_AI_GATEWAY ? DEFAULT_GATEWAY_MODEL : DEFAULT_XAI_MODEL);
 const VISION_MODEL = process.env.VISION_MODEL ?? AI_MODEL;
 
+const ollama = OLLAMA_BASE_URL
+  ? createOpenAI({ baseURL: `${OLLAMA_BASE_URL}/v1`, apiKey: "ollama" })
+  : null;
+
 function resolveModel(modelId: string) {
+  if (ollama) return ollama(modelId);
   return USE_AI_GATEWAY ? modelId : xai.responses(modelId);
 }
 
@@ -368,13 +377,23 @@ Rules:
     let collectedToolCalls: any[] = [];
     let collectedText = "";
 
+    // On the plan-approved resume step, force a tool call so the model can't
+    // just output prose and exit — it must call apply_config_update.
+    const isResumeStep = step === 0 && context.planFeedback?.approved === true;
+    const allTools = tools as Record<string, unknown>;
+    const stepTools =
+      isResumeStep && allTools.apply_config_update
+        ? { apply_config_update: allTools.apply_config_update }
+        : allTools;
+
     try {
       const streamResult = streamText({
         // Use AI Gateway when configured; otherwise fall back to direct xAI.
         model: resolveModel(AI_MODEL),
         system: systemPrompt,
         messages,
-        tools,
+        tools: stepTools as never,
+        ...(isResumeStep ? { toolChoice: "required" } : {}),
       });
 
       // Stream text, reasoning, and tool-call chunks to the client in real time.
@@ -470,8 +489,13 @@ Rules:
       return;
     }
 
-    // No more tool calls → model is done
-    if (!collectedToolCalls.length) break;
+    // No more tool calls → model is done (log text for debugging)
+    if (!collectedToolCalls.length) {
+      if (collectedText) {
+        yield audit("agent/text-only-exit", { step, text: collectedText.slice(0, 500) });
+      }
+      break;
+    }
 
     // Append assistant turn to message history
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
