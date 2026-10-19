@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 const shouldRunRealAi = Boolean(
   process.env.RUN_REAL_AI_E2E &&
-  (process.env.XAI_API_KEY || process.env.AI_GATEWAY_API_KEY),
+  (process.env.AI_GATEWAY_API_KEY || process.env.OLLAMA_BASE_URL),
 );
 
 test.describe("real AI storefront flows", () => {
@@ -10,7 +10,7 @@ test.describe("real AI storefront flows", () => {
 
   test.skip(
     !shouldRunRealAi,
-    "Set RUN_REAL_AI_E2E=1 and either XAI_API_KEY or AI_GATEWAY_API_KEY to run live AI smoke tests.",
+    "Set RUN_REAL_AI_E2E=1 and configure AI_GATEWAY_API_KEY or OLLAMA_BASE_URL to run live AI smoke tests.",
   );
 
   async function waitForPlan(page: import("@playwright/test").Page) {

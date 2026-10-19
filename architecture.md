@@ -518,9 +518,9 @@ A stateless async generator that:
 
 1. Loads SKILL.md files from disk, filtered by tag for this request
 2. Discovers MCP tools via `tools/list` JSON-RPC call
-3. **(If image supplied)** Runs vision pre-analysis with `grok-4-0709` → extracts exact hex colors + design tokens
+3. **(If image supplied)** Runs vision pre-analysis with `VISION_MODEL` (Anthropic Claude Sonnet 5 via AI Gateway by default) → extracts exact hex colors + design tokens
 4. Builds the system prompt: planner skill (full) + supporting skills (full, under `## Skill References`) + pre-computed vision tokens + MCP tool schemas + current config
-5. Runs a multi-turn **`streamText`** loop (AI SDK v6) using the primary model (`grok-3-fast`)
+5. Runs a multi-turn **`streamText`** loop (AI SDK v6) using `AI_MODEL` (Anthropic Claude Sonnet 5 via AI Gateway by default)
 6. Iterates `fullStream`, emitting `thinking` SSE events for:
    - `text-delta` chunks (model scratchpad / plan narration)
    - `reasoning-delta` chunks (extended thinking)
@@ -531,7 +531,7 @@ A stateless async generator that:
 
 ### Vision pipeline (two-step)
 
-`grok-3` (primary model) is text-only. When `context.imageData` is present, the orchestrator first calls `grok-2-vision-1212` to extract structured design tokens:
+When `context.imageData` is present, the orchestrator calls `VISION_MODEL` to extract structured design tokens. It defaults to the primary Anthropic Claude model and can be configured independently:
 
 ```json
 {
@@ -705,14 +705,14 @@ Accepts a design patch (same shape as the `apply_config_update` args in the orch
 
 ## AI Stack
 
-| Layer         | Technology                                                                          |
-| ------------- | ----------------------------------------------------------------------------------- |
-| Primary LLM   | xAI `grok-3-fast` via `@ai-sdk/xai` (text-only, overridable via `AI_MODEL` env var) |
-| Vision LLM    | `grok-4-0709` — image pre-analysis only                                             |
-| AI SDK        | Vercel AI SDK v6 (`ai@6.0.152`)                                                     |
-| Transport     | Server-Sent Events (SSE) at `/api/orchestrate`                                      |
-| Tool protocol | MCP server at `/api/mcp` (JSON-RPC 2.0)                                             |
-| Skill loading | `lib/skills/*/SKILL.md` — read from disk at runtime, filtered by tag                |
+| Layer         | Technology                                                                  |
+| ------------- | --------------------------------------------------------------------------- |
+| Primary LLM   | Anthropic Claude Sonnet 5 via Vercel AI Gateway (overridable via `AI_MODEL`) |
+| Vision LLM    | `VISION_MODEL` — defaults to the primary model; supports image pre-analysis |
+| AI SDK        | Vercel AI SDK v6 (`ai@6.0.152`)                                             |
+| Transport     | Server-Sent Events (SSE) at `/api/orchestrate`                              |
+| Tool protocol | MCP server at `/api/mcp` (JSON-RPC 2.0)                                     |
+| Skill loading | `lib/skills/*/SKILL.md` — read from disk at runtime, filtered by tag        |
 
 ### SSE event types
 

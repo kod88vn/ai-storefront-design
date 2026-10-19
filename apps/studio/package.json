@@ -13,7 +13,7 @@
     "test:e2e:real": "RUN_REAL_AI_E2E=1 playwright test e2e/ai-real-flows.spec.ts"
   },
   "dependencies": {
-    "@ai-sdk/xai": "^3.0.80",
+    "@ai-sdk/openai": "^3.0.58",
     "@ai-storefront/storefront-components": "*",
     "@ai-storefront/types": "*",
     "@ai-storefront/ui": "*",

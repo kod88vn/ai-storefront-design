@@ -1,14 +1,18 @@
 import { generateText } from "ai";
-import { xai } from "@ai-sdk/xai";
+import { createOpenAI } from "@ai-sdk/openai";
 
-const USE_AI_GATEWAY = Boolean(process.env.AI_GATEWAY_API_KEY);
-const DEFAULT_XAI_MODEL = "grok-3-fast";
-const DEFAULT_GATEWAY_MODEL = "openai/gpt-4.1-mini";
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL;
+const DEFAULT_GATEWAY_MODEL = "anthropic/claude-sonnet-5";
+const DEFAULT_OLLAMA_MODEL = "qwen3-coder:latest";
 const AI_MODEL =
   process.env.AI_MODEL ??
-  (USE_AI_GATEWAY ? DEFAULT_GATEWAY_MODEL : DEFAULT_XAI_MODEL);
+  (OLLAMA_BASE_URL ? DEFAULT_OLLAMA_MODEL : DEFAULT_GATEWAY_MODEL);
 const HANDSHAKE_TIMEOUT_MS = 5000;
 const CACHE_TTL_MS = 60_000;
+
+const ollama = OLLAMA_BASE_URL
+  ? createOpenAI({ baseURL: `${OLLAMA_BASE_URL}/v1`, apiKey: "ollama" })
+  : null;
 
 let cachedStatus:
   | {
@@ -25,11 +29,12 @@ export interface AiHandshakeResult {
 }
 
 function resolveModel(modelId: string) {
-  return USE_AI_GATEWAY ? modelId : xai.responses(modelId);
+  if (ollama) return ollama(modelId);
+  return modelId;
 }
 
 function hasAiCredentials() {
-  return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.XAI_API_KEY);
+  return Boolean(process.env.OLLAMA_BASE_URL || process.env.AI_GATEWAY_API_KEY);
 }
 
 function toReason(error: unknown) {
