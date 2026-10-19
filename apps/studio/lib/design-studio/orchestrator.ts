@@ -14,7 +14,6 @@
  */
 
 import { generateText, streamText, tool } from "ai";
-import { xai } from "@ai-sdk/xai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
 
@@ -28,19 +27,14 @@ import { filterSkills, loadSkills } from "@/lib/design-studio/skill-loader";
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const MAX_STEPS = 15;
-const USE_AI_GATEWAY = Boolean(process.env.AI_GATEWAY_API_KEY);
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL; // e.g. http://ai:11434
-const DEFAULT_XAI_MODEL = "grok-3-fast";
-const DEFAULT_GATEWAY_MODEL = "openai/gpt-4.1-mini";
+const DEFAULT_GATEWAY_MODEL = "anthropic/claude-sonnet-5";
 const DEFAULT_OLLAMA_MODEL = "qwen3-coder:latest";
 
-// With AI Gateway enabled, use provider/model IDs such as
-// "openai/gpt-4.1-mini", "anthropic/claude-sonnet-4-5", or "xai/grok-4.1-mini".
-// Otherwise use native xAI Responses API model IDs.
-// With OLLAMA_BASE_URL, point at a local Ollama instance.
+// AI Gateway model IDs use provider/model format. Ollama uses its local OpenAI-compatible endpoint.
 const AI_MODEL =
   process.env.AI_MODEL ??
-  (OLLAMA_BASE_URL ? DEFAULT_OLLAMA_MODEL : USE_AI_GATEWAY ? DEFAULT_GATEWAY_MODEL : DEFAULT_XAI_MODEL);
+  (OLLAMA_BASE_URL ? DEFAULT_OLLAMA_MODEL : DEFAULT_GATEWAY_MODEL);
 const VISION_MODEL = process.env.VISION_MODEL ?? AI_MODEL;
 
 const ollama = OLLAMA_BASE_URL
@@ -49,7 +43,7 @@ const ollama = OLLAMA_BASE_URL
 
 function resolveModel(modelId: string) {
   if (ollama) return ollama(modelId);
-  return USE_AI_GATEWAY ? modelId : xai.responses(modelId);
+  return modelId;
 }
 
 // ─── Orchestrator generator ───────────────────────────────────────────────────
@@ -92,8 +86,8 @@ export async function* runOrchestrator(
 
   // ── 3. Image pre-analysis (vision model → structured tokens) ────────────────
   //
-  // grok-3 is text-only. When an image is uploaded we first call
-  // grok-2-vision-1212 to extract exact design tokens (hex colors, enums).
+  // When an image is uploaded, VISION_MODEL extracts exact design tokens
+  // (hex colors, enums) before the main planning call.
   // These tokens are injected into the system prompt so the AI can skip the
   // MCP analyze_vision_input call (which can't access the image data) and use
   // the pre-computed values directly in plan_feedback and apply_config_update.
@@ -388,7 +382,7 @@ Rules:
 
     try {
       const streamResult = streamText({
-        // Use AI Gateway when configured; otherwise fall back to direct xAI.
+        // Use the configured gateway model or the local Ollama endpoint.
         model: resolveModel(AI_MODEL),
         system: systemPrompt,
         messages,

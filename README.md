@@ -1,6 +1,6 @@
 # AI Storefront Design Studio
 
-An AI-powered storefront design studio with real-time preview and agentic workflows. Built as a Turborepo monorepo with Yarn workspaces.
+An AI-powered design studio for people building and customizing ecommerce storefronts. Describe a goal in natural language, iterate on the theme, layout, and content with a live preview, then run the result in the included standalone storefront. Built as a Turborepo monorepo with Yarn workspaces, Next.js, and TypeScript.
 
 ---
 
@@ -27,22 +27,22 @@ packages/
 
 ## Environment variables
 
-Create `apps/studio/.env.local` with either a direct xAI key or a Vercel AI Gateway key.
+Copy `apps/studio/.env.example` to `apps/studio/.env.local` and replace the placeholder with a Vercel AI Gateway key. The example selects Anthropic through the gateway.
 
 ```bash
-# Option A: direct xAI access
-XAI_API_KEY=your_xai_key_here
-AI_MODEL=grok-4-1-fast-reasoning
-
-# Option B: Vercel AI Gateway for testing different providers/models
+# Default: Anthropic through Vercel AI Gateway
 AI_GATEWAY_API_KEY=your_gateway_key_here
-AI_MODEL=openai/gpt-4.1-mini
-# Example alternatives:
-# AI_MODEL=anthropic/claude-sonnet-4-5
-# AI_MODEL=xai/grok-4.1-mini
+AI_MODEL=anthropic/claude-sonnet-5
 
-# Optional vision override (defaults to AI_MODEL)
-# VISION_MODEL=openai/gpt-4.1-mini
+# Other AI Gateway models:
+# AI_MODEL=openai/gpt-4.1-mini
+
+# Option B: local Ollama instance (no API key required)
+# OLLAMA_BASE_URL=http://ai:11434
+# AI_MODEL=qwen3-coder:latest   # defaults to qwen3-coder:latest if omitted
+
+# Optional vision override — keep this on a cloud model when using Ollama text-only
+# VISION_MODEL=anthropic/claude-sonnet-5
 ```
 
 ---
@@ -163,7 +163,7 @@ Reusable storefront section components: `Navbar`, `Hero`, `ProductGrid`, `Catego
 | Animation   | Framer Motion               |
 | Icons       | Lucide React                |
 | State       | Zustand                     |
-| AI SDK      | Vercel AI SDK v6 + xAI Grok |
+| AI SDK      | Vercel AI SDK v6 + Anthropic via Vercel AI Gateway |
 | Build speed | Turbopack (dev)             |
 
 ---
@@ -175,6 +175,16 @@ Reusable storefront section components: `Navbar`, `Hero`, `ProductGrid`, `Catego
 - **Yarn only** — never `npm install` or `pnpm`; use `yarn workspace <name> add <pkg>` to add to a specific app
 
 ---
+
+## Planned work
+
+The next work focuses on maintainability and reliability:
+
+- Split the Studio store, orchestrator, and MCP route into focused modules.
+- Break the large sidebar and component editor into smaller, testable components.
+- Add error boundaries and stronger types around configurable section data.
+
+See the [prioritized refactor plan](review.md#priority-refactor-plan) and [architecture roadmap](review.md#refactoring-roadmap-priority-order) for details.
 
 ## AI workspace customizations
 

@@ -1,11 +1,13 @@
-import fs from "fs";
+import fs from "node:fs";
+import { generateText } from "ai";
 
-const img = fs.readFileSync("delacalle1.webp");
-const b64 = img.toString("base64");
-const dataUrl = `data:image/webp;base64,${b64}`;
+if (!process.env.AI_GATEWAY_API_KEY) {
+  throw new Error("Set AI_GATEWAY_API_KEY before running this test.");
+}
 
-console.log("Image size:", (img.length / 1024).toFixed(1), "KB");
-console.log("Calling grok-2-vision-1212...\n");
+const image = fs.readFileSync(new URL("./delacalle1.webp", import.meta.url));
+console.log("Image size:", (image.length / 1024).toFixed(1), "KB");
+console.log("Calling Anthropic Claude through Vercel AI Gateway...\n");
 
 const prompt = `You are a design analyst. Extract structured design tokens from this storefront screenshot and respond with ONLY a raw JSON object (no markdown fences):
 
@@ -40,35 +42,20 @@ Rules:
 - brandSignals must mention specific cues like restaurant cards, sticky cuisine chips, athlete imagery, monochrome product cutouts, oversized sale messaging, etc.
 - Uber Eats and Nike should not produce similar outputs.`;
 
-const res = await fetch("https://api.x.ai/v1/chat/completions", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${process.env.XAI_API_KEY}`,
-  },
-  body: JSON.stringify({
-    model: "grok-4-0709",
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "text", text: prompt },
-          { type: "image_url", image_url: { url: dataUrl } },
-        ],
-      },
-    ],
-    max_tokens: 600,
-  }),
+const { text } = await generateText({
+  model: process.env.VISION_MODEL ?? "anthropic/claude-sonnet-5",
+  maxOutputTokens: 600,
+  messages: [
+    {
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "image", image },
+      ],
+    },
+  ],
 });
 
-const data = await res.json();
-
-if (data.error) {
-  console.error("API error:", JSON.stringify(data.error, null, 2));
-  process.exit(1);
-}
-
-const text = data.choices?.[0]?.message?.content ?? "";
 console.log("Raw response:\n" + text);
 
 try {

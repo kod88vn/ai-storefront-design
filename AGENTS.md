@@ -179,7 +179,7 @@ function Panel({ title, icon: Icon, testId, children }: PanelProps) {
 - **Framework**: Next.js 16 App Router, TypeScript
 - **Styling**: Tailwind CSS (no inline styles unless dynamic values like colors)
 - **State**: Zustand (`@/lib/store.ts`)
-- **AI**: Vercel AI SDK v6 (`ai@6.0.152`), xAI Grok (`@ai-sdk/xai`)
+- **AI**: Vercel AI SDK v6 (`ai@6.0.152`), Anthropic via Vercel AI Gateway
 - **Architecture**: MCP server at `/api/mcp`, orchestrator at `lib/design-studio/orchestrator.ts`, SSE at `/api/orchestrate`
 
 ## Package Manager Rules
